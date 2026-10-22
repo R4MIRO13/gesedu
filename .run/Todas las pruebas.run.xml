@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Todas las pruebas" type="CompoundRunConfigurationType">
+    <toRun type="MavenRunConfiguration" name="Pruebas backend" />
+    <toRun type="js.build_tools.npm" name="Pruebas frontend" />
+    <method v="2" />
+  </configuration>
+</component>

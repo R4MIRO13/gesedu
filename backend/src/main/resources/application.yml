@@ -1,0 +1,48 @@
+# Valores comunes. Sin secretos: todo lo sensible llega por variables de entorno (perfil aws) o por los valores
+# de desarrollo de application-local.yml.
+spring:
+  application:
+    name: gesedu-api
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${GESEDU_DB_URL}
+    username: ${GESEDU_DB_APP_USER}
+    password: ${GESEDU_DB_APP_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    # Flyway migra con el rol dueño del esquema; la aplicación trabaja con gesedu_app (sin DDL).
+    user: ${GESEDU_DB_MIGRATOR_USER}
+    password: ${GESEDU_DB_MIGRATOR_PASSWORD}
+    locations: classpath:db/migration
+
+server:
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+gesedu:
+  zona-horaria: ${GESEDU_TIME_ZONE:America/Lima}
+  seguridad:
+    # Sin valor por defecto: fuera de local la clave tiene que venir de GESEDU_JWT_SECRET
+    jwt-secreto: ${GESEDU_JWT_SECRET}
+    jwt-minutos: ${GESEDU_JWT_MINUTOS:15}
+    # RNF-06: 5 intentos fallidos bloquean la cuenta; S-03: durante 15 minutos
+    max-intentos: 5
+    bloqueo-minutos: ${GESEDU_BLOQUEO_MINUTOS:15}

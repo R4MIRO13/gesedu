@@ -1,0 +1,18 @@
+# Perfil local: valores de desarrollo que coinciden con docker-compose.yml e infra/postgres/init.
+# Cada valor puede sobrescribirse con la variable de entorno indicada.
+spring:
+  datasource:
+    url: ${GESEDU_DB_URL:jdbc:postgresql://localhost:5432/gesedu}
+    username: ${GESEDU_DB_APP_USER:gesedu_app}
+    password: ${GESEDU_DB_APP_PASSWORD:gesedu_app}
+  flyway:
+    user: ${GESEDU_DB_MIGRATOR_USER:gesedu_migrador}
+    password: ${GESEDU_DB_MIGRATOR_PASSWORD:gesedu_migrador}
+
+gesedu:
+  seguridad:
+    jwt-secreto: ${GESEDU_JWT_SECRET:cambia-esta-clave-solo-para-desarrollo-local-0123456789}
+
+logging:
+  level:
+    pe.edu.gesedu: DEBUG

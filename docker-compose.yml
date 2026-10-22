@@ -1,0 +1,37 @@
+# Servicios de desarrollo local de GESEDU.
+#   docker compose up -d --wait postgres        # base de datos
+#   docker compose --profile correo up -d       # además Mailpit (solo se usa desde la recuperación de contraseña y UC-02)
+name: gesedu
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: gesedu-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+      TZ: America/Lima
+    ports:
+      - "${GESEDU_DB_PORT:-5432}:5432"
+    volumes:
+      # Desde PostgreSQL 18 la imagen guarda los datos en /var/lib/postgresql (PGDATA=/var/lib/postgresql/18/docker).
+      - gesedu-pg:/var/lib/postgresql
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d gesedu"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: gesedu-mailpit
+    profiles: ["correo"]
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # interfaz web
+
+volumes:
+  gesedu-pg:

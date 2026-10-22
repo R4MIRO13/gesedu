@@ -1,0 +1,5 @@
+# Perfil demo: se activa junto con local (--spring.profiles.active=local,demo).
+# Agrega los datos semilla de la demostración (un usuario por rol, año escolar 2027 y sus bloques horarios).
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/demo

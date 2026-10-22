@@ -1,0 +1,17 @@
+# Normaliza los saltos de línea; los scripts de shell y el wrapper de Maven necesitan LF aunque se clone en Windows.
+* text=auto
+
+mvnw            text eol=lf
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.cmd           text eol=crlf
+*.bat           text eol=crlf
+*.ps1           text eol=crlf
+
+# Binarios
+*.pdf           binary
+*.xlsx          binary
+*.png           binary
+*.jpg           binary
+*.ico           binary
+*.jar           binary

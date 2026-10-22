@@ -1,0 +1,23 @@
+# IDE: se ignora .idea/ completo; las configuraciones compartidas de IntelliJ viven en .run/
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+# Backend
+target/
+HELP.md
+
+# Frontend
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Entorno local y secretos
+.env
+*.local
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
