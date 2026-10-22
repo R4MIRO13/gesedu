@@ -94,12 +94,31 @@ class JwtYPermisosIT extends BaseIT {
     }
 
     @Test
-    void laSaludDelServicioEsPublica() throws Exception {
-        assertThat(get("/actuator/health", null).estado()).isEqualTo(200);
+    void yoDevuelveLosDatosYPermisosDelUsuarioAutenticado() throws Exception {
+        Respuesta r = get("/api/v1/auth/yo", tokenDe(crearUsuario("ALUMNO", true)));
+
+        assertThat(r.estado()).isEqualTo(200);
+        assertThat(r.cuerpo().get("rol").asString()).isEqualTo("ALUMNO");
+        assertThat(r.cuerpo().get("permisos").valueStream().map(p -> p.asString()).toList())
+                .contains("HORARIO_CONSULTAR").doesNotContain("AUDITORIA_CONSULTAR");
+        assertProblema(get("/api/v1/auth/yo", null), 401, "NO_AUTENTICADO");
     }
 
-    private String tokenDe(String correo) throws Exception {
-        return iniciarSesion(correo, CONTRASENA).cuerpo().get("tokenAcceso").asString();
+    @Test
+    void laDocumentacionDeLaApiEsPublicaYDeclaraElEsquemaBearer() throws Exception {
+        Respuesta api = get("/v3/api-docs", null);
+
+        assertThat(api.estado()).isEqualTo(200);
+        assertThat(api.cuerpo().get("components").get("securitySchemes").get("bearer").get("scheme").asString())
+                .isEqualTo("bearer");
+        assertThat(get("/v3/api-docs/3-auditoria", null).cuerpo().get("paths").has("/api/v1/auditoria/registros"))
+                .isTrue();
+        assertThat(get("/swagger-ui/index.html", null).estado()).isEqualTo(200);
+    }
+
+    @Test
+    void laSaludDelServicioEsPublica() throws Exception {
+        assertThat(get("/actuator/health", null).estado()).isEqualTo(200);
     }
 
     private static void assertProblema(Respuesta r, int estado, String codigo) {

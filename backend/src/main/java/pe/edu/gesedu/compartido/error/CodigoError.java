@@ -21,6 +21,8 @@ public enum CodigoError {
 
     RECURSO_NO_ENCONTRADO(HttpStatus.NOT_FOUND, "El recurso solicitado no existe"),
 
+    CONFLICTO_HORARIO(HttpStatus.CONFLICT, "El horario entra en conflicto con otro existente"),
+
     ERROR_INTERNO(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrió un error inesperado");
 
     private final HttpStatus estado;

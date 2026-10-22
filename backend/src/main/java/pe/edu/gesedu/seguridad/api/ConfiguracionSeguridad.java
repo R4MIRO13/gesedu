@@ -33,6 +33,8 @@ class ConfiguracionSeguridad {
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/inicio-sesion").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
+                        // Documentación de la API (Swagger UI): pública en la demo
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(o -> o
                         .jwt(j -> j.jwtAuthenticationConverter(convertidor))

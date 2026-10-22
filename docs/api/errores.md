@@ -17,6 +17,7 @@ implementación: `pe.edu.gesedu.compartido.error.CodigoError`.
 | 401 | `SESION_EXPIRADA` | Token de acceso vencido | — |
 | 403 | `ACCESO_DENEGADO` | Falta el permiso de `@PreAuthorize` | — |
 | 404 | `RECURSO_NO_ENCONTRADO` | Ruta o recurso inexistente | — |
+| 409 | `CONFLICTO_HORARIO` | Un bloque horario se superpone con otro del mismo día | `conflictos[]` con los bloques que se cruzan |
 | 500 | `ERROR_INTERNO` ¹ | Error no controlado (el detalle no se expone) | — |
 
 ¹ No figuran en `docs/PLAN.md` § 5.2; se agregan para que ninguna respuesta de error salga sin `codigo`.

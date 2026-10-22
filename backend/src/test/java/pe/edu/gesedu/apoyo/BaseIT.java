@@ -89,6 +89,11 @@ public abstract class BaseIT {
                 json.writeValueAsString(java.util.Map.of("correo", correo, "contrasena", contrasena)), null);
     }
 
+    /** Inicia sesión con {@link #CONTRASENA} y devuelve el token de acceso. */
+    protected String tokenDe(String correo) throws IOException, InterruptedException {
+        return iniciarSesion(correo, CONTRASENA).cuerpo().get("tokenAcceso").asString();
+    }
+
     private HttpRequest.Builder base(String ruta) {
         return HttpRequest.newBuilder(URI.create("http://localhost:" + puerto + ruta));
     }
@@ -99,9 +104,10 @@ public abstract class BaseIT {
         }
         HttpResponse<String> respuesta = cliente.send(peticion.build(), HttpResponse.BodyHandlers.ofString());
         String cuerpo = respuesta.body();
-        return new Respuesta(respuesta.statusCode(),
-                respuesta.headers().firstValue("Content-Type").orElse(""),
-                cuerpo == null || cuerpo.isBlank() ? null : json.readTree(cuerpo));
+        String tipo = respuesta.headers().firstValue("Content-Type").orElse("");
+        // Solo se interpretan cuerpos JSON (la Swagger UI responde HTML)
+        return new Respuesta(respuesta.statusCode(), tipo,
+                cuerpo == null || cuerpo.isBlank() || !tipo.contains("json") ? null : json.readTree(cuerpo));
     }
 
     /** Crea una cuenta con la contraseña {@link #CONTRASENA} y devuelve su correo (único por llamada). */

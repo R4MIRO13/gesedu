@@ -72,14 +72,26 @@ public class AutenticacionService {
 
         usuario.registrarAccesoExitoso(ahora);
         EmisorToken.TokenEmitido token = emisorToken.emitir(usuario.getId());
+        return new SesionIniciada(token.valor(), token.expiraEn().atZone(reloj.getZone()).toOffsetDateTime(),
+                datosDe(usuario));
+    }
+
+    /** Datos del usuario de la sesión actual; la SPA arma el menú con sus permisos (RF-50). */
+    @Transactional(readOnly = true)
+    public SesionIniciada.DatosUsuario datosUsuarioActual(String usuarioId) {
+        return usuarios.findConPermisosById(usuarioId)
+                .map(this::datosDe)
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.NO_AUTENTICADO));
+    }
+
+    private SesionIniciada.DatosUsuario datosDe(Usuario usuario) {
         List<String> permisos = usuario.getRolAcceso().getPermisos().stream()
                 .map(Permiso::getCodigo)
                 .sorted(Comparator.naturalOrder())
                 .toList();
         String cargo = administradores.findByUsuarioId(usuario.getId()).map(Administrador::getCargo).orElse(null);
-        return new SesionIniciada(token.valor(), token.expiraEn().atZone(reloj.getZone()).toOffsetDateTime(),
-                new SesionIniciada.DatosUsuario(usuario.getNombres(), usuario.getRolAcceso().getCodigo(), cargo,
-                        permisos));
+        return new SesionIniciada.DatosUsuario(usuario.getNombres(), usuario.getRolAcceso().getCodigo(), cargo,
+                permisos);
     }
 
     private ExcepcionNegocio cuentaBloqueada(Usuario usuario) {

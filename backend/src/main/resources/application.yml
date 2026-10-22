@@ -14,10 +14,8 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
-    properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
+    # Sin hibernate.jdbc.time_zone: con UTC desplazaba los campos TIME (LocalTime) por la zona de la JVM
+    # (07:45 se leía como 02:45). TIMESTAMPTZ es absoluto y no lo necesita.
   flyway:
     # Flyway migra con el rol dueño del esquema; la aplicación trabaja con gesedu_app (sin DDL).
     user: ${GESEDU_DB_MIGRATOR_USER}

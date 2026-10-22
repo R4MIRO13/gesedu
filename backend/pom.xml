@@ -58,6 +58,13 @@
             <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
 
+        <!-- Swagger UI y OpenAPI (springdoc 3.x es la línea de Spring Boot 4) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+
         <!-- Flyway: la autoconfiguración vive en un módulo propio (spring-boot-starter-flyway) y PostgreSQL exige su módulo -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -128,7 +135,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <executions>
+                <configuration>
+                    <!-- Zona distinta de UTC: así las pruebas detectan errores de zona horaria en LocalTime/Instant -->
+                    <argLine>-Duser.timezone=America/Lima</argLine>
+                </configuration>
+    <executions>
                     <execution>
                         <goals>
                             <goal>integration-test</goal>
