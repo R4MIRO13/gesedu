@@ -1,0 +1,14 @@
+# Perfil aws (Elastic Beanstalk + RDS para PostgreSQL 18). Nada se fija aquí: todo llega por variables de entorno,
+# Secrets Manager o Parameter Store. Todavía no se despliega; ver docs/despliegue/aws.md (pendiente).
+spring:
+  datasource:
+    # Ejemplo: jdbc:postgresql://<endpoint-rds>:5432/gesedu?sslmode=verify-full
+    url: ${GESEDU_DB_URL}
+    username: ${GESEDU_DB_APP_USER}
+    password: ${GESEDU_DB_APP_PASSWORD}
+  flyway:
+    user: ${GESEDU_DB_MIGRATOR_USER}
+    password: ${GESEDU_DB_MIGRATOR_PASSWORD}
+
+server:
+  port: ${SERVER_PORT:5000}

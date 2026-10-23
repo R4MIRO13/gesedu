@@ -1,605 +1,774 @@
-# GESEDU — Plan de implementación (v1, aprobado 21/10/2026)
+# GESEDU — Plan de implementación
 
-> Plan aprobado. Las convenciones de trabajo están en `CLAUDE.md`. Las preguntas abiertas (§11.3) siguen pendientes de respuesta.
-> Fuentes: `docs/arquitectura.pdf` (Arq v1.0), `docs/ers.pdf` (ERS v3), `docs/catalogo_requisitos.pdf` (Cat v3), `docs/modelo_conceptual.pdf` (MC v1, 6 diagramas), `docs/wireframes.pdf` (35 pantallas), `docs/vision.pdf` (v3), `docs/procesos.pdf`, `docs/matriz_trazabilidad.xlsx`.
-> Prioridad ante contradicciones: **Arq > ERS > Catálogo > Wireframes > resto**. Las contradicciones están en §11.1 (C-xx), los supuestos en §11.2 (S-xx) y las preguntas en §11.3 (Q-xx).
+> Versión del plan: 1.3 (22/10/2026). Convenciones operativas en `CLAUDE.md`.
+> Revisión 1.1: tras las correcciones del equipo quedaron resueltas C-01, C-08, C-15, C-17, C-19 y C-23.
+> Revisión 1.3: la demo es el **23/10/2026** y solo pide la arquitectura funcionando en localhost; se agrega la sección **7.0 «Demo 23/10»** con un alcance reducido. Las semanas S1–S8 empiezan después de la demo. Se corrigió la referencia de UC-18 (C-26).
+> Revisión 1.2: se releyeron la ERS y la matriz y quedan resueltas C-29, C-30 y C-31 (sin contradicciones abiertas entre la ERS, el catálogo, la arquitectura y la matriz; solo permanece el wireframe p. 15, que no se actualizará). Cambios: corte mínimo de demo en la fase 1, regla de migraciones editables hasta el primer despliegue compartido (S-26) y apoyo de I2 a Asistencia desde la fase 2.
+> Fuentes leídas por completo: `arquitectura.pdf` (v1.0), `ers.pdf` (v3.0), `catalogo_requisitos.pdf` (v4.0), `modelo_conceptual.pdf` (v1; 4 diagramas extraídos como imagen), `wireframes.pdf` (35 pantallas), `vision.pdf` (v3.0), `procesos.pdf` (v2), `matriz_trazabilidad.xlsx` (RF×UC y RF×RNF).
+> Toda cita RF/RNF usa la numeración del Catálogo v4. Las contradicciones se listan en § 13 (C-xx) y los supuestos en § 14 (S-xx); en el texto se referencian por su ID.
 
 ## Contexto
 
-El repositorio solo contiene `docs/` (un commit inicial). Hay que construir GESEDU desde cero con el stack fijado en la arquitectura (DA-01 a DA-11). La primera entrega es una demo en localhost que atraviesa todas las capas: login con los 4 roles y bloqueo (UC-24), elaboración de horario con detección de cruces (UC-21), registro de matrícula con descuento atómico de vacantes (UC-02) y auditoría consultable y exportable (UC-25). Luego se completan los 25 casos de uso por fases y por módulo, con 10 personas trabajando en paralelo.
+El equipo (10 estudiantes, PUCP 2026-2) debe construir GESEDU, el sistema web de gestión integral de un colegio de secundaria. La documentación de análisis y arquitectura ya está cerrada, pero todavía no hay código. Este plan convierte esos documentos en una ruta de implementación ejecutable. El primer hito es una demo en localhost durante la clase que muestre la arquitectura funcionando de punta a punta. Después vienen los 25 casos de uso, organizados por fases, para que 10 personas avancen en paralelo con pocas dependencias entre sí.
+
+Decisiones tomadas con el usuario durante la planificación:
+- **Monorepo** `gesedu` con `backend/` y `frontend/` y un CI con dos jobs. La § 10.10 de la arquitectura ya describe el monorepo (C-01, resuelta).
+- **El inicio de sesión es solo con correo** (RF-52). La etiqueta del wireframe «Usuario (DNI o correo)» pasa a «Correo» (C-02).
 
 ---
 
 ## 1. Resumen de entendimiento
 
-### 1.1 Módulos funcionales (Arq §1.2, ERS §1.2) → paquetes y esquemas
-| Módulo funcional | Paquete(s) Java | Esquema(s) PG | UC | RF |
-|---|---|---|---|---|
-| Gestión de Matrícula y Pagos | `matricula`, `pagos` | `matricula`, `pagos` | UC-01 a UC-06 | RF-02, RF-04 a RF-11 |
-| Control de Asistencia | `asistencia` | `asistencia` | UC-07 a UC-12 | RF-12 a RF-20 |
-| Gestión Académica y Motor de Evaluación | `academico`, `evaluacion` | `academico`, `evaluacion` | UC-13 a UC-19 | RF-03, RF-21 a RF-37 |
-| Gestión y Matriz Interactiva de Horarios | `horarios` | `horarios` | UC-20 a UC-23 | RF-38 a RF-46 |
-| Seguridad, Auditoría y Transparencia | `seguridad`, `auditoria` | `seguridad`, `auditoria` | UC-24, UC-25 | RF-01, RF-47 a RF-50 |
-| Transversal (no funcional) | `compartido`, `transversal` | (`public.shedlock`) | — | — |
+### 1.1 Qué es GESEDU
+Una SPA (React 19) y una API REST (Spring Boot 4.1 sobre Java 25), organizadas como monolito modular sobre PostgreSQL 18 con un esquema por módulo. Atiende a un solo colegio que inicia operaciones. Se desplegará después en AWS: CloudFront + S3 para la SPA, Elastic Beanstalk para la API, RDS para la base de datos, S3 para documentos y SES para correo (DA-01 a DA-11).
 
-### 1.2 Actores (ERS §2.1.1, Arq §6.1)
-- **Administrador**: usuarios y roles, evaluación y confirmación de matrículas, validación de pagos, elaboración y publicación de horarios, reportes y auditoría. Incluye al "Personal Administrativo" de los procesos.
-- **Directivo**: es un Administrador con `cargo` directivo (no es un perfil nuevo). Crea el año escolar (UC-13), configura cursos y competencias (UC-14) y consolida bimestres (UC-18).
-- **Docente**: marca su asistencia (UC-07), registra su disponibilidad (UC-20), logros (UC-15), la regla de consolidación (UC-16) y las notas finales (UC-17). Si es **tutor** de una sección (asignación, no subclase), también hace UC-08, UC-09 y UC-10.
-- **Alumno**: consulta cursos, notas, libreta, horario y su asistencia.
-- **Apoderado**: solicita matrícula (UC-01), consulta obligaciones (UC-03), presenta comprobantes (UC-04) y consulta notas, libretas y horario de sus hijos. Recibe correos.
-- **Tiempo**: dispara el cierre diario (UC-12) y los vencimientos y penalidades (RF-09, RF-10, DA-08).
-- Sistemas externos: servicio de correo (SES; Mailpit en local). La entidad financiera no tiene integración. No hay SIAGIE.
+### 1.2 Actores
+| Actor | En el sistema | Qué hace |
+|---|---|---|
+| Administrador | Rol ADMINISTRADOR | Usuarios, roles y permisos; matrícula; validación de pagos; horarios; reportes; auditoría |
+| Administrador (Directivo) | El **mismo rol** ADMINISTRADOR, con `cargo` de dirección o coordinación (ERS 2.1.1, arquitectura § 5) | Año escolar y bimestres (UC-13), cursos y competencias (UC-14), consolidación bimestral (UC-18) |
+| Docente (y Docente Tutor) | Rol DOCENTE; la tutoría es una asignación a una sección, no un rol | Marca su asistencia; si es tutor, registra la asistencia de su sección; registra logros; define la regla de consolidación; registra su disponibilidad |
+| Alumno | Rol ALUMNO | Consulta su horario, sus notas, su libreta y su asistencia |
+| Apoderado | Rol APODERADO | Solicita la matrícula, consulta obligaciones, presenta comprobantes, consulta notas, libreta y horario de sus hijos |
+| Tiempo | Tarea programada (ShedLock) | Cierre diario de asistencia (UC-12); vencimientos y penalidades (RF-09, RF-10) |
 
-### 1.3 Casos de uso (ERS v3 §3.1)
-UC-01 Solicitar matrícula · UC-02 Registrar matrícula · UC-03 Consultar matrícula y obligaciones · UC-04 Presentar comprobante · UC-05 Validar y registrar pago · UC-06 Historial de pagos · UC-07 Asistencia de docente · UC-08 Asistencia de alumnos · UC-09 Actualizar estado (FALTA→TARDANZA) · UC-10 Exportar reportes de asistencia · UC-11 Calcular resumen mensual (incluido en UC-10, sin persistir) · UC-12 Faltas de docentes (job) · UC-13 Año escolar · UC-14 Cursos y competencias · UC-15 Registrar logros · UC-16 Regla de consolidación · UC-17 Notas finales · UC-18 Consolidar bimestre · UC-19 Consultar notas y libreta · UC-20 Disponibilidad docente · UC-21 Elaborar horario · UC-22 Publicar horario · UC-23 Consultar horario · UC-24 Gestionar la cuenta (incluye el login y el bloqueo) · UC-25 Auditoría (registro, consulta y exportación).
-Casos de uso arquitectónicamente significativos (Arq tabla 4): UC-01, 02, 05, 07, 12, 16, 17, 18, 21, 24, 25.
+### 1.3 Módulos (paquete Java y esquema de BD) y casos de uso
+| Módulo (paquete / esquema) | Casos de uso | RF | RNF |
+|---|---|---|---|
+| `seguridad` | UC-24 + inicio de sesión y recuperación de contraseña (RF-52) | RF-01, RF-48, RF-50, RF-52 | RNF-01, RNF-06, RNF-07 |
+| `matricula` | UC-01, UC-02 | RF-02, RF-04, RF-05, RF-12 | RNF-09, RNF-12 |
+| `pagos` | UC-03, UC-04, UC-05, UC-06 | RF-06 a RF-11 | RNF-10, RNF-11 |
+| `asistencia` | UC-07 a UC-12 | RF-13 a RF-21 | RNF-03 |
+| `academico` | UC-13, UC-14 | RF-03, RF-23 a RF-25 | RNF-03 |
+| `evaluacion` | UC-15 a UC-19 | RF-22, RF-26 a RF-38 | RNF-03 |
+| `horarios` | UC-20 a UC-23 | RF-39 a RF-47 | RNF-03 |
+| `auditoria` | UC-25 | RF-49, RF-51 | RNF-08 |
+| `compartido` (sin esquema) | — | Núcleo compartido: errores, dinero, identificadores, reloj, anotación `@Auditable` | — |
+| `transversal` (esquema `transversal`, solo para ShedLock) | — | Configuración, archivos, notificaciones, reportes, planificador | RNF-05 |
 
-### 1.4 Decisiones de arquitectura (Arq §3.2), en mis palabras
-- **DA-01** SPA React 18 + TS + Vite, con React Router y TanStack Query (Arq §7.1). Solo valida formatos; las reglas de negocio están en el backend (Arq §4.1).
-- **DA-02** Monolito modular Java 21 / Spring Boot 3. Cada módulo tiene las capas api/aplicacion/dominio/infraestructura y solo se comunica con otro a través de su capa `aplicacion`. Las operaciones entre módulos (matrícula → obligaciones) se resuelven en una sola transacción ACID local.
-- **DA-03** PostgreSQL 16, un esquema por módulo, FK entre esquemas permitidas, NUMERIC exacto, índices únicos parciales y bloqueo de filas.
-- **DA-04** Access token JWT de 15 min + refresh token revocable en una cookie HttpOnly/Secure/SameSite=Strict, guardado como hash en BD. BCrypt con costo 12 (Arq §4.3).
-- **DA-05** RBAC: `RolAcceso` agrupa `Permiso` (código, módulo y acción). Se aplica con `@PreAuthorize` en el backend y una caché de permisos con invalidación (RNF-07 < 1 s).
-- **DA-06** Aspecto `@Auditable` en la **misma transacción** de negocio. `RegistroAuditoria` y `CambioAuditoria` son de solo inserción: el usuario de la app tiene solo INSERT/SELECT y un trigger rechaza UPDATE/DELETE.
-- **DA-07** Archivos en S3 privado con URL prefirmadas de 5 min, detrás del **Gestor de Archivos**. En local se usa una implementación en disco.
-- **DA-08** `@Scheduled` + ShedLock con jobs idempotentes: cierre diario de asistencia (UC-12) y vencimientos y penalidades (RF-09, RF-10).
-- **DA-09** Motor de evaluación con Strategy: `PromedioPonderado`, `Moda` y `UltimoRegistro`. El mapa de estrategias va indexado por `TipoRegla`, con AD=4, A=3, B=2 y C=1 (RF-37). El cálculo es idempotente (reemplaza, no duplica).
-- **DA-10** Configuración de asistencia tipada (`@ConfigurationProperties`) y validada al arrancar, sin pantalla de edición. Se cambia con un reinicio y no reclasifica lo ya guardado.
-- **DA-11** AWS: CloudFront + S3 (SPA), ALB + Elastic Beanstalk de 2 a 4 instancias, RDS Multi-AZ, SES, Secrets Manager y Parameter Store. En esta etapa solo preparamos el código (§10).
-- Tácticas clave: vacantes con `UPDATE … WHERE vacantes_disponibles > 0`, `CHECK ≥ 0` e índice único parcial (RNF-09). Pagos con `@Transactional` + `SELECT … FOR UPDATE` + `BigDecimal` escala 2 HALF_UP + `NUMERIC(12,2)` + número de operación único (RNF-10, RNF-11). Horarios con un endpoint de validación previa, revalidación en la transacción, 3 índices únicos anticruce, `@Version` en el borrador (409) y un índice parcial para el horario vigente (RF-40 a RF-43).
-- API: `/api/v1`, sustantivos en plural, RFC 7807 con `codigo` de negocio, paginación `page/size/sort`, fechas ISO 8601 con `-05:00`, montos como decimal de 2 cifras y OpenAPI con springdoc (Arq §7.3).
-- Asistencia (ERS §3.4): la hora y la fecha siempre vienen del servidor con `America/Lima`. **No se valida la IP ni la red** (ERS §2.3 y §3.5.1, Arq §4.8). Solo se guardan los registros diarios (`asistencia_alumno` y `asistencia_docente`, únicos por persona y fecha). Los reportes se calculan bajo demanda, sin acumulados.
+### 1.4 Decisiones de arquitectura en mis palabras
+- **DA-01** SPA en React 19 + TypeScript estricto + Vite; TanStack Router (rutas tipadas por archivo) y TanStack Query (caché de la API). La SPA no tiene reglas de negocio, solo valida formatos.
+- **DA-02** API REST en Java 25 y Spring Boot 4.1, como un único JAR. Los módulos se comunican solo a través de sus servicios de la capa `aplicacion`; las operaciones que cruzan módulos (matrícula → obligaciones) corren en una sola transacción ACID local.
+- **DA-03** PostgreSQL 18 con un esquema por módulo; usamos `CHECK`, índices únicos parciales, `NUMERIC(12,2)` y `SELECT … FOR UPDATE`.
+- **DA-04** JWT de acceso de 15 min más refresh token rotativo en cookie HttpOnly/Secure/SameSite=Strict, guardado como hash; BCrypt con costo 12.
+- **DA-05** RBAC con permisos `MODULO_ACCION`, verificados con `@PreAuthorize` y una caché Caffeine que se invalida al cambiar roles (RNF-07).
+- **DA-06** Aspecto `@Auditable` síncrono que escribe en la misma transacción; tablas de auditoría de solo inserción (trigger + GRANT).
+- **DA-07** Documentos en S3 privado con URL prefirmadas de 5 min; los archivos no pasan por la API.
+- **DA-08** Spring Scheduling + ShedLock 7, con jobs idempotentes.
+- **DA-09** Motor de evaluación con Strategy (`PromedioPonderado`, `Moda`, `UltimoRegistro`).
+- **DA-10** Parámetros de asistencia en un `@ConfigurationProperties` validado: si son inválidos, la aplicación no arranca.
+- **DA-11** AWS en alta disponibilidad (2 a 4 instancias en 2 zonas, RDS Multi-AZ). En esta etapa solo se deja todo preparado (§ 12).
 
 ---
 
 ## 2. Estructura del repositorio
 
-Monorepo (ver C-02):
 ```
 gesedu/
-├─ CLAUDE.md                      # convenciones (se crea al aprobar)
-├─ README.md                      # cómo levantar y probar
-├─ docker-compose.yml             # postgres:16, mailpit; perfil "full" con backend+frontend
-├─ .env.example                   # todas las variables (sin secretos reales)
-├─ .github/workflows/
-│  ├─ backend.yml                 # mvn verify (Testcontainers, ArchUnit), path filter backend/**
-│  └─ frontend.yml                # npm ci, lint, typecheck, vitest, build; path filter frontend/**
-├─ infra/local/postgres/init/01-roles.sql   # crea gesedu_owner y gesedu_app (solo local)
-├─ docs/  (PDFs existentes + PLAN.md + adr/ + api/openapi.json exportado en CI)
+├─ .editorconfig  .gitattributes  .gitignore  .env.example  README.md  CLAUDE.md
+├─ docker-compose.yml                 # postgres:18, mailpit; localstack opcional (perfil compose "aws-sim")
+├─ .run/                              # configuraciones compartidas de IntelliJ (§ 2.4)
+├─ .github/workflows/ci.yml           # jobs backend y frontend (§ 10)
+├─ infra/
+│  └─ postgres/init/01-roles-y-bd.sql # crea la BD gesedu y los roles gesedu_migrador y gesedu_app (solo local y Testcontainers)
+├─ scripts/
+│  ├─ reiniciar-bd.sh / reiniciar-bd.ps1     # docker compose down -v postgres && up
+│  └─ generar-tipos-api.sh / .ps1            # openapi-typescript contra http://localhost:8080/v3/api-docs
+├─ docs/
+│  ├─ arquitectura.pdf  ers.pdf  catalogo_requisitos.pdf  modelo_conceptual.pdf  wireframes.pdf
+│  ├─ vision.pdf  procesos.pdf  matriz_trazabilidad.xlsx
+│  ├─ PLAN.md
+│  ├─ api/errores.md                  # catálogo de códigos de negocio (§ 5.2)
+│  ├─ demo/guion.md                   # § 11
+│  └─ despliegue/{aws.md, s3-cors.json, variables-entorno.md}
 ├─ backend/
-│  ├─ pom.xml  (Maven wrapper mvnw)
-│  ├─ Dockerfile
+│  ├─ mvnw  mvnw.cmd  .mvn/wrapper/  pom.xml
 │  └─ src/
 │     ├─ main/java/pe/edu/gesedu/
 │     │  ├─ GeseduApplication.java
-│     │  ├─ compartido/                 # sin dependencias hacia módulos
-│     │  │  ├─ dominio/        Ids (generador UUIDv7), RangoFechas
-│     │  │  ├─ excepciones/    NegocioException(codigo), ConflictoException, NoEncontradoException, AccesoDenegadoException
-│     │  │  ├─ auditoria/      @Auditable, AuditoriaContexto (colector de CambioAuditoria)
-│     │  │  ├─ seguridad/      UsuarioAutenticado (record del principal), Permisos (constantes de códigos)
-│     │  │  ├─ paginacion/     PaginaRespuesta<T>
-│     │  │  └─ tiempo/         RelojInstitucional (Clock con zona configurada)
+│     │  ├─ compartido/               # núcleo compartido, sin dependencias hacia los módulos
+│     │  │  ├─ dominio/ (EntidadBase con id UUIDv7, Dinero, NivelLogro, RangoFechas)
+│     │  │  ├─ error/ (ExcepcionNegocio, CodigoError, ManejadorProblemas)
+│     │  │  ├─ auditoria/ (@Auditable, ContextoAuditoria)   # anotación compartida; el aspecto vive en el módulo auditoria
+│     │  │  ├─ seguridad/ (UsuarioActual: interfaz)
+│     │  │  └─ web/ (PaginaDto, ETags, ParametrosPaginacion)
 │     │  ├─ transversal/
-│     │  │  ├─ web/            ManejadorErrores (ProblemDetail RFC 7807), OpenApiConfig, JacksonConfig
-│     │  │  ├─ archivos/       GestorArchivos (interfaz), DiscoGestorArchivos (@Profile local), S3GestorArchivos (@Profile aws)
-│     │  │  ├─ notificaciones/ Notificador (interfaz), SmtpNotificador (Mailpit), SesNotificador; @Async
-│     │  │  ├─ reportes/       ExcelExporter (Apache POI), PdfGenerator (OpenPDF)
-│     │  │  ├─ programacion/   SchedulingConfig + ShedLock (JdbcTemplateLockProvider)
-│     │  │  └─ cache/          CacheConfig (Caffeine)
-│     │  ├─ seguridad/   { api, aplicacion, dominio, infraestructura }
-│     │  ├─ auditoria/   { api, aplicacion, dominio, infraestructura }   # el aspecto AuditableAspect vive en infraestructura
-│     │  ├─ academico/   { … }
-│     │  ├─ horarios/    { … }
-│     │  ├─ matricula/   { … }
-│     │  ├─ pagos/       { … }
-│     │  ├─ asistencia/  { … }
-│     │  └─ evaluacion/  { … }
+│     │  │  ├─ config/ (OpenApiConfig, RelojConfig, JacksonConfig, CacheConfig)
+│     │  │  ├─ planificador/ (SchedulingConfig + ShedLock)
+│     │  │  ├─ archivos/ (GestorArchivos + GestorArchivosS3 + GestorArchivosDisco)
+│     │  │  ├─ notificaciones/ (Notificador + NotificadorSmtp + NotificadorSes + plantillas)
+│     │  │  └─ reportes/ (GeneradorExcel con Apache POI, GeneradorPdf con OpenPDF)
+│     │  ├─ seguridad/ {api, aplicacion, dominio, infraestructura}
+│     │  ├─ matricula/ {api, aplicacion, dominio, infraestructura}
+│     │  ├─ pagos/      …   ├─ asistencia/ …   ├─ academico/ …
+│     │  ├─ evaluacion/ …   ├─ horarios/   …   └─ auditoria/ …
 │     ├─ main/resources/
-│     │  ├─ application.yml           # común, todo con ${VAR:default-seguro-no-secreto}
-│     │  ├─ application-local.yml     # disco, SMTP Mailpit, swagger-ui on, logs legibles
-│     │  ├─ application-aws.yml       # s3, ses, forward-headers, cookie secure, swagger-ui off
-│     │  ├─ application-demo.yml      # activa DemoDataSeeder
-│     │  └─ db/migration/V*.sql       # Flyway (§3.3)
-│     └─ test/java/pe/edu/gesedu/
-│        ├─ arquitectura/ReglasModulosTest.java  (ArchUnit)
-│        ├─ <modulo>/dominio/…Test (unitarias)
-│        ├─ <modulo>/…IT (Testcontainers)
-│        └─ soporte/ (PostgresContainer compartido, fixtures, JwtDePrueba)
+│     │  ├─ application.yml  application-local.yml  application-demo.yml  application-aws.yml
+│     │  ├─ db/migration/V1__…sql … (§ 4.4)
+│     │  ├─ db/demo/V1000__datos_demo.sql        # solo con el perfil demo (spring.flyway.locations)
+│     │  └─ plantillas/correo/*.html
+│     └─ test/java/pe/edu/gesedu/ {arquitectura/, <modulo>/…, soporte/ContenedorPostgres.java}
 └─ frontend/
-   ├─ package.json, vite.config.ts (proxy /api → backend, misma-origen como CloudFront), tsconfig.json, .eslintrc
-   ├─ index.html
+   ├─ package.json  package-lock.json  vite.config.ts  tsconfig*.json  eslint.config.js  .prettierrc  index.html
    └─ src/
-      ├─ main.tsx
-      ├─ app/          App.tsx, router.tsx (rutas §5), providers.tsx, queryClient.ts
-      ├─ api/          http.ts (fetch + Bearer + refresh único en 401 + parseo problem+json),
-      │                schema.d.ts (generado con openapi-typescript desde /v3/api-docs), <modulo>.ts (hooks TanStack)
-      ├─ auth/         AuthProvider, useAuth, RequierePermiso, RutaProtegida
-      ├─ layout/       IntranetLayout, MenuLateral (según permisos), NavInferiorMovil, Encabezado, Migas
-      ├─ components/   Boton, Campo, Tabla, Paginacion, EstadoBadge, Alerta, Modal, Stepper, CargaArchivo,
-      │                MatrizHorario, SelectorPerspectiva, VacioEstado, Dinero, Fecha
-      ├─ modules/
-      │  ├─ seguridad/   pages/LoginPage, UsuariosPage, components/FormUsuario
-      │  ├─ inicio/      pages/InicioPage (tarjetas por rol)
-      │  ├─ matricula/   pages/SolicitudNuevaPage, BandejaSolicitudesPage, EvaluarSolicitudPage
-      │  ├─ pagos/       pages/MatriculaPagosPage, PresentarComprobantePage, ValidarComprobantesPage, HistorialFinancieroPage
-      │  ├─ asistencia/  pages/MiAsistenciaPage, RegistrarAsistenciaPage, RegistroDelDiaPage, ReportesAsistenciaPage, ResumenMensualPage, AsistenciaDocentesPage
-      │  ├─ academico/   pages/NuevoAnioEscolarPage, CursosCompetenciasPage, ConsolidarNotasPage, config/*
-      │  ├─ evaluacion/  pages/RegistroNotasPage, ConfiguracionCursoPage, NotasFinalesPage, MisNotasPage
-      │  ├─ horarios/    pages/DisponibilidadPage, ElaborarHorarioPage, PublicarHorarioPage, MiHorarioPage, config/*
-      │  └─ auditoria/   pages/AuditoriaPage
-      ├─ styles/       tokens.css (colores, espaciado, breakpoints 600/1024 px), global.css
-      └─ utils/        fechas (America/Lima), formato S/ desde string decimal
+      ├─ main.tsx  routeTree.gen.ts (generado por el plugin)
+      ├─ routes/                      # rutas por archivo (§ 6)
+      │  ├─ __root.tsx  login.tsx  recuperar-contrasena.tsx  restablecer-contrasena.tsx
+      │  └─ intranet/ route.tsx (layout + guardia de sesión), inicio.tsx, matricula/…, pagos/…, asistencia/…,
+      │     academico/…, notas/…, cursos/…, disponibilidad/…, horarios/…, horario.tsx, usuarios/…, auditoria.tsx
+      ├─ modulos/<modulo>/ {api.ts (hooks de TanStack Query), esquemas.ts (zod), componentes/}
+      ├─ compartido/
+      │  ├─ api/ cliente.ts (fetch + Bearer + refresh + problem+json), tipos.gen.ts (openapi-typescript), errores.ts
+      │  ├─ auth/ (SesionProvider, usePermiso, guardias)
+      │  ├─ componentes/ (Layout, MenuLateral, BarraInferiorMovil, MatrizHorario, TablaPaginada, Campo,
+      │  │                 SelectorArchivo, Alerta, Insignia, EscalaLogro, Monto, Dialogo)
+      │  └─ estilos/ (tokens.css, responsive.css)  # CSS Grid/Flexbox con puntos de quiebre (RNF-02)
+      └─ test/ (setup.ts, msw/handlers.ts)
 ```
-**Reglas de dependencia** (ArchUnit, Arq §9.1):
-1. `X.api` → `X.aplicacion`. `X.aplicacion` → `X.dominio` (+ `Y.aplicacion` de otros módulos). `X.infraestructura` implementa los puertos de `X.dominio` y `X.aplicacion`.
-2. Un módulo **solo** importa `pe.edu.gesedu.Y.aplicacion..` de otro módulo, nunca su `dominio`, `infraestructura` ni `api`. Los DTO que cruzan módulos viven en `Y.aplicacion` (records).
-3. Todos pueden usar `compartido` y `transversal`. `compartido` no depende de nadie.
-4. Sin ciclos entre módulos (`slices().should().beFreeOfCycles()`).
 
-Grafo previsto (acíclico): `seguridad` ← `academico` ← `horarios` ← `asistencia`; `academico`, `seguridad` ← `matricula` → `pagos` (`pagos` no depende de `matricula`: recibe los datos por parámetro); `evaluacion` → `academico`, `horarios`, `matricula`, `seguridad`; `auditoria` no depende de ningún módulo (lee el principal desde `compartido`).
+### 2.1 Capas y reglas de dependencia (verificadas con ArchUnit)
+- Cada módulo tiene cuatro capas: `api` (controladores y DTO HTTP), `aplicacion` (servicios `@Transactional`, DTO públicos tipo `record` y puertos SPI), `dominio` (entidades JPA, enums y reglas puras) e `infraestructura` (repositorios Spring Data y adaptadores).
+- Dentro de un módulo: `api → aplicacion → {dominio, infraestructura}` e `infraestructura → dominio`. `dominio` no depende de `api`, `aplicacion` ni `infraestructura`. `api` no usa `infraestructura`.
+- **Entre módulos solo se usa la capa `aplicacion` del otro módulo.** Las entidades nunca cruzan módulos: se intercambian `record`. En JPA las relaciones entre esquemas son ids (`String`), no asociaciones; en la BD sí hay FK entre esquemas, para conservar la integridad referencial.
+- Grafo acíclico de módulos (ArchUnit `slices().should().beFreeOfCycles()`):
+  `seguridad` ← `academico` ← `pagos` ← `matricula`; `evaluacion` → {`academico`, `matricula`, `seguridad`}; `horarios` → {`academico`, `seguridad`, `evaluacion`}; `asistencia` → {`horarios`, `academico`, `matricula`, `seguridad`}; `auditoria` → `seguridad`. Todos pueden usar `compartido` y `transversal`.
+- Dependencias inversas mediante puertos SPI. `seguridad.aplicacion.VerificadorVinculoAcademico` (UC-24, paso 4) lo implementa `matricula.infraestructura`. La anotación `@Auditable` está en `compartido`, para que los módulos no dependan de `auditoria`.
+
+### 2.2 Configuración por perfil
+| Archivo | Contenido |
+|---|---|
+| `application.yml` | Valores comunes. **Ningún secreto.** `spring.threads.virtual.enabled=true`, `server.forward-headers-strategy=framework`, `spring.jpa.open-in-view=false`, `spring.jpa.hibernate.ddl-auto=validate`, Flyway con `spring.flyway.user=${GESEDU_DB_MIGRATOR_USER}`, datasource con `${GESEDU_DB_APP_USER}`, `gesedu.asistencia.*` y `gesedu.seguridad.*` desde variables de entorno |
+| `application-local.yml` | Mailpit (`spring.mail.host=localhost`, puerto 1025), `gesedu.archivos.tipo=disco`, `gesedu.notificaciones.tipo=smtp`, cookie `Secure` activa (Chrome y Firefox la aceptan en `http://localhost`), log SQL opcional |
+| `application-demo.yml` | Se activa junto con `local` (`local,demo`). Agrega `classpath:db/demo` a `spring.flyway.locations` y `gesedu.reloj.fijo` opcional para simular la hora en la demo |
+| `application-aws.yml` | `gesedu.archivos.tipo=s3`, `gesedu.notificaciones.tipo=ses`, región y bucket por variables, SSL JDBC, logs JSON, `management.endpoints` restringidos |
+| `.env.example` | `GESEDU_DB_URL`, `GESEDU_DB_APP_USER/PASSWORD`, `GESEDU_DB_MIGRATOR_USER/PASSWORD`, `GESEDU_JWT_SECRET` (≥ 256 bits), `GESEDU_ASISTENCIA_TEACHER_LATE_THRESHOLD_MINUTES=5`, `GESEDU_ASISTENCIA_STUDENT_LATE_CUTOFF_TIME=08:30`, `GESEDU_ASISTENCIA_SCHOOL_DAY_CLOSING_TIME=15:30`, `GESEDU_TIME_ZONE=America/Lima`, `GESEDU_WEB_ORIGIN=http://localhost:5173`, `GESEDU_S3_BUCKET`, `AWS_REGION`, `GESEDU_MAIL_FROM` |
+
+**Configuración de asistencia (DA-10).** La clase `AsistenciaProperties` es un `record` con `@ConfigurationProperties("gesedu.asistencia")` y `@Validated`, con los campos `teacherLateThresholdMinutes` (`@NotNull @PositiveOrZero`), `studentLateCutoffTime` (`LocalTime`, `@NotNull`), `schoolDayClosingTime` (`@NotNull`) y `timeZone` (`@NotNull`, `ZoneId` válido). Una restricción de clase exige `studentLateCutoffTime < schoolDayClosingTime`. Si la configuración es inválida, el contexto no levanta y `FailureAnalyzer` muestra un diagnóstico legible. La validación se prueba con `ApplicationContextRunner`.
+
+### 2.3 Docker Compose (local)
+- `postgres`: imagen `postgres:18`, volumen `gesedu-pg:/var/lib/postgresql` (**ruta nueva desde la v18**), `./infra/postgres/init:/docker-entrypoint-initdb.d:ro`, healthcheck con `pg_isready`, puerto 5432.
+- `mailpit`: `axllent/mailpit` (versión fijada); SMTP en 1025 e interfaz web en http://localhost:8025.
+- `localstack` (opcional, perfil de compose `aws-sim`): **desde la release 2026.03 la imagen exige un auth token**, aunque existe un plan Hobby gratuito para uso no comercial. Por eso no es obligatoria: sirve para probar `GestorArchivosS3` y `NotificadorSes` (§ 13, C-15, ya reflejado en la Tabla 9 de la arquitectura).
+
+### 2.4 Configuración del entorno de desarrollo (fase 0)
+- `.gitattributes`: `* text=auto`; `mvnw text eol=lf`; `*.sh text eol=lf`; `Dockerfile text eol=lf`; `*.cmd text eol=crlf`; `*.ps1 text eol=crlf`; binarios (`*.pdf`, `*.xlsx`, `*.png`, `*.jar`) marcados como `binary`.
+- `.gitignore`: `.idea/` (las configuraciones compartidas viven en `.run/`, fuera de `.idea`), `*.iml`, `target/`, `node_modules/`, `dist/`, `.env`, `*.local`, `coverage/`, `.vscode/*` con `!.vscode/extensions.json`.
+- `.editorconfig`: UTF-8, LF, indentación de 4 espacios en Java y XML y de 2 en TS, TSX, JSON, YAML y CSS, `insert_final_newline`.
+- `.run/`: `Backend (local).run.xml` y `Backend (demo).run.xml` (Spring Boot, perfiles `local` y `local,demo`, cargan `.env`), `Frontend dev.run.xml` (npm `dev`), `Docker Compose.run.xml` (compose up de postgres y mailpit), `Pruebas backend.run.xml` (Maven `verify`), `Pruebas frontend.run.xml` (npm `test`) y `Todas las pruebas.run.xml` (compound de las dos anteriores).
+- Quien use VS Code tiene `.vscode/extensions.json` (Java, ESLint, Prettier) y usa los comandos de § 11.
 
 ---
 
-## 3. Modelo de datos
+## 3. Dependencias y versiones
 
-Convenciones: PK `id VARCHAR(36)` con UUIDv7 generado en Java (`uuid-creator`). Columnas técnicas `created_at` y `updated_at TIMESTAMPTZ`. Montos `NUMERIC(12,2)` con `CHECK (>= 0)`. Enums como `VARCHAR` + `CHECK IN (…)`. FK entre esquemas permitidas (Arq §3.1). Los nombres de tablas y valores siguen el MC (en español, ver C-03).
+**Regla:** se usan las versiones de la arquitectura v1.0, Tabla 3. Cuando dice «administrada por Spring Boot», **no se fija versión en el `pom.xml`**. Las versiones exactas de los parches se fijan el primer día de la fase 0 contra Maven Central y npm, y se registran en `CLAUDE.md`.
 
-### 3.1 Tablas por esquema (origen MC, salvo las marcadas como S-xx)
-**seguridad** (MC p.1 y p.6)
-- `usuario` (id, nombres, apellidos, correo UNIQUE, numero_documento UNIQUE NULL [S-01], hash_contrasena, activo, intentos_fallidos INT DEFAULT 0 CHECK ≥0, bloqueado_hasta, ultimo_acceso, rol_acceso_id FK NOT NULL). Índices: `lower(correo)` UNIQUE.
-- `administrador` (id, usuario_id UNIQUE FK, cargo) · `docente` (id, usuario_id UNIQUE FK, codigo_docente UNIQUE, especialidad)
-- `alumno` (id, usuario_id UNIQUE NULL, codigo_alumno UNIQUE, documento_identidad UNIQUE, nombres, apellidos, fecha_nacimiento [S-02], apoderado_id FK NOT NULL) — Apoderado 1 → 1..* Alumno.
-- `apoderado` (id, usuario_id UNIQUE NULL, documento_identidad UNIQUE, nombres, apellidos, correo, numero_telefono, parentesco [S-02])
-- `rol_acceso` (id, nombre UNIQUE, descripcion, perfil CHECK IN (ADMINISTRADOR, DOCENTE, ALUMNO, APODERADO) [S-03]) · `permiso` (id, codigo UNIQUE, modulo, accion, descripcion) · `rol_permiso` (rol_acceso_id, permiso_id, PK compuesta)
-- `refresh_token` (id, usuario_id FK, token_hash UNIQUE, emitido_en, expira_en, revocado_en NULL, user_agent). Índice (usuario_id) WHERE revocado_en IS NULL.
+### 3.1 Backend
+| Dependencia (coordenadas) | Versión | Compatibilidad / notas |
+|---|---|---|
+| JDK Amazon Corretto (o Temurin en desarrollo) | 25 LTS | Mismo JDK en desarrollo, CI y Elastic Beanstalk |
+| `spring-boot-starter-parent` | **4.1.x** (último parche; 4.1.1 publicado el 20/08/2026) | Spring Framework 7, Spring Security 7, Hibernate 7, Jackson 3 |
+| `spring-boot-starter-webmvc` ⚠ | administrada | **Spring Boot 4 renombra** `spring-boot-starter-web` |
+| `spring-boot-starter-security` | administrada | Spring Security 7 |
+| `spring-boot-starter-security-oauth2-resource-server` ⚠ | administrada | JWT HS256 con Nimbus (`NimbusJwtEncoder`/`Decoder`), sin librerías JWT externas. **Spring Boot 4 agrega `security-` al nombre del starter** (verificado en Maven Central) |
+| `spring-boot-starter-data-jpa` | administrada | Hibernate 7 / Jakarta Persistence 3.2 |
+| `spring-boot-starter-validation` | administrada | Bean Validation |
+| `spring-boot-starter-aspectj` ⚠ | administrada | **Spring Boot 4 renombra** `spring-boot-starter-aop` |
+| `spring-boot-starter-flyway` ⚠ + `org.flywaydb:flyway-database-postgresql` | administradas | **La autoconfiguración de Flyway pasa a un módulo propio** (`spring-boot-flyway`); sin el starter, Flyway no se ejecuta. El módulo de PostgreSQL es obligatorio |
+| `spring-boot-starter-mail` | administrada | SMTP hacia Mailpit (local) |
+| `spring-boot-starter-cache` + `com.github.ben-manes.caffeine:caffeine` | administradas | Caché de permisos (RNF-07) y de catálogos y horario vigente (RNF-03) |
+| `spring-boot-starter-actuator` | administrada | `/actuator/health` para el ALB |
+| Jackson 3 `tools.jackson.core:jackson-databind` ⚠ | administrada | **El paquete cambia de `com.fasterxml.jackson` a `tools.jackson`**; las anotaciones siguen en `com.fasterxml.jackson.annotation`. `JsonMapper` reemplaza a `ObjectMapper` en la configuración |
+| `org.postgresql:postgresql` | administrada | PostgreSQL 18 |
+| `org.springdoc:springdoc-openapi-starter-webmvc-ui` | **3.1.x** (3.1.1, construida sobre Spring Boot 4.1; la 3.0.x apunta a Spring Boot 4.0) | La línea 3.x es la de Spring Boot 4; **la 2.x no sirve** |
+| `net.javacrumbs.shedlock:shedlock-spring` + `shedlock-provider-jdbc-template` | **7.x** | Línea para Spring Framework 7. ⚠ Verificar en las notas de versión que declare compatibilidad con Spring 7; si no la declara, avisar antes de seguir |
+| `software.amazon.awssdk:bom` → `s3`, `ses` (o `sesv2`) | 2.x (BOM, último) | S3Presigner y SES. Solo se cargan con el perfil `aws` o con LocalStack |
+| `com.github.librepdf:openpdf` | 2.x/3.x estable | Libretas y reportes PDF (arquitectura § 8.1). ⚠ La 3.x cambia el paquete a `org.openpdf`; usar la que esté vigente y documentarla |
+| `org.apache.poi:poi-ooxml` | 5.x | Excel de asistencia y auditoría |
+| Generación de UUIDv7 | Hibernate 7 `@UuidGenerator(style = VERSION_7)` sobre `String` | Sin dependencia extra (S-21) |
+| **Pruebas** `spring-boot-starter-test` + starters de prueba por módulo (`spring-boot-starter-webmvc-test`, `-data-jpa-test`, `-security-test`) ⚠ | administradas | **En Spring Boot 4 los starters de prueba también son modulares.** JUnit 5 (Jupiter), AssertJ. `RestTestClient` de Spring Framework 7 para los endpoints |
+| `spring-boot-testcontainers` + `org.testcontainers:testcontainers-postgresql` + `testcontainers-junit-jupiter` ⚠ | administradas (línea 2.x) | **Testcontainers 2 cambia las coordenadas** (`testcontainers-<modulo>`). Docker Engine 29 exige API ≥ 1.44: la 1.x falla con «client version too old»; usar la 2.x más reciente y, si persiste el error, subir el parche |
+| `com.tngtech.archunit:archunit-junit5` | 1.4.x | Compatible con Java 25 (verificar el soporte de bytecode 69) |
 
-**auditoria** (MC p.6, Arq §4.4)
-- `registro_auditoria` (id, fecha_hora TIMESTAMPTZ DEFAULT now(), usuario_id NULL (NULL = "Sistema"), usuario_nombre, rol, accion, modulo, tipo_entidad, id_entidad_afectada, descripcion). Índices: (fecha_hora DESC), (usuario_id, fecha_hora DESC), (modulo, fecha_hora DESC), (accion, fecha_hora DESC).
-- `cambio_auditoria` (id, registro_auditoria_id FK, campo, valor_anterior, valor_nuevo)
-- **Inmutabilidad**: la función `auditoria.rechazar_modificacion()` hace `RAISE EXCEPTION` en triggers `BEFORE UPDATE OR DELETE … FOR EACH ROW` y `BEFORE TRUNCATE … FOR EACH STATEMENT` sobre ambas tablas. Además `REVOKE ALL … FROM gesedu_app; GRANT SELECT, INSERT … TO gesedu_app` (DA-06, RNF-08).
+### 3.2 Frontend (Node 22 LTS)
+| Paquete | Versión | Notas |
+|---|---|---|
+| `react`, `react-dom` | 19.x | — |
+| `typescript` | 5.9.x (`strict: true`, `noUncheckedIndexedAccess`) | — |
+| `vite` + `@vitejs/plugin-react` | Vite 7.x | Requiere Node ≥ 22.12; proxy `/api` → `http://localhost:8080` (mismo origen, igual que con CloudFront) |
+| `@tanstack/react-router` + `@tanstack/router-plugin` | 1.x | Rutas por archivo con el plugin de Vite |
+| `@tanstack/react-query` (+ devtools) | 5.x | Compatible con React 19 |
+| `react-hook-form` + `@hookform/resolvers` + `zod` | 7.x / 5.x / 4.x | — |
+| `openapi-typescript` (dev) | 7.x | Tipos generados desde `/v3/api-docs` |
+| `vitest`, `@vitest/coverage-v8`, `jsdom` | 3.x o 4.x | — |
+| `@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom` | 16.x / 14.x / 6.x | Compatibles con React 19 |
+| `msw` (dev) | 2.x | Simula la API en las pruebas |
+| `eslint` 9 (flat config), `typescript-eslint`, `eslint-plugin-react-hooks`, `@tanstack/eslint-plugin-query`, `@tanstack/eslint-plugin-router`, `prettier` | vigentes | `npm run lint` |
 
-**academico** (MC p.4)
-- `anio_escolar` (id, anio INT UNIQUE, fecha_inicio, fecha_fin, estado CHECK IN (PLANIFICADO, ACTIVO, CERRADO), creado_por). CHECK `fecha_fin > fecha_inicio`. La duración de 10 a 12 meses se valida en el dominio (UC-13). Índice único parcial `(estado) WHERE estado='ACTIVO'` (un solo año activo) [S-04].
-- `bimestre` (id, anio_escolar_id FK, numero CHECK 1..4, fecha_inicio, fecha_fin). UNIQUE (anio_escolar_id, numero). Sin traslape: `EXCLUDE USING gist (anio_escolar_id WITH =, daterange(fecha_inicio, fecha_fin, '[]') WITH &&)` con `btree_gist` (RF-24).
-- `grado` (id, anio_escolar_id FK, numero_nivel CHECK 1..5). UNIQUE (anio_escolar_id, numero_nivel).
-- `seccion` (id, grado_id FK, letra_identificadora, capacidad INT [S-05], vacantes_disponibles INT, tutor_docente_id FK NULL → seguridad.docente). UNIQUE (grado_id, letra). **CHECK (vacantes_disponibles >= 0 AND vacantes_disponibles <= capacidad)** (RNF-09). Índice único parcial (tutor_docente_id) WHERE tutor_docente_id IS NOT NULL (un docente tutor de 0..1 secciones). Como `grado` cuelga del año, cada año tiene sus secciones.
-- `curso` (id, anio_escolar_id FK, nombre, horas_lectivas INT CHECK > 0, habilitado BOOL). UNIQUE (anio_escolar_id, lower(nombre)). Aplica a todos los grados (RF-22) [S-06].
-- `competencia` (id, curso_id FK, nombre, nivel_esperado_descripcion [S-07], orden). UNIQUE (curso_id, lower(nombre)).
-- (`aula` pertenece al paquete horarios según la Arq tabla 7, así que va en el esquema **horarios**.)
+Sin librería de componentes: CSS propio con tokens, Grid y Flexbox (arquitectura § 4.2), para reproducir fielmente los wireframes (S-22).
 
-**horarios** (MC p.5)
-- `aula` (id, nombre UNIQUE, habilitado)
-- `bloque_horario` (id, anio_escolar_id FK, dia_semana CHECK IN (LUNES…DOMINGO), hora_inicio, hora_fin). CHECK fin > inicio. Sin traslape en el mismo día: `EXCLUDE USING gist (anio_escolar_id WITH =, dia_semana WITH =, tsrange-equivalente con int4range(minutos) WITH &&)`. El recreo no es un bloque (C-17).
-- `periodo_registro_disponibilidad` (id, anio_escolar_id UNIQUE FK, fecha_hora_inicio, fecha_hora_fin, estado CHECK IN (HABILITADO, CERRADO))
-- `vinculacion_docente` (id, docente_id FK, anio_escolar_id FK, habilitado, carga_semanal_referencia INT). UNIQUE (docente_id, anio_escolar_id).
-- `asociacion_docente_curso` (id, vinculacion_docente_id FK, curso_id FK, + docente_id denormalizado). UNIQUE (vinculacion_docente_id, curso_id). UNIQUE (id, docente_id, curso_id) para una FK compuesta.
-- `disponibilidad_docente` (id, vinculacion_docente_id UNIQUE FK, fecha_hora_confirmacion, observaciones) — solo la última versión confirmada (RF-45).
-- `bloque_disponible` (id, disponibilidad_docente_id FK, bloque_horario_id FK). UNIQUE (disponibilidad_docente_id, bloque_horario_id).
-- `carga_horaria_curso` (id, grado_id FK, curso_id FK, bloques_semanales INT CHECK ≥ 0). UNIQUE (grado_id, curso_id) [C-13].
-- `horario_borrador` (id, anio_escolar_id UNIQUE FK, fecha_hora_creacion, fecha_hora_actualizacion, **version BIGINT** para `@Version`)
-- `asignacion_horario` (id, horario_borrador_id FK, bloque_horario_id FK, seccion_id FK, asociacion_docente_curso_id, docente_id, curso_id, aula_id FK). FK compuesta (asociacion_docente_curso_id, docente_id, curso_id) → asociacion. **UNIQUE (horario_borrador_id, bloque_horario_id, docente_id)**, **UNIQUE (…, aula_id)**, **UNIQUE (…, seccion_id)** (Arq §9.3).
-- `horario_publicado` (id, anio_escolar_id FK, numero_version INT, fecha_hora_publicacion, vigente BOOL, publicado_por FK → administrador). UNIQUE (anio_escolar_id, numero_version). **Índice único parcial (anio_escolar_id) WHERE vigente** (Arq §9.3).
-- `asignacion_publicada` (id, horario_publicado_id FK, bloque_horario_id, seccion_id, docente_id, curso_id, aula_id) con los mismos 3 UNIQUE por versión. Las filas son inmutables (solo inserción).
+**Dependencias sin compatibilidad confirmada:** ninguna bloqueante. Hay que verificar al iniciar ShedLock 7.x con Spring Framework 7, ArchUnit con Java 25 y el nombre exacto del starter de resource server en Spring Boot 4.1. Alternativas si algo falla: para ShedLock, un `@Scheduled` con lock propio en PostgreSQL (`pg_try_advisory_xact_lock`) que conserve la idempotencia; para ArchUnit, Spring Modulith, que la arquitectura § 9.1 también admite.
 
-**matricula** (MC p.2)
-- `solicitud_matricula` (id, codigo_seguimiento UNIQUE (formato `MAT-AAAA-NNNNN`, secuencia por año) [S-08], anio_escolar_id, alumno_id FK, apoderado_id FK, grado_id FK, fecha_solicitud, tipo_estudiante CHECK (NUEVO_INGRESO, RECURRENTE), estado_documentacion CHECK (COMPLETA, INCOMPLETA), estado_admision CHECK (ADMITIDO, NO_ADMITIDO, NO_APLICA) NULL, estado CHECK (PENDIENTE_REVISION, APROBADA, RECHAZADA), motivo_rechazo CHECK (NO_ADMITIDO, DUPLICIDAD, DEUDAS, SIN_VACANTE, VOLUNTAD_APODERADO) NULL [S-09], observacion, evaluada_por NULL). Índice único parcial **(alumno_id, anio_escolar_id) WHERE estado='PENDIENTE_REVISION'** (UC-01 FA-2).
-- `documento_solicitud` (id, solicitud_id FK, tipo CHECK (CERTIFICADO_ESTUDIOS, FICHA_MATRICULA_ANTERIOR, DNI, OTRO), clave_archivo, nombre_original, content_type, tamanio_bytes) — metadatos del Gestor de Archivos.
-- `matricula` (id, solicitud_id UNIQUE FK, alumno_id, anio_escolar_id, seccion_id FK, fecha_matricula, estado CHECK (CONFIRMADA, ANULADA), confirmada_por). **Índice único parcial (alumno_id, anio_escolar_id) WHERE estado='CONFIRMADA'** (RNF-09, RF-05).
+---
 
-**pagos** (MC p.2 + S-10)
-- `politica_cobranza` (id, anio_escolar_id UNIQUE, porcentaje_penalidad NUMERIC(5,2) CHECK 0..100) [S-10] · `cronograma_cobro` (id, politica_cobranza_id FK, concepto CHECK (MATRICULA, PENSION), periodo (ej. "2027-03"), fecha_vencimiento, monto NUMERIC(12,2)). UNIQUE (politica_cobranza_id, concepto, periodo) (RF-06).
-- `obligacion_pago` (id, matricula_id FK, alumno_id, apoderado_id (denormalizados para consultas por alcance), concepto, periodo, monto_base, fecha_vencimiento, monto_penalidad DEFAULT 0, estado CHECK (PENDIENTE, PAGADA, VENCIDA), penalidad_aplicada_en DATE NULL). UNIQUE (matricula_id, concepto, periodo). Índices: (apoderado_id, estado, fecha_vencimiento), (estado, fecha_vencimiento) para el job.
-- `comprobante_pago` (id, obligacion_pago_id FK, apoderado_id FK, numero_operacion, medio_pago [S-11], fecha_pago, monto_presentado, referencia_comprobante (clave del archivo), estado_revision CHECK (PENDIENTE, APROBADO, OBSERVADO, RECHAZADO), observacion, revisado_por, fecha_revision). **Índice único parcial (numero_operacion) WHERE estado_revision IN ('PENDIENTE','APROBADO')** (RF-08) [S-12]. Índice único parcial (obligacion_pago_id) WHERE estado_revision='PENDIENTE' (un comprobante en revisión por obligación).
-- `registro_pago` (= boleta) (id, obligacion_pago_id UNIQUE FK, comprobante_pago_id UNIQUE FK, numero_boleta UNIQUE (`B001-NNNNN`, secuencia) [S-13], fecha_registro, monto_total, registrado_por).
+## 4. Modelo de datos
 
-**asistencia** (MC p.3, ERS §3.4)
-- `asistencia_alumno` (id, alumno_id FK, fecha DATE, estado CHECK (PUNTUAL, TARDANZA, FALTA), created_at, updated_at). **UNIQUE (alumno_id, fecha)**.
-- `asistencia_docente` (id, docente_id FK, fecha, hora_registro TIMESTAMPTZ NULL, estado, created_at, updated_at). **UNIQUE (docente_id, fecha)**. CHECK `(estado='FALTA') = (hora_registro IS NULL)`.
+Convenciones (S-21): PK `id VARCHAR(36)` con UUIDv7 generado en Java; todas las tablas tienen `created_at TIMESTAMPTZ` y `updated_at TIMESTAMPTZ`, y las editables concurrentemente, `version BIGINT`. Las fechas sin hora son `DATE` y los instantes `TIMESTAMPTZ`, presentados en `-05:00`. Los montos son `NUMERIC(12,2)` (RNF-11) y los enums se guardan como `VARCHAR` con `CHECK`. Extensiones: `btree_gist` (exclusión de rangos) y `citext` (correo).
 
-**evaluacion** (MC p.4)
-- `asignacion_docente` (id, docente_id, curso_id, seccion_id, regla_consolidacion CHECK (PROMEDIO_PONDERADO, MODA, ULTIMO_REGISTRO) NULL (NULL ⇒ PROMEDIO_PONDERADO por defecto, UC-16 FA-2)). UNIQUE (curso_id, seccion_id) [C-21].
-- `registro_logro` (id, asignacion_docente_id FK, alumno_id, competencia_id, bimestre_id, nivel_logro CHECK (AD, A, B, C), fecha_registro TIMESTAMPTZ). Índice (asignacion_docente_id, bimestre_id). Granularidad: ver Q-01.
-- `peso_consolidacion` (asignacion_docente_id, bimestre_id, peso NUMERIC(5,2) DEFAULT 1, PK compuesta) — pesos iguales por defecto (Arq §9.2).
-- `consolidacion_bimestral` (id, bimestre_id UNIQUE, fecha_consolidacion, estado CHECK (EJECUTADA), ejecutada_por FK → administrador)
-- `libreta` (id, alumno_id, anio_escolar_id, fecha_actualizacion, estado CHECK (PARCIAL, FINAL)). UNIQUE (alumno_id, anio_escolar_id).
-- `nota_consolidada` (id, libreta_id FK, asignacion_docente_id, competencia_id, bimestre_id NULL, tipo CHECK (BIMESTRAL, FINAL), nivel_logro). Índices únicos parciales: (libreta_id, competencia_id, bimestre_id) WHERE tipo='BIMESTRAL'; (libreta_id, competencia_id) WHERE tipo='FINAL'. Recalcular hace UPSERT (idempotente).
+### 4.1 Esquemas y tablas (derivados del Modelo Conceptual; las desviaciones llevan su ID)
 
-**public**: `shedlock` (name PK, lock_until, locked_at, locked_by).
+**`seguridad`**
+- `rol_acceso` (codigo UNIQUE ∈ {ADMINISTRADOR, DOCENTE, ALUMNO, APODERADO}, nombre, descripcion) — el Modelo Conceptual asigna un rol por usuario (Usuario 0..* → 1 RolAcceso).
+- `permiso` (codigo UNIQUE, modulo, accion, descripcion), `rol_permiso` (PK (rol_id, permiso_id)).
+- `usuario` (nombres, apellidos, `documento_identidad` UNIQUE NOT NULL (C-21), `correo CITEXT` con índice único parcial `WHERE correo IS NOT NULL`, hash_contrasena NULL, activo, intentos_fallidos `CHECK ≥ 0`, bloqueado_hasta, ultimo_acceso, rol_acceso_id FK, version). `CHECK (NOT activo OR (correo IS NOT NULL AND hash_contrasena IS NOT NULL))`. **No existe DELETE**: las cuentas solo se desactivan (RF-01).
+- `administrador` (usuario_id UNIQUE FK, cargo), `docente` (usuario_id UNIQUE, codigo_docente UNIQUE, especialidad), `apoderado` (usuario_id UNIQUE, numero_telefono), `alumno` (usuario_id UNIQUE NOT NULL, codigo_alumno UNIQUE, fecha_nacimiento (C-22), apoderado_id FK NOT NULL («es responsable de» 1..*), parentesco_apoderado (C-22)).
+- `refresh_token` (usuario_id, token_hash UNIQUE, familia, expira_en, revocado_en, reemplazado_por) — técnica (DA-04).
+- `token_recuperacion` (usuario_id, token_hash UNIQUE, expira_en = emitido + 30 min, usado_en) — técnica (RF-52); índice parcial `WHERE usado_en IS NULL`.
 
-### 3.2 Roles de base de datos
-- `gesedu_owner`: dueño de los esquemas; lo usa **solo Flyway** (`spring.flyway.user/password`).
-- `gesedu_app`: lo usa la aplicación (datasource). Tiene `USAGE` en los esquemas y `SELECT, INSERT, UPDATE, DELETE` en todas las tablas **excepto** las de auditoría (`SELECT, INSERT`). Se configura con `ALTER DEFAULT PRIVILEGES` en cada migración.
-- En local, los dos roles los crea `infra/local/postgres/init/01-roles.sql`. En AWS los crea un script de arranque que ejecuta el DBA una sola vez (documentado; no se escribe IaC ahora).
+**`academico`**
+- `anio_escolar` (anio INT UNIQUE, fecha_inicio, fecha_fin, estado ∈ {PLANIFICADO, ACTIVO, CERRADO}). `CHECK fecha_fin > fecha_inicio`; la duración de 10 a 12 meses se valida en la aplicación y con `CHECK` (UC-13). Índice único parcial `(estado) WHERE estado='ACTIVO'`.
+- `bimestre` (anio_escolar_id, numero `CHECK 1..4`, fecha_inicio, fecha_fin, UNIQUE (anio, numero)). `EXCLUDE USING gist (anio_escolar_id WITH =, daterange(fecha_inicio, fecha_fin, '[]') WITH &&)` impide bimestres superpuestos (UC-13, FA-2). Que el bimestre caiga dentro del año se valida en la aplicación.
+- `grado` (anio_escolar_id, numero_nivel `CHECK 1..5`, UNIQUE).
+- `seccion` (grado_id, anio_escolar_id, letra, `capacidad` (C-22), vacantes_disponibles, tutor_docente_id NULL FK→seguridad.docente). `CHECK (vacantes_disponibles >= 0 AND vacantes_disponibles <= capacidad)` (RNF-09); UNIQUE (grado_id, letra); UNIQUE (anio_escolar_id, tutor_docente_id).
+- `curso` (anio_escolar_id, nombre, slug, horas_lectivas `CHECK > 0`, habilitado, UNIQUE (anio, nombre), UNIQUE (anio, slug)). Aplica a todos los grados (RF-23).
+- `competencia` (curso_id, codigo `C1…`, nombre, `nivel_esperado` TEXT (RF-34, C-22), orden, UNIQUE (curso_id, codigo)).
 
-### 3.3 Migraciones Flyway (en orden; cada fase añade las suyas)
-| # | Archivo | Contenido | Fase |
+**`matricula`**
+- `solicitud_matricula` (codigo_seguimiento UNIQUE `MAT-2027-00482`, anio_escolar_id, alumno_id, apoderado_id, grado_id, fecha_solicitud, tipo_estudiante ∈ {NUEVO_INGRESO, RECURRENTE}, estado_documentacion, estado_admision ∈ {ADMITIDO, NO_ADMITIDO, NO_APLICA}, estado ∈ {PENDIENTE_REVISION, APROBADA, RECHAZADA}, `motivo_rechazo` ∈ {NO_ADMITIDO, DUPLICIDAD, DEUDAS, SIN_VACANTE, VOLUNTAD_APODERADO} con `observacion` (C-22), `costos_aceptados`, evaluado_por, version). `CHECK (estado <> 'RECHAZADA' OR motivo_rechazo IS NOT NULL)`. Índice único parcial `(alumno_id, anio_escolar_id) WHERE estado='PENDIENTE_REVISION'` (UC-01, FA-2).
+- `documento_solicitud` (solicitud_id, tipo ∈ {CERTIFICADO_ESTUDIOS, FICHA_MATRICULA_ANTERIOR, OTRO}, clave_objeto, nombre_archivo, content_type, tamano_bytes) (C-22; metadatos del Gestor de Archivos).
+- `matricula` (solicitud_id UNIQUE, alumno_id, anio_escolar_id, seccion_id, fecha_matricula, estado ∈ {CONFIRMADA, ANULADA}, confirmada_por). **Índice único parcial `(alumno_id, anio_escolar_id) WHERE estado='CONFIRMADA'`** (RNF-09, RF-05). La sección actual del alumno se deriva de su matrícula confirmada; no se duplica en `alumno`.
+
+**`pagos`**
+- `cronograma_cobro` (anio_escolar_id, concepto ∈ {MATRICULA, PENSION}, periodo, monto NUMERIC(12,2) `CHECK ≥ 0`, fecha_vencimiento, UNIQUE (anio, concepto, periodo)) y `politica_cobro` (anio_escolar_id UNIQUE, porcentaje_penalidad NUMERIC(5,2) `CHECK 0..100`) (RF-06, C-22).
+- `obligacion_pago` (matricula_id, alumno_id, apoderado_id, concepto, periodo, monto_base, fecha_vencimiento, monto_penalidad `DEFAULT 0 CHECK ≥ 0`, penalidad_aplicada_en, estado ∈ {PENDIENTE, PAGADA, VENCIDA}, version, UNIQUE (matricula_id, concepto, periodo)). Índices (alumno_id), (estado, fecha_vencimiento).
+- `comprobante_pago` (obligacion_id, apoderado_id, numero_operacion, fecha_pago, monto_presentado, `medio_pago` (C-22), referencia_comprobante (clave del objeto), estado_revision ∈ {PENDIENTE, APROBADO, OBSERVADO, RECHAZADO}, observacion, revisado_por, revisado_en). **Índice único parcial `(numero_operacion) WHERE estado_revision IN ('PENDIENTE','APROBADO')`** (RF-08, S-11); único `(obligacion_id) WHERE estado_revision='APROBADO'`; único `(obligacion_id) WHERE estado_revision='PENDIENTE'`.
+- `registro_pago` (boleta) (comprobante_id UNIQUE, obligacion_id, numero_boleta UNIQUE `B001-00001` (secuencia `pagos.seq_boleta`), fecha_registro, monto_total).
+
+**`asistencia`** (nombres en español según la arquitectura, Tabla 8; C-09)
+- `asistencia_alumno` (alumno_id, fecha, estado ∈ {PUNTUAL, TARDANZA, FALTA}, created_at, updated_at, **UNIQUE (alumno_id, fecha)**).
+- `asistencia_docente` (docente_id, fecha, hora_registro TIMESTAMPTZ NULL, estado, **UNIQUE (docente_id, fecha)**, `CHECK ((estado='FALTA') = (hora_registro IS NULL))`).
+
+**`evaluacion`**
+- `asignacion_docente` (docente_id, curso_id, seccion_id, regla_consolidacion ∈ {PROMEDIO_PONDERADO, MODA, ULTIMO_REGISTRO} `DEFAULT 'PROMEDIO_PONDERADO'` (UC-16, FA-2), UNIQUE (curso_id, seccion_id)). Se sincroniza al publicar el horario (S-13).
+- `peso_bimestre` (asignacion_id, bimestre_id, peso NUMERIC(5,2) `CHECK > 0` `DEFAULT 1`, UNIQUE) (RF-38).
+- `registro_logro` (asignacion_id, alumno_id, competencia_id, bimestre_id, nivel_logro `CHECK IN ('AD','A','B','C')`, fecha_registro, version, UNIQUE (alumno_id, competencia_id, bimestre_id)) (C-12, S-12).
+- `nota_consolidada` (alumno_id, competencia_id, asignacion_id, anio_escolar_id, bimestre_id NULL, tipo ∈ {BIMESTRAL, ANUAL}, nivel_logro, calculada_en, libreta_id). Únicos parciales `(alumno, competencia, bimestre) WHERE tipo='BIMESTRAL'` y `(alumno, competencia, anio) WHERE tipo='ANUAL'`: el cálculo idempotente hace un upsert.
+- `consolidacion_bimestral` (bimestre_id UNIQUE, fecha_consolidacion, estado, ejecutada_por) y `libreta` (alumno_id, anio_escolar_id, estado ∈ {PARCIAL, FINAL}, fecha_actualizacion, UNIQUE (alumno, anio)).
+
+**`horarios`** (sin `Aula`; C-03)
+- `bloque_horario` (anio_escolar_id, dia_semana ∈ {LUNES…DOMINGO}, hora_inicio, hora_fin, `CHECK hora_fin > hora_inicio`, UNIQUE (anio, dia, hora_inicio)). Que no haya solapamientos dentro del mismo día se valida en la aplicación. El recreo es el hueco entre bloques.
+- `periodo_registro_disponibilidad` (anio_escolar_id UNIQUE, fecha_hora_inicio, fecha_hora_fin, estado ∈ {HABILITADO, CERRADO}).
+- `vinculacion_docente` (docente_id, anio_escolar_id, habilitado, carga_semanal_referencia, UNIQUE) y `asociacion_docente_curso` (vinculacion_id, curso_id, UNIQUE).
+- `carga_horaria_curso` (grado_id, curso_id, bloques_semanales `CHECK > 0`, UNIQUE) (C-10).
+- `disponibilidad_docente` (vinculacion_id UNIQUE, fecha_hora_confirmacion, observaciones) y `bloque_disponible` (disponibilidad_id, bloque_id, UNIQUE). Solo se guarda la última versión confirmada (RF-46).
+- `horario_borrador` (anio_escolar_id **UNIQUE**: un borrador por año, fecha_creacion, fecha_actualizacion, **version** para `@Version`).
+- `asignacion_horario` (horario_borrador_id, bloque_id, seccion_id, curso_id, docente_id, asociacion_docente_curso_id). **UNIQUE (horario_borrador_id, bloque_id, docente_id)** y **UNIQUE (horario_borrador_id, bloque_id, seccion_id)** (RF-41, arquitectura § 9.3).
+- `horario_publicado` (anio_escolar_id, numero_version, fecha_hora_publicacion, vigente, publicado_por, UNIQUE (anio, numero_version), **índice único parcial `(anio_escolar_id) WHERE vigente`**) y `asignacion_publicada` (mismos campos e índices únicos), inmutables (RF-44, RF-45).
+
+**`auditoria`**
+- `registro_auditoria` (fecha_hora `DEFAULT now()`, usuario_id NULL (NULL = «Sistema»), accion, modulo, tipo_entidad, id_entidad_afectada, descripcion). Índices (fecha_hora DESC), (usuario_id, fecha_hora), (modulo, fecha_hora) y (accion, fecha_hora) (RF-51, RNF-03).
+- `cambio_auditoria` (registro_id FK, campo, valor_anterior, valor_nuevo).
+- **Inmutabilidad (RNF-08):** trigger `BEFORE UPDATE OR DELETE` y trigger `BEFORE TRUNCATE` (a nivel de sentencia) que ejecutan `auditoria.rechazar_modificacion()` → `RAISE EXCEPTION 'auditoría de solo inserción'`. `REVOKE ALL` y `GRANT SELECT, INSERT … TO gesedu_app`.
+
+**`transversal`**: `shedlock` (name PK, lock_until, locked_at, locked_by).
+
+### 4.2 Roles de base de datos
+- `gesedu_migrador`: dueño de los esquemas y tablas; lo usa Flyway (`spring.flyway.user`). Crea los triggers y otorga los permisos.
+- `gesedu_app`: lo usa el datasource de la aplicación. `USAGE` en los esquemas; `SELECT, INSERT, UPDATE, DELETE` en las tablas de negocio; **solo `SELECT, INSERT` en `auditoria.*`**; `USAGE, SELECT` en las secuencias. Los permisos se dejan con `ALTER DEFAULT PRIVILEGES FOR ROLE gesedu_migrador IN SCHEMA … GRANT … TO gesedu_app`, y para `auditoria` se revocan UPDATE y DELETE de forma explícita.
+- Los roles y la BD se crean con `infra/postgres/init/01-roles-y-bd.sql` en local y en Testcontainers; en RDS, una vez, con el usuario maestro (`docs/despliegue/aws.md`). Flyway no crea roles: hacerlo requiere superusuario.
+
+### 4.3 Reglas transaccionales críticas en la BD
+- Vacantes (RNF-09): `UPDATE academico.seccion SET vacantes_disponibles = vacantes_disponibles - 1 WHERE id = ? AND vacantes_disponibles > 0`; si afecta 0 filas → `SIN_VACANTE`. A eso se suman el `CHECK` y el índice único parcial de matrícula.
+- Pagos (RNF-10): `SELECT … FROM pagos.obligacion_pago WHERE id = ? FOR UPDATE` (`@Lock(PESSIMISTIC_WRITE)`) dentro de un único `@Transactional`: comprobante → APROBADO, `registro_pago` (boleta), obligación → PAGADA y auditoría. Cualquier excepción revierte todo.
+- Horarios: el validador de la aplicación, los índices únicos y `@Version` (`OPTIMISTIC_FORCE_INCREMENT` sobre `horario_borrador` en cada alta, cambio o baja).
+
+### 4.4 Migraciones de Flyway (en orden)
+**Regla de edición (S-26).** Hasta el **primer despliegue compartido** (el primer entorno con una base de datos que no sea la local de cada integrante: QA o AWS) las migraciones **V1 a V11 se pueden editar**; cada integrante reinicia su base con `scripts/reiniciar-bd.ps1` o `scripts/reiniciar-bd.sh` (`docker compose down -v` + `up`). El CI siempre parte de una base vacía. Quien edite una migración lo avisa en el PR y en el canal del equipo, porque Flyway rechaza el arranque con un checksum distinto en una base ya migrada. `db/demo/V1000` se puede editar siempre. **Desde el primer despliegue compartido, solo hacia adelante:** una migración integrada no se modifica y los cambios van en `V12+`. El líder técnico anuncia el momento con la etiqueta de git `esquema-congelado` y actualiza `CLAUDE.md`.
+
+| Versión | Contenido |
+|---|---|
+| V1__extensiones_y_esquemas.sql | `btree_gist`, `citext`; esquemas `seguridad, academico, matricula, pagos, asistencia, evaluacion, horarios, auditoria, transversal`; default privileges hacia `gesedu_app` |
+| V2__seguridad.sql | rol_acceso, permiso, rol_permiso, usuario, administrador, docente, apoderado, alumno, refresh_token, token_recuperacion |
+| V3__academico.sql | anio_escolar, bimestre (EXCLUDE), grado, seccion (CHECK vacantes), curso, competencia |
+| V4__pagos.sql | cronograma_cobro, politica_cobro, obligacion_pago, comprobante_pago (índices parciales), registro_pago, seq_boleta |
+| V5__matricula.sql | solicitud_matricula, documento_solicitud, matricula (índice único parcial) |
+| V6__horarios.sql | bloque_horario, periodo, vinculacion, asociacion, carga_horaria, disponibilidad, bloque_disponible, borrador, asignacion_horario (índices anticruce), publicado (índice vigente), asignacion_publicada |
+| V7__evaluacion.sql | asignacion_docente, peso_bimestre, registro_logro, nota_consolidada, consolidacion_bimestral, libreta |
+| V8__asistencia.sql | asistencia_alumno, asistencia_docente |
+| V9__auditoria.sql | tablas, índices, función y triggers, GRANT SELECT/INSERT |
+| V10__shedlock.sql | transversal.shedlock |
+| V11__catalogo_roles_permisos.sql | Los 4 roles y los permisos de § 5.3 (datos de referencia que existen en todos los ambientes) |
+| db/demo/V1000__datos_demo.sql | Solo con el perfil demo (§ 7.2) |
+
+---
+
+## 5. Contrato de la API
+
+### 5.1 Convenciones (arquitectura § 7.3)
+- Prefijo `/api/v1`, sustantivos en plural, JSON. Fechas ISO 8601 con `-05:00`; montos como string decimal de 2 cifras (`"350.00"`) para no perder precisión en JS (S-23).
+- **Paginación:** `?page=0&size=20&sort=campo,asc` (máximo 100; lista blanca de campos ordenables). Respuesta `{contenido, pagina, tamano, totalElementos, totalPaginas}` (Spring Data `PagedModel` vía DTO).
+- **Concurrencia optimista:** los recursos con `@Version` devuelven `ETag: "<version>"`. Las modificaciones exigen `If-Match`: sin la cabecera → 400 `VERSION_REQUERIDA`; con una versión desactualizada → **409** `CONFLICTO_CONCURRENCIA`, como dice la arquitectura (§ 4.7), en lugar de 412. Se aplica al borrador de horario (versión del borrador), a los usuarios y a la configuración académica.
+- **Errores (RFC 9457):** `application/problem+json` con `ProblemDetail` de Spring: `type` (`https://gesedu.pe/problemas/<codigo>`), `title`, `status`, `detail`, `instance` y, como propiedades extra, `codigo`, `errores[]` (campo y mensaje, en 400) y `conflictos[]` (horarios). `ResponseEntityExceptionHandler` + `@RestControllerAdvice`; `spring.mvc.problemdetails.enabled=true`. El 401 y el 403 de Spring Security salen con el mismo formato (`AuthenticationEntryPoint` y `AccessDeniedHandler` propios).
+- Documentación: `/v3/api-docs` y `/swagger-ui.html`, con esquema de seguridad bearer y grupos por módulo.
+
+### 5.2 Códigos de negocio (`docs/api/errores.md`)
+| HTTP | Código | Origen |
+|---|---|---|
+| 400 | VALIDACION_INVALIDA, VERSION_REQUERIDA, TOKEN_RECUPERACION_INVALIDO | Bean Validation, If-Match, RF-52 |
+| 401 | NO_AUTENTICADO, CREDENCIALES_INVALIDAS, CUENTA_BLOQUEADA (incluye `bloqueadoHasta`), CUENTA_INACTIVA, SESION_EXPIRADA | RF-52, RNF-06 |
+| 403 | ACCESO_DENEGADO, FUERA_DE_ALCANCE | RF-50, RNF-07 |
+| 404 | RECURSO_NO_ENCONTRADO | — |
+| 409 | CONFLICTO_CONCURRENCIA, SIN_VACANTE, MATRICULA_DUPLICADA, SOLICITUD_EN_TRAMITE, DOCUMENTO_DUPLICADO, CORREO_DUPLICADO, CONFLICTO_HORARIO (con `conflictos`), NUMERO_OPERACION_DUPLICADO, ASISTENCIA_YA_REGISTRADA | RNF-09, RF-05, RF-02, RF-41, RF-08, UC-07 FA-1, UC-08 FA-5 |
+| 422 | DEUDA_VENCIDA, NO_ADMITIDO, DOCUMENTACION_INCOMPLETA, OBLIGACION_YA_PAGADA, MONTO_INSUFICIENTE, DOCENTE_NO_ASOCIADO, DOCENTE_NO_DISPONIBLE, HORARIO_INCOMPLETO, PERIODO_DISPONIBILIDAD_CERRADO, DIA_NO_LECTIVO, JORNADA_CERRADA, SIN_CLASES_PROGRAMADAS, PLAZO_TARDANZA_EXCEDIDO, RANGO_ANIO_INVALIDO, BIMESTRES_SUPERPUESTOS, BIMESTRE_INCOMPLETO, NIVEL_LOGRO_INVALIDO, ARCHIVO_INVALIDO, VINCULO_ACADEMICO_INEXISTENTE | Reglas de negocio de la ERS |
+
+### 5.3 Permisos (RF-48)
+`SESION` (implícito en todos los roles) · `USUARIO_CONSULTAR`, `USUARIO_GESTIONAR`, `ROL_GESTIONAR` · `MATRICULA_SOLICITAR`, `MATRICULA_CONSULTAR_PROPIA`, `MATRICULA_EVALUAR`, `MATRICULA_REGISTRAR` · `COBRO_CONFIGURAR`, `OBLIGACION_CONSULTAR_PROPIA`, `COMPROBANTE_PRESENTAR`, `COMPROBANTE_VALIDAR`, `PAGO_HISTORIAL_CONSULTAR` · `ASISTENCIA_DOCENTE_MARCAR`, `ASISTENCIA_ALUMNO_REGISTRAR`, `ASISTENCIA_REPORTE_SECCION`, `ASISTENCIA_REPORTE_GENERAL`, `ASISTENCIA_DOCENTE_CONSULTAR`, `ASISTENCIA_CONSULTAR_PROPIA` · `ACADEMICO_CONFIGURAR`, `ACADEMICO_CONSULTAR` · `NOTA_REGISTRAR`, `REGLA_DEFINIR`, `NOTA_CALCULAR_FINAL`, `NOTA_CONSOLIDAR`, `NOTA_CONSULTAR_PROPIA` · `HORARIO_CONFIGURAR`, `HORARIO_GESTIONAR`, `DISPONIBILIDAD_REGISTRAR`, `HORARIO_CONSULTAR` · `AUDITORIA_CONSULTAR`, `AUDITORIA_EXPORTAR`.
+Asignación inicial: ADMINISTRADOR, todos los de gestión; DOCENTE, marcar asistencia, registrar asistencia de alumnos, reporte de sección, notas, regla, cálculo final, disponibilidad y consulta de horario; ALUMNO, los `*_PROPIA` y la consulta de horario; APODERADO, `MATRICULA_SOLICITAR`, `MATRICULA_CONSULTAR_PROPIA`, `OBLIGACION_CONSULTAR_PROPIA`, `COMPROBANTE_PRESENTAR`, `NOTA_CONSULTAR_PROPIA` y `HORARIO_CONSULTAR`.
+**El alcance (mi sección, mis hijos, mis cursos) se verifica en el servicio** con `AlcanceService`, además de `@PreAuthorize`; si no se cumple → 403 `FUERA_DE_ALCANCE`.
+
+### 5.4 Endpoints por módulo
+(Perm. = permiso de `@PreAuthorize`; ★ = endpoint de la fase 1)
+
+**Seguridad — UC-24, RF-01, RF-48, RF-50, RF-52**
+| Método | Ruta | Perm. | UC / RF |
 |---|---|---|---|
-| V1 | `V1__extensiones_y_esquemas.sql` | `btree_gist`; esquemas seguridad, auditoria, academico, horarios, matricula, pagos, asistencia, evaluacion; grants base y default privileges con el placeholder `${appUser}` | 0 |
-| V2 | `V2__seguridad.sql` | usuario, administrador, docente, apoderado, alumno, rol_acceso, permiso, rol_permiso, refresh_token | 0 |
-| V3 | `V3__seguridad_roles_permisos.sql` | datos de referencia: 5 roles (S-03) y catálogo de permisos (§4.2) | 0 |
-| V4 | `V4__auditoria.sql` | registro_auditoria, cambio_auditoria, índices, función y triggers de inmutabilidad, REVOKE/GRANT | 0 |
-| V5 | `V5__shedlock.sql` | public.shedlock | 0 |
-| V6 | `V6__academico.sql` | anio_escolar, bimestre (+EXCLUDE), grado, seccion (+CHECK vacantes), curso, competencia | 1 |
-| V7 | `V7__horarios.sql` | aula, bloque_horario, periodo, vinculacion, asociacion, disponibilidad, bloque_disponible, carga_horaria, borrador, asignacion_horario (+3 UNIQUE), horario_publicado (+parcial vigente), asignacion_publicada | 1 |
-| V8 | `V8__matricula.sql` | solicitud_matricula (+parcial pendiente), documento_solicitud, matricula (+parcial confirmada), secuencias de código | 1 |
-| V9 | `V9__pagos.sql` | politica_cobranza, cronograma_cobro, obligacion_pago, comprobante_pago (+parciales), registro_pago, secuencia de boleta | 1 (obligaciones) / 3 (resto) |
-| V10 | `V10__asistencia.sql` | asistencia_alumno, asistencia_docente | 5 |
-| V11 | `V11__evaluacion.sql` | asignacion_docente, registro_logro, peso_consolidacion, consolidacion_bimestral, libreta, nota_consolidada | 6 |
-| V12+ | ajustes por fase | índices por rendimiento (RNF-03) tras medir | 7 |
+| POST ★ | /auth/inicio-sesion `{correo, contrasena}` → `{tokenAcceso, expiraEn, usuario{nombres, rol, cargo, permisos[]}}` + cookie de refresh | público (con límite de peticiones) | RF-52, RNF-06 |
+| POST ★ | /auth/refresco (cookie) → nuevo token de acceso y rotación del refresh | público + cookie | DA-04 |
+| POST ★ | /auth/cierre-sesion | SESION | RF-52 |
+| POST ★ | /auth/recuperacion `{correo}` → **202 siempre con el mismo cuerpo** | público (con límite de peticiones) | RF-52 |
+| POST ★ | /auth/recuperacion/confirmacion `{token, nuevaContrasena}` | público | RF-52 |
+| GET ★ | /auth/yo | SESION | RF-50 (menú) |
+| GET ★ / POST / PUT / PATCH | /usuarios (filtros: q, rol, estado; paginado), /usuarios/{id}, /usuarios/{id}/estado `{activo}`, /usuarios/{id}/desbloqueo | USUARIO_CONSULTAR / USUARIO_GESTIONAR | UC-24, RF-01 |
+| GET / PUT | /roles, /roles/{id}/permisos | ROL_GESTIONAR | RF-48 |
 
-Regla: una migración ya integrada en `main` **no se edita**; se corrige con una nueva versión. Los datos de demostración **no** van en Flyway: los carga `DemoDataSeeder` (perfil `demo`, idempotente, contraseña desde `DEMO_PASSWORD`).
+**Académico — UC-13, UC-14, RF-03, RF-04, RF-23 a RF-25**
+| GET / POST | /anios-escolares, /anios-escolares `{fechaInicio, fechaFin, bimestres[4]}` | ACADEMICO_CONSULTAR / ACADEMICO_CONFIGURAR | UC-13, RF-03, RF-25 |
+| GET / POST / PUT / DELETE | /anios-escolares/{anio}/cursos, /cursos/{id} (con competencias), /anios-escolares/{anio}/cursos/copia-anterior | ACADEMICO_CONFIGURAR | UC-14, RF-23, RF-24 |
+| GET / POST / PUT | /anios-escolares/{anio}/grados, /grados/{id}/secciones, /secciones/{id} (capacidad, tutor) | ACADEMICO_CONFIGURAR | RF-03, RF-04 |
 
----
+**Matrícula — UC-01, UC-02, RF-02, RF-04, RF-05, RF-12**
+| POST | /solicitudes-matricula/archivos (pide una URL prefirmada de subida) | MATRICULA_SOLICITAR | UC-01, RF-08 (Gestor de Archivos) |
+| POST | /solicitudes-matricula | MATRICULA_SOLICITAR | UC-01 |
+| GET | /solicitudes-matricula/mias | MATRICULA_CONSULTAR_PROPIA | UC-01 (seguimiento) |
+| GET ★ | /solicitudes-matricula?estado=&q= (bandeja paginada) | MATRICULA_EVALUAR | UC-02, paso 1 |
+| GET ★ | /solicitudes-matricula/{codigo} (detalle + validaciones + vacantes por sección + resumen de costos) | MATRICULA_EVALUAR | UC-02, pasos 2–7 |
+| GET ★ | /solicitudes-matricula/{codigo}/documentos/{id}/url (URL prefirmada de descarga) | MATRICULA_EVALUAR | UC-02, paso 2 |
+| POST ★ | /solicitudes-matricula/{codigo}/confirmacion `{seccionId, costosAceptados:true}` (If-Match) → 201 matrícula + obligaciones | MATRICULA_REGISTRAR | UC-02, pasos 9–13, RNF-09, RF-07, RF-12 |
+| POST ★ | /solicitudes-matricula/{codigo}/rechazo `{motivo, observacion}` | MATRICULA_REGISTRAR | UC-02, FA-1 a FA-5 |
+| GET | /matriculas/mias?alumnoId= | MATRICULA_CONSULTAR_PROPIA | UC-03 |
 
-## 4. Contrato de la API
+**Pagos — UC-03 a UC-06, RF-06 a RF-11**
+| GET / PUT | /anios-escolares/{anio}/cobros (cronograma + política) | COBRO_CONFIGURAR | RF-06 |
+| GET | /alumnos/{alumnoId}/obligaciones (alcance de apoderado) | OBLIGACION_CONSULTAR_PROPIA | UC-03, RF-09, RF-11 |
+| POST | /obligaciones/{id}/comprobantes/archivo (URL prefirmada) y /obligaciones/{id}/comprobantes | COMPROBANTE_PRESENTAR | UC-04, RF-08 |
+| GET | /comprobantes?estado=PENDIENTE (bandeja) y /comprobantes/{id} (+ URL del voucher) | COMPROBANTE_VALIDAR | UC-05, pasos 1–3 |
+| POST | /comprobantes/{id}/validacion, /comprobantes/{id}/observacion, /comprobantes/{id}/rechazo | COMPROBANTE_VALIDAR | UC-05, RNF-10, RNF-11 |
+| GET | /alumnos/{codigoAlumno}/historial-financiero | PAGO_HISTORIAL_CONSULTAR | UC-06, RF-11 |
 
-### 4.1 Convenciones (Arq §7.3)
-- Base `/api/v1`. JSON. Fechas `2027-03-01`, instantes `2027-03-01T07:43:12-05:00`, montos como **string decimal** `"350.00"` (para que el frontend no haga aritmética monetaria, RNF-11).
-- **Errores RFC 7807** (`application/problem+json`): `{type, title, status, detail, instance, codigo, errores?: [{campo, mensaje}], conflictos?: [...] }`. Estados: 400 `DATOS_INVALIDOS`, 401 `NO_AUTENTICADO` / `CREDENCIALES_INVALIDAS` / `CUENTA_BLOQUEADA` / `CUENTA_INACTIVA`, 403 `ACCESO_DENEGADO`, 404 `NO_ENCONTRADO` / `HORARIO_NO_PUBLICADO`, 409 `CONFLICTO_CONCURRENCIA` (versión, unicidad) / `SIN_VACANTE`, 422 regla de negocio (`MATRICULA_DUPLICADA`, `DEUDA_VENCIDA`, `CONFLICTO_HORARIO`, `MONTO_NO_COINCIDE`, `OPERACION_DUPLICADA`, `JORNADA_CERRADA`, …). Violaciones de unicidad de BD → 409 mediante un traductor de `DataIntegrityViolationException` por nombre de constraint.
-- **Paginación**: `?page=0&size=20&sort=campo,asc` → `{contenido:[], pagina, tamanio, totalElementos, totalPaginas}`. `size` máx 100.
-- Seguridad: `Authorization: Bearer <jwt>`. El refresh viaja en la cookie `gesedu_rt` (HttpOnly, Secure configurable, SameSite=Strict, Path=/api/v1/auth). Concurrencia optimista: header `If-Match: "<version>"` → 409 si no coincide.
-- Alcance (además del permiso): el servicio verifica la pertenencia (apoderado → sus alumnos; alumno → él mismo; tutor → su sección; docente → sus asignaciones). Si falla → 403.
+**Horarios — UC-20 a UC-23, RF-39 a RF-47**
+| GET / PUT | /anios-escolares/{anio}/bloques, /periodo-disponibilidad, /vinculaciones-docentes (+ asociaciones con cursos), /cargas-horarias | HORARIO_CONFIGURAR | RF-46, RF-47, RF-43 |
+| GET / PUT | /anios-escolares/{anio}/disponibilidad/mia | DISPONIBILIDAD_REGISTRAR | UC-20, RF-46 |
+| GET ★ | /horarios/{anio}/borrador?perspectiva=SECCION&seccionId= o perspectiva=DOCENTE&docenteId= (crea el borrador si no existe; ETag) | HORARIO_GESTIONAR | UC-21, RF-39, RF-44 |
+| GET ★ | /horarios/{anio}/borrador/opciones?bloqueId&seccionId[&cursoId][&docenteId] → cursos con horas asignadas/requeridas y docentes asociados con `disponible`/`ocupadoEn` | HORARIO_GESTIONAR | RF-47, RF-43 |
+| POST ★ | /horarios/{anio}/borrador/validaciones `{bloqueId, seccionId, cursoId, docenteId, asignacionId?}` → `{valido, conflictos[]}` | HORARIO_GESTIONAR | RF-41, RF-42 (tiempo real) |
+| POST ★ / PUT ★ / DELETE ★ | /horarios/{anio}/borrador/asignaciones[/{id}] (If-Match) → 201/200/204 o 409 CONFLICTO_HORARIO / CONFLICTO_CONCURRENCIA | HORARIO_GESTIONAR | RF-40 a RF-42, RF-47 |
+| GET | /horarios/{anio}/borrador/completitud | HORARIO_GESTIONAR | UC-22, RF-43 |
+| POST | /horarios/{anio}/publicaciones | HORARIO_GESTIONAR | UC-22, RF-44 |
+| GET | /horarios/{anio}/vigente?perspectiva=&seccionId=&docenteId= (alcance por rol; 404 HORARIO_NO_PUBLICADO) | HORARIO_CONSULTAR | UC-23, RF-45 |
 
-### 4.2 Catálogo de permisos (datos de referencia, RF-47, DA-05) y roles semilla
-`USUARIO_CONSULTAR, USUARIO_GESTIONAR, USUARIO_DESBLOQUEAR, ROL_GESTIONAR, AUDITORIA_CONSULTAR, AUDITORIA_EXPORTAR, ESTRUCTURA_GESTIONAR, ANIO_ESCOLAR_GESTIONAR, CURSO_GESTIONAR, MATRICULA_SOLICITAR, MATRICULA_EVALUAR, MATRICULA_REGISTRAR, MATRICULA_CONSULTAR, MATRICULA_CONSULTAR_PROPIA, COBRANZA_GESTIONAR, OBLIGACION_CONSULTAR_PROPIA, COMPROBANTE_PRESENTAR, COMPROBANTE_VALIDAR, PAGO_HISTORIAL_CONSULTAR, ASISTENCIA_DOCENTE_MARCAR, ASISTENCIA_ALUMNO_REGISTRAR, ASISTENCIA_REPORTE_SECCION, ASISTENCIA_REPORTE_GENERAL, ASISTENCIA_CONSULTAR_PROPIA, LOGRO_REGISTRAR, REGLA_DEFINIR, NOTA_FINAL_CALCULAR, NOTA_CONSOLIDAR_BIMESTRE, NOTA_CONSULTAR_PROPIA, HORARIO_CONFIGURAR, HORARIO_GESTIONAR, HORARIO_PUBLICAR, HORARIO_CONSULTAR, DISPONIBILIDAD_REGISTRAR`.
-Roles: **ADMINISTRADOR** (todo lo administrativo), **DIRECTIVO** (perfil Administrador: ANIO_ESCOLAR/CURSO/NOTA_CONSOLIDAR + consultas) [S-03, C-14], **DOCENTE**, **ALUMNO** y **APODERADO** (sus permisos propios). La matriz exacta rol × permiso se fija en V3 y se prueba en `PermisosPorRolIT`.
+**Asistencia — UC-07 a UC-12, RF-13 a RF-21**
+| GET / POST | /asistencia-docente/hoy (hora del servidor, primera clase, tolerancia) y /asistencia-docente/marcaciones | ASISTENCIA_DOCENTE_MARCAR | UC-07, RF-18 a RF-20 |
+| GET | /asistencia-docente/mias?desde&hasta | ASISTENCIA_DOCENTE_MARCAR | UC-07 (historial) |
+| GET / POST | /secciones/{codigo}/asistencia?fecha=hoy y /secciones/{codigo}/asistencia (lote atómico; cada estado ∈ PUNTUAL, TARDANZA o FALTA) | ASISTENCIA_ALUMNO_REGISTRAR (tutor) | UC-08, RF-14 |
+| PATCH | /asistencia-alumnos/{id} `{estado:"TARDANZA"}` | ASISTENCIA_ALUMNO_REGISTRAR (tutor) | UC-09, RF-15 |
+| GET | /reportes/asistencia?ambito=ALUMNOS\|DOCENTES&mes&anio&seccion=&formato=json\|xlsx\|pdf | ASISTENCIA_REPORTE_SECCION / _GENERAL | UC-10, UC-11, RF-16, RF-17, RF-21 |
+| GET | /asistencia-docente?fecha= | ASISTENCIA_DOCENTE_CONSULTAR | UC-12 (consulta) |
+| GET | /alumnos/{id}/asistencia/resumen?mes= | ASISTENCIA_CONSULTAR_PROPIA | Inicio del alumno (RF-16 bajo demanda) |
 
-### 4.3 Endpoints por módulo
-Columnas: Método · Ruta · Permiso · UC · RF/RNF.
+**Evaluación — UC-15 a UC-19, RF-22, RF-26 a RF-38**
+| GET | /asignaciones-docentes/mias | NOTA_REGISTRAR | RF-31 |
+| GET / PUT | /asignaciones-docentes/{id}/registros?bimestre= (rejilla alumnos × competencias) | NOTA_REGISTRAR | UC-15, RF-22 |
+| GET / PUT | /asignaciones-docentes/{id}/configuracion `{regla, pesos[bimestre]}` | REGLA_DEFINIR | UC-16, RF-26, RF-38 |
+| GET / POST | /asignaciones-docentes/{id}/notas-finales y /asignaciones-docentes/{id}/notas-finales/calculo | NOTA_CALCULAR_FINAL | UC-17, RF-28, RF-29 |
+| GET / POST | /anios-escolares/{anio}/bimestres/{n}/avance y /anios-escolares/{anio}/bimestres/{n}/consolidacion | NOTA_CONSOLIDAR | UC-18, RF-27, RF-35, RF-37 |
+| GET | /alumnos/{id}/cursos, /alumnos/{id}/cursos/{cursoId}/notas, /alumnos/{id}/libreta?periodo=&formato=pdf | NOTA_CONSULTAR_PROPIA | UC-19, RF-30, RF-32 a RF-34, RF-36 |
+| GET | /apoderados/yo/alumnos | NOTA_CONSULTAR_PROPIA | UC-19, FA-1, RF-33 |
 
-**Seguridad**
-| M | Ruta | Permiso | UC | RF/RNF |
-|---|---|---|---|---|
-| POST | /auth/login `{usuario (DNI o correo), contrasena}` → `{accessToken, expiraEn, usuario}` + cookie | público, con límite de peticiones | UC-24 | RNF-01, RNF-06 |
-| POST | /auth/refresh (rota el refresh) | cookie | UC-24 | DA-04 |
-| POST | /auth/logout (revoca) | autenticado | UC-24 | DA-04 |
-| GET | /auth/me → perfil, rol, permisos, datos de perfil (sección, hijos…) | autenticado | UC-24 | RF-49 |
-| GET | /usuarios?rol&estado&q&page | USUARIO_CONSULTAR | UC-24 | RF-01, RF-47 |
-| POST | /usuarios | USUARIO_GESTIONAR | UC-24 (FA-1, FA-2) | RF-01, RF-02, RF-47 |
-| GET / PUT | /usuarios/{id} | USUARIO_CONSULTAR / USUARIO_GESTIONAR | UC-24 | RF-01 |
-| POST | /usuarios/{id}/desactivar · /activar | USUARIO_GESTIONAR | UC-24 | RF-01 (C-15) |
-| POST | /usuarios/{id}/desbloquear | USUARIO_DESBLOQUEAR | UC-24 FA-3 | RNF-06 |
-| GET | /roles · /permisos | ROL_GESTIONAR | UC-24 | RF-47 |
-| PUT | /roles/{id}/permisos (invalida la caché) | ROL_GESTIONAR | UC-24 | RF-47, RNF-07 |
-| GET | /alumnos/mios (apoderado: hijos; alumno: él mismo) | OBLIGACION_CONSULTAR_PROPIA o NOTA_CONSULTAR_PROPIA | UC-03, UC-19 FA-1 | RF-32 |
+**Auditoría — UC-25, RF-49, RF-51**
+| GET ★ | /auditoria/registros?usuarioId&modulo&accion&desde&hasta (paginado) | AUDITORIA_CONSULTAR | UC-25, pasos 4–5 |
+| GET ★ | /auditoria/registros/{id} (incluye los cambios) | AUDITORIA_CONSULTAR | RF-49 |
+| GET ★ | /auditoria/registros/exportacion?…&formato=xlsx\|csv | AUDITORIA_EXPORTAR | UC-25, paso 6 |
+| GET ★ | /auditoria/catalogos (módulos y acciones para los filtros) | AUDITORIA_CONSULTAR | RF-51 |
 
-**Auditoría**
-| GET | /auditoria?usuarioId&modulo&accion&desde&hasta&page | AUDITORIA_CONSULTAR | UC-25 | RF-50, RNF-03 |
-| GET | /auditoria/{id} (con cambios) | AUDITORIA_CONSULTAR | UC-25 | RF-50 |
-| GET | /auditoria/exportar?mismos filtros → `.xlsx` (máx. 50 000 filas, streaming SXSSF) | AUDITORIA_EXPORTAR | UC-25 | RF-50 |
-
-**Académico**
-| GET / POST | /anios-escolares (POST incluye 4 bimestres) | ANIO_ESCOLAR_GESTIONAR (GET: autenticado) | UC-13 (FA-1, FA-2) | RF-03, RF-24 |
-| GET / PUT | /anios-escolares/{id} · POST /{id}/activar · /{id}/cerrar | ANIO_ESCOLAR_GESTIONAR | UC-13 | RF-03 (S-04) |
-| GET / POST | /anios-escolares/{id}/grados · /grados/{id}/secciones | ESTRUCTURA_GESTIONAR | — (config) | RF-03, RF-04 |
-| PUT | /secciones/{id} (capacidad, tutor) | ESTRUCTURA_GESTIONAR | — | RF-04, RF-13 |
-| GET | /anios-escolares/{id}/secciones?conVacantes | MATRICULA_EVALUAR / ESTRUCTURA_GESTIONAR | UC-02 | RF-04 |
-| GET / POST | /anios-escolares/{id}/cursos | CURSO_GESTIONAR (GET: ACADEMICO autenticado) | UC-14 | RF-22 |
-| PUT / DELETE | /cursos/{id} | CURSO_GESTIONAR | UC-14 | RF-22 |
-| POST / PUT / DELETE | /cursos/{id}/competencias · /competencias/{id} | CURSO_GESTIONAR | UC-14 | RF-23 |
-| POST | /anios-escolares/{id}/cursos/copia `{anioOrigenId}` | CURSO_GESTIONAR | UC-14 FA-1 | RF-22, RF-23 |
-
-**Horarios**
-| GET / POST / PUT / DELETE | /aulas | HORARIO_CONFIGURAR | — | RF-46 |
-| GET / PUT | /anios-escolares/{id}/bloques (reemplazo del conjunto) | HORARIO_CONFIGURAR | — | RF-45 |
-| GET / PUT | /anios-escolares/{id}/periodo-disponibilidad | HORARIO_CONFIGURAR | UC-20 | RF-45 |
-| GET / POST / PUT | /anios-escolares/{id}/vinculaciones (docente, habilitado, carga ref., cursos asociados) | HORARIO_CONFIGURAR | UC-21 pre | RF-46 |
-| GET / PUT | /anios-escolares/{id}/cargas-horarias | HORARIO_CONFIGURAR | UC-22 pre | RF-42 |
-| GET | /disponibilidades/mia?anioId (matriz + carga + aviso de insuficiencia) | DISPONIBILIDAD_REGISTRAR | UC-20 | RF-45 |
-| PUT | /disponibilidades/mia `{anioId, bloqueIds[], observaciones}` | DISPONIBILIDAD_REGISTRAR | UC-20 (FA-1, FA-2, FE-1) | RF-45 |
-| GET | /disponibilidades?anioId (consolidado + docentes sin registro) | HORARIO_GESTIONAR | — | RF-45 |
-| GET | /horarios/borrador?anioId → `{id, version}` (lo crea si no existe) | HORARIO_GESTIONAR | UC-21 paso 2 | RF-38, RF-43 |
-| GET | /horarios/{id}/asignaciones?perspectiva=SECCION\|DOCENTE\|AULA&recursoId | HORARIO_GESTIONAR | UC-21 FA-3 | RF-38 |
-| GET | /horarios/{id}/opciones?bloqueId&seccionId&cursoId&docenteId → cursos, docentes asociados con su disponibilidad y ocupación, aulas libres | HORARIO_GESTIONAR | UC-21 paso 4 | RF-46 |
-| POST | /horarios/{id}/asignaciones/validacion (no persiste) → `{valida, conflictos:[{tipo: DOCENTE_NO_ASOCIADO\|DOCENTE_NO_DISPONIBLE\|CRUCE_DOCENTE\|CRUCE_AULA\|CRUCE_SECCION\|RECURSO_NO_HABILITADO, recurso, asignacionExistente:{seccion, curso, docente, aula, dia, bloque}}]}` | HORARIO_GESTIONAR | UC-21 paso 6 | RF-40, RF-41, RF-46 |
-| POST | /horarios/{id}/asignaciones (If-Match) → 201, 409 versión/unicidad, 422 `CONFLICTO_HORARIO` + conflictos | HORARIO_GESTIONAR | UC-21 (FE-1, FE-2) | RF-39, RF-40, RF-41 |
-| PUT / DELETE | /horarios/{id}/asignaciones/{asigId} (If-Match) | HORARIO_GESTIONAR | UC-21 FA-1, FA-2 | RF-39 |
-| GET | /horarios/{id}/completitud → por sección y curso: asignadas, requeridas, diferencia | HORARIO_GESTIONAR | UC-22 paso 2, UC-21 (panel) | RF-42 |
-| POST | /horarios/publicaciones `{anioId, versionBorrador}` → 201 o 422 `HORARIO_INCOMPLETO` | HORARIO_PUBLICAR | UC-22 (FA-1) | RF-42, RF-43 |
-| GET | /horarios/vigente?anioId&perspectiva&recursoId → matriz o 404 `HORARIO_NO_PUBLICADO` | HORARIO_CONSULTAR (+alcance) | UC-23 (FA-1, FA-2) | RF-38, RF-44 |
-| GET | /horarios/vigente/asignaciones/{id} (detalle) | HORARIO_CONSULTAR | UC-23 paso 6 | RF-38 |
-
-**Matrícula**
-| POST | /solicitudes-matricula/documentos/carga → URL prefirmada + clave | MATRICULA_SOLICITAR | UC-01 | DA-07, RNF-12 |
-| POST | /solicitudes-matricula | MATRICULA_SOLICITAR | UC-01 (FA-1, FA-2) | RF-02 |
-| GET | /solicitudes-matricula/mias | MATRICULA_CONSULTAR_PROPIA | UC-01 post | — |
-| GET | /solicitudes-matricula?estado&q&page (bandeja) | MATRICULA_EVALUAR | UC-02 paso 1 | RF-05 |
-| GET | /solicitudes-matricula/{codigo} → datos, documentos (URL de descarga), **validaciones** (matrícula activa, deudas, admisión, vacantes), secciones con vacantes y resumen de costos | MATRICULA_EVALUAR | UC-02 pasos 2–7 | RF-02, RF-04, RF-05, RF-06 |
-| PUT | /solicitudes-matricula/{id}/evaluacion `{tipoEstudiante, estadoAdmision}` | MATRICULA_EVALUAR | UC-02 pasos 3–4 | RF-05 |
-| POST | /solicitudes-matricula/{id}/rechazo `{motivo, observacion}` | MATRICULA_EVALUAR | UC-02 FA-1…FA-5 | RF-05 |
-| POST | /matriculas `{solicitudId, seccionId, costosAceptados:true}` → 201 o 409 `SIN_VACANTE` / 422 `MATRICULA_DUPLICADA`, `DEUDA_VENCIDA`, `NO_ADMITIDO` | MATRICULA_REGISTRAR | UC-02 pasos 9–13 | RF-04, RF-05, RF-07, RNF-09, RNF-10 |
-| GET | /matriculas?anioId&seccionId&page | MATRICULA_CONSULTAR | — | RF-05 |
-| GET | /alumnos/{id}/matricula?anioId | MATRICULA_CONSULTAR_PROPIA (+alcance) / MATRICULA_CONSULTAR | UC-03 (FA-2) | RF-05 |
-
-**Pagos**
-| GET / PUT | /anios-escolares/{id}/politica-cobranza (+cronograma) | COBRANZA_GESTIONAR | — (pre UC-01/02) | RF-06 |
-| GET | /alumnos/{id}/obligaciones?anioId | OBLIGACION_CONSULTAR_PROPIA (+alcance) | UC-03 (FA-1) | RF-07, RF-09, RF-11 |
-| POST | /comprobantes/carga → URL prefirmada | COMPROBANTE_PRESENTAR | UC-04 | DA-07 |
-| POST | /comprobantes `{obligacionId, numeroOperacion, medioPago, fechaPago, montoPresentado, claveArchivo}` | COMPROBANTE_PRESENTAR | UC-04 (FA-1, FA-2) | RF-08 |
-| GET | /comprobantes?estado=PENDIENTE&page | COMPROBANTE_VALIDAR | UC-05 paso 1 | RF-08 |
-| GET | /comprobantes/{id} (obligación, base, penalidad, total, checks, URL del voucher) | COMPROBANTE_VALIDAR | UC-05 pasos 2–4 | RF-08, RF-10 |
-| POST | /comprobantes/{id}/validacion → registra el pago y la boleta y marca PAGADA (1 transacción) | COMPROBANTE_VALIDAR | UC-05 pasos 5–9 | RF-08, RF-09, RNF-10, RNF-11 |
-| POST | /comprobantes/{id}/observacion · /rechazo | COMPROBANTE_VALIDAR | UC-05 FA-1, FA-2 | RF-08 |
-| GET | /alumnos/{codigo}/historial-financiero?anioId | PAGO_HISTORIAL_CONSULTAR | UC-06 (FA-1, FA-2) | RF-11 |
-
-**Asistencia**
-| GET | /asistencias/docentes/mia/hoy → hora del servidor, primera clase, tolerancia, estado del día | ASISTENCIA_DOCENTE_MARCAR | UC-07 | RF-17 |
-| POST | /asistencias/docentes (marcar) → 201, 200 (FA-1 existente) o 422 `SIN_CLASES` / `DIA_NO_LECTIVO` / `JORNADA_CERRADA` | ASISTENCIA_DOCENTE_MARCAR | UC-07 (FA-1…FA-3) | RF-12, RF-17, RF-18, RF-19 |
-| GET | /asistencias/docentes/mia?desde&hasta | ASISTENCIA_DOCENTE_MARCAR | UC-07 (vista) | RF-19 |
-| GET | /asistencias/docentes?fecha | ASISTENCIA_REPORTE_GENERAL | UC-12 (consulta) | RF-18, RF-20 |
-| GET | /secciones/{id}/asistencias?fecha (lista alfabética + registros existentes) | ASISTENCIA_ALUMNO_REGISTRAR (+tutor) | UC-08 pasos 2–4 | RF-13 |
-| POST | /secciones/{id}/asistencias `{registros:[{alumnoId, estado: PUNTUAL\|FALTA}]}` (lote atómico) | ASISTENCIA_ALUMNO_REGISTRAR | UC-08 (FA-1…FA-5) | RF-13 |
-| PATCH | /asistencias/alumnos/{id} `{estado:"TARDANZA"}` | ASISTENCIA_ALUMNO_REGISTRAR (+tutor) | UC-09 (FA-1…FA-3) | RF-12, RF-14 |
-| GET | /asistencias/alumnos/mia?mes | ASISTENCIA_CONSULTAR_PROPIA | (inicio alumno) | RF-15 |
-| GET | /reportes/asistencia?ambito=ALUMNOS\|DOCENTES&anio&mes&seccionId&formato=json\|xlsx\|pdf | ASISTENCIA_REPORTE_SECCION (solo su sección) / ASISTENCIA_REPORTE_GENERAL | UC-10, UC-11 (FA-1…FA-4) | RF-15, RF-16, RF-20 |
-
-**Evaluación**
-| GET | /asignaciones/mias (cursos que dicta) | LOGRO_REGISTRAR | UC-15 paso 1 | RF-30 |
-| GET | /asignaciones/{id} (curso, sección, competencias, regla, bimestre vigente) | LOGRO_REGISTRAR | UC-16 paso 2 | RF-30, RF-33 |
-| GET | /asignaciones/{id}/logros?bimestreId | LOGRO_REGISTRAR | UC-15 paso 2 | RF-21 |
-| PUT | /asignaciones/{id}/logros `{bimestreId, registros:[{alumnoId, competenciaId, nivel}]}` → aviso si está incompleto (FA-2) | LOGRO_REGISTRAR | UC-15 (FA-1, FA-2) | RF-21, RF-48 |
-| PUT | /asignaciones/{id}/regla `{regla}` | REGLA_DEFINIR | UC-16 (FA-1, FA-2) | RF-25 |
-| GET | /asignaciones/{id}/notas-consolidadas | LOGRO_REGISTRAR | UC-17 paso 2 | RF-28 |
-| POST | /asignaciones/{id}/notas-finales | NOTA_FINAL_CALCULAR | UC-17 | RF-25, RF-27, RF-37 |
-| GET | /consolidaciones/avance?anioId&bimestreId | NOTA_CONSOLIDAR_BIMESTRE | UC-18 paso 2 (FA-2) | RF-26 |
-| POST | /consolidaciones `{bimestreId}` → 422 `REGISTRO_INCOMPLETO` + lista de docentes pendientes | NOTA_CONSOLIDAR_BIMESTRE | UC-18 (FA-1, FA-2) | RF-26, RF-27, RF-34, RF-36 |
-| GET | /alumnos/{id}/cursos | NOTA_CONSULTAR_PROPIA (+alcance) | UC-19 paso 2 | RF-31, RF-32 |
-| GET | /alumnos/{id}/notas?cursoId | NOTA_CONSULTAR_PROPIA | UC-19 pasos 4–5 | RF-29, RF-33 |
-| GET | /alumnos/{id}/libretas/{anioId}.pdf?bimestre | NOTA_CONSULTAR_PROPIA | UC-19 (FA-2) | RF-34, RF-35, RF-36 |
-
-**Archivos (solo en el perfil local)**: `PUT/GET /api/v1/archivos/{token}` emula la URL prefirmada (token HMAC de 5 min). En `aws` se usan URL de S3.
-**Operación**: `/actuator/health` (ALB), `/v3/api-docs`, `/swagger-ui.html` (solo en local).
+**Archivos (desarrollo local sin S3):** `PUT/GET /api/v1/archivos-locales/{token}` existe solo cuando `gesedu.archivos.tipo=disco`. Imita la URL prefirmada con un token HMAC de 5 min, en el mismo origen (S-20).
 
 ---
 
-## 5. Mapeo de pantallas (wireframes → rutas)
+## 6. Mapeo de pantallas (wireframes → rutas)
 
-| WF (pág.) | Ruta frontend | Componentes principales | Endpoints | Roles | UC |
+| Wireframe | Ruta SPA | Componentes principales | Endpoints | Roles | Fase |
 |---|---|---|---|---|---|
-| p1 | `/login` | FormLogin, Alerta de bloqueo | /auth/login | público | UC-24 |
-| p2–3 | `/intranet/inicio` | tarjetas por rol (clase actual y siguiente, notas del bimestre, asistencia del mes, matrícula) | /auth/me, /horarios/vigente, /alumnos/{id}/notas, /asistencias/alumnos/mia, /alumnos/{id}/matricula | todos | — |
-| p4–5 | `/intranet/matricula/solicitud` | Stepper (Estudiante, Documentos, Grado, Confirmar), CargaArchivo | /solicitudes-matricula/documentos/carga, POST /solicitudes-matricula | Apoderado | UC-01 |
-| p6 | `/intranet/matricula/solicitudes` y `/intranet/matricula/solicitudes/:codigo` | Bandeja + panel de evaluación (validaciones, secciones con vacantes, resumen de costos, casilla de aceptación, Rechazar/Confirmar) | §4.3 Matrícula | Admin | UC-02 |
-| p7–8 | `/intranet/pagos` | resumen de deuda, tabla de obligaciones, selector de hijo | /alumnos/mios, /alumnos/{id}/matricula, /alumnos/{id}/obligaciones | Apoderado (Alumno: Q-07) | UC-03 |
-| p9–10 | `/intranet/pagos/comprobante?obligacion=:id` | formulario + CargaArchivo | /comprobantes/carga, POST /comprobantes | Apoderado | UC-04 |
-| p11 | `/intranet/pagos/validar` | lista de pendientes + detalle (checks, monto vs. total) + Rechazar/Observar/Validar | /comprobantes… | Admin | UC-05 |
-| p12 | `/intranet/pagos/historial/:codigoAlumno` | pestañas Obligaciones / Boletas y pagos / Deudas y penalidades | /alumnos/{codigo}/historial-financiero | Admin | UC-06 |
-| p13–14 | `/intranet/mi-asistencia` | reloj del servidor, primera clase, botón Registrar, últimos 5 días (**sin** el indicador "Conectado a la red", C-01) | /asistencias/docentes/mia/hoy, POST /asistencias/docentes | Docente | UC-07 |
-| p15 | `/intranet/asistencia/:seccion/registrar` | lista alfabética con Puntual/Falta, "Marcar todos como Puntual", resaltado de pendientes | GET/POST /secciones/{id}/asistencias | Docente tutor | UC-08 |
-| p16 | `/intranet/asistencia/:seccion/registro-del-dia` | tabla del día + modal "Cambiar a Tardanza" (límite StudentLateCutoffTime) | PATCH /asistencias/alumnos/{id} | Docente tutor | UC-09 (C-06) |
-| p17 | `/intranet/asistencia/reportes` | filtros ámbito, mes y sección; vista previa; descarga Excel/PDF | /reportes/asistencia | Admin; tutor (solo su sección) | UC-10, UC-11 (C-05) |
-| p18 | `/intranet/asistencia/resumen-mensual` (en vez de `/consolidacion`, C-05) | resumen por sección **calculado al consultar**, sin estados "Consolidado" | /reportes/asistencia?formato=json | Admin | UC-10, UC-11 |
-| p19 | `/intranet/asistencia/docentes/:fecha` | tabla de docentes con clases (solo consulta) | /asistencias/docentes?fecha | Admin | UC-12 |
-| p20 | `/intranet/academico/anio-escolar/nuevo` | Paso 1 fechas, Paso 2 bimestres, línea de tiempo con superposición | POST /anios-escolares | Directivo | UC-13 |
-| p21 | `/intranet/academico/:anio/cursos` | lista de cursos + editor de curso y competencias + "Copiar configuración" | §4.3 Académico | Directivo | UC-14 |
-| p22 | `/intranet/notas/:curso/:seccion/bimestre-:n` | grilla alumnos × competencias con validación AD/A/B/C y aviso de incompletos | /asignaciones/{id}/logros | Docente | UC-15 |
-| p23 | `/intranet/cursos/:cursoSeccion/configuracion` | tarjetas de las 3 reglas con ejemplo, regla actual y por defecto | PUT /asignaciones/{id}/regla | Docente | UC-16 |
-| p24 | `/intranet/notas/:curso/:seccion/finales` | B-I…B-IV + Final por competencia, botón "Calcular notas finales" | /asignaciones/{id}/notas-consolidadas, POST notas-finales | Docente | UC-17 |
-| p25 | `/intranet/academico/consolidar-notas` | avance por curso y sección, docentes pendientes, botón Consolidar | /consolidaciones… | Directivo | UC-18 |
-| p26–27 | `/intranet/notas` | cursos con la nota del bimestre, detalle por competencia y nivel esperado, descargar informe y libreta | /alumnos/{id}/cursos, /notas, /libretas | Alumno, Apoderado | UC-19 |
-| p28 | `/intranet/disponibilidad/:anio` | matriz clicable de días × bloques, carga vs. disponibles, observaciones, Confirmar | /disponibilidades/mia | Docente | UC-20 |
-| p29 | `/intranet/horarios/:anio/elaborar` | SelectorPerspectiva, **MatrizHorario**, panel "Nueva asignación" con opciones filtradas, conflicto en tiempo real y panel de carga horaria | §4.3 Horarios | Admin | UC-21 |
-| p30 | `/intranet/horarios/:anio/publicar` | tabla de completitud, botón Publicar (deshabilitado si hay observaciones) | /completitud, POST /publicaciones | Admin | UC-22 |
-| p31–33 | `/intranet/horario` | MatrizHorario de solo lectura, detalle del bloque, estado "aún no ha sido publicado" | /horarios/vigente | Alumno, Apoderado, Docente (sus asignaciones), Admin (cualquier perspectiva) | UC-23 |
-| p34 | `/intranet/usuarios` | tabla con filtros, modal Nuevo usuario (duplicado de DNI, vínculo con matrícula, vista de permisos del rol), Desbloquear/Desactivar | §4.3 Seguridad | Admin | UC-24 |
-| p35 | `/intranet/auditoria` | filtros (usuario, módulo, acción, fechas), tabla paginada, Exportar | §4.3 Auditoría | Admin | UC-25 |
-| (sin WF) S-14 | `/intranet/configuracion/{secciones, aulas, bloques, disponibilidad, vinculaciones, carga-horaria, cobranza}` | formularios CRUD con el estilo de los WF | endpoints de configuración | Admin / Directivo | pre de UC-01/02/20/21/22 |
+| Login (p. 1) | `/login` | FormLogin (rhf + zod), AlertaBloqueo, enlace «¿Olvidaste tu contraseña?» | /auth/inicio-sesion | público | 1 |
+| *(sin wireframe, S-01)* | `/recuperar-contrasena`, `/restablecer-contrasena?token=` | FormCorreo, FormNuevaContrasena | /auth/recuperacion[/confirmacion] | público | 1 |
+| Inicio del alumno (p. 2–3) | `/intranet/inicio` | TarjetaClaseActual, ClasesDeHoy, ResumenAsistencia, NotasBimestre, EstadoMatricula. En la fase 1, inicio mínimo por rol | /auth/yo, /horarios/{anio}/vigente, /alumnos/{id}/… | todos (contenido por rol) | 1 (mínimo) → 5 |
+| Solicitar matrícula (p. 4–5) | `/intranet/matricula/solicitud` | Asistente de 4 pasos, SelectorArchivo (subida prefirmada), resumen de errores | /solicitudes-matricula[/archivos] | Apoderado | 2 |
+| Evaluar solicitud (p. 6) | `/intranet/matricula/solicitudes` y `/intranet/matricula/solicitudes/$codigo` | BandejaSolicitudes, DetalleSolicitud, ListaValidaciones, SelectorSeccion (vacantes), TablaCostos, CheckAceptacion, DialogoRechazo | ★ bandeja, detalle, confirmación, rechazo | Administrador | **1** |
+| Matrícula y pagos del apoderado (p. 7–8) | `/intranet/pagos` | SelectorHijo, TarjetaMatricula, TablaObligaciones (desglose de penalidad), tarjetas Deuda vencida y Próximo vencimiento | /matriculas/mias, /alumnos/{id}/obligaciones | Apoderado (el alumno ve su matrícula en el inicio) | 2 |
+| Presentar comprobante (p. 9–10) | `/intranet/pagos/comprobante?obligacion=` | FormComprobante, SelectorArchivo | /obligaciones/{id}/comprobantes… | Apoderado | 2 |
+| Validar comprobantes (p. 11) | `/intranet/pagos/validar` | BandejaComprobantes, PanelVerificacion (monto vs. total), VisorVoucher, Rechazar/Observar/Validar | /comprobantes… | Administrador | 2 |
+| Historial financiero (p. 12) | `/intranet/pagos/historial` (buscador) y `/intranet/pagos/historial/$codigoAlumno` | Pestañas Obligaciones / Boletas / Deudas, TotalesFinancieros | /alumnos/{codigo}/historial-financiero | Administrador | 2 |
+| Mi asistencia docente (p. 13–14) | `/intranet/mi-asistencia` | RelojServidor, BotonRegistrar, Ultimos5Dias. **Sin la insignia de «red del colegio» (C-04)** | /asistencia-docente/hoy, marcaciones, mias | Docente | 4 |
+| Registrar asistencia de la sección (p. 15) | `/intranet/asistencia/$seccion/registrar` | TablaPaseLista (Puntual / Tardanza / Falta, según UC-08 paso 5 y RF-14; el wireframe p. 15 solo muestra Puntual y Falta y no se actualizará: prevalece la ERS), MarcarTodos, AvisoPendientes | /secciones/{codigo}/asistencia | Docente tutor | 4 |
+| Registro del día (p. 16) | `/intranet/asistencia/$seccion/registro-del-dia` | TablaDia, DialogoCambiarATardanza (hora límite). **Sin historial ni responsable (C-07)** | GET asistencia, PATCH | Docente tutor | 4 |
+| Reportes de asistencia (p. 17) | `/intranet/asistencia/reportes` | Filtros (ámbito, mes, sección), VistaPrevia, Descargar Excel/PDF, «generado el …». **El % sigue la ERS (C-06)** | /reportes/asistencia | Administrador, Docente tutor (solo su sección) | 4 |
+| Consolidación mensual (p. 18) | — **no se implementa** (C-05) | — | — | — | — |
+| Asistencia docente del día (p. 19) | `/intranet/asistencia/docentes/$fecha` | TablaDocentesDia, «generado al cierre» | /asistencia-docente?fecha= | Administrador | 4 |
+| Nuevo año escolar (p. 20) | `/intranet/academico/anio-escolar/nuevo` | Paso de fechas, Paso de bimestres, LineaTiempo con superposiciones | /anios-escolares | Administrador (Directivo) | 3 |
+| Cursos y competencias (p. 21) | `/intranet/academico/$anio/cursos` | ListaCursos, FormCurso, ListaCompetencias, CopiarAñoAnterior | /anios-escolares/{anio}/cursos… | Administrador (Directivo) | 3 |
+| Registro de notas (p. 22) | `/intranet/notas/$curso/$seccion/bimestre-$n` | RejillaLogros (AD/A/B/C), AvisoIncompletos, contador de celdas | /asignaciones-docentes/{id}/registros | Docente | 5 |
+| Configuración del curso (p. 23) | `/intranet/cursos/$cursoSeccion/configuracion` (p. ej. `matematica-3A`) | TarjetasRegla con ejemplo, EditorPesos por bimestre (S-14) | /asignaciones-docentes/{id}/configuracion | Docente | 5 |
+| Notas finales (p. 24) | `/intranet/notas/$curso/$seccion/finales` | TablaBimestres×Competencias, BotonCalcular | /…/notas-finales[/calculo] | Docente | 5 |
+| Consolidar notas (p. 25) | `/intranet/academico/consolidar-notas` | TablaAvance, DocentesPendientes, botón habilitado al 100 % | /bimestres/{n}/avance, consolidacion | Administrador (Directivo) | 5 |
+| Mis notas (p. 26–27) | `/intranet/notas` | ListaCursos, DetalleCompetencias (nivel esperado), HistoricoBimestres, Descargar informe, Ver libreta | /alumnos/{id}/… | Alumno, Apoderado (con SelectorHijo) | 5 |
+| Mi disponibilidad (p. 28) | `/intranet/disponibilidad/$anio` | MatrizDisponibilidad (clic para alternar), AlertaInsuficiente, Observaciones | /disponibilidad/mia | Docente | 3 |
+| Elaborar horario (p. 29) | `/intranet/horarios/$anio/elaborar` | **MatrizHorario** (perspectivas Sección/Docente, **sin «Por aula» (C-03)**), PanelAsignacion (curso con h asignadas/requeridas, docentes con Disponible/«tiene clase en…», alerta de conflicto en vivo), CargaHorariaSeccion | ★ borrador, opciones, validaciones, asignaciones | Administrador | **1** |
+| Publicar horario (p. 30) | `/intranet/horarios/$anio/publicar` | TablaCompletitud, DetalleObservaciones, Publicar deshabilitado mientras haya observaciones | /completitud, /publicaciones | Administrador | 3 |
+| Mi horario (p. 31–33) | `/intranet/horario` | MatrizHorario (solo lectura), DetalleBloque, vista diaria en móvil, «aún no publicado» + «Ver horario 2026» | /horarios/{anio}/vigente | Alumno, Apoderado, Docente (perspectiva docente), Administrador (cualquiera) | 3 |
+| Usuarios (p. 34) | `/intranet/usuarios` | TablaUsuarios (filtros, paginación), DialogoNuevoUsuario (rol, vínculo con matrícula, permisos del rol), Desactivar/Activar/Desbloquear | /usuarios… | Administrador | 1 (lista + desbloquear) → 6 |
+| Auditoría (p. 35) | `/intranet/auditoria` | FiltrosAuditoria, TablaPaginada, Exportar ▾ (Excel/CSV), «no se pueden editar ni eliminar» | ★ /auditoria/… | Administrador | **1** |
+| *(sin wireframe, S-02)* | `/intranet/academico/$anio/secciones`, `/intranet/pagos/configuracion`, `/intranet/horarios/$anio/configuracion`, `/intranet/usuarios/roles` | Formularios simples | RF-03, RF-04, RF-06, RF-46, RF-47, RF-48 | Administrador | 2, 3, 6 |
 
-Responsive (RNF-02): las páginas de alumno, apoderado y docente tienen versión móvil (WF p3, 5, 8, 10, 14, 27, 32, 33) con `NavInferiorMovil` (Inicio · Notas · Horario · Pagos). El menú lateral se arma con los **permisos** de `/auth/me` (RF-49); el backend decide siempre.
+El menú lateral (escritorio) y la barra inferior (móvil, p. 3, 8, 14, 27) se arman con los **permisos** de `/auth/yo`. Rutas: TanStack Router con `beforeLoad` exige sesión y permiso y redirige a `/login` o a `/intranet/inicio`. Esto solo oculta opciones: la decisión de acceso la toma siempre el backend (DA-05).
 
 ---
 
-## 6. Fases de implementación
+## 7. Fases de implementación
 
-Cada fase incluye: tareas, criterios de aceptación (de los flujos de la ERS), RF/RNF cubiertos y pruebas. **Definición de terminado (todas las fases)**: código con revisión por PR, pruebas en verde en CI, OpenAPI actualizado, operaciones críticas con `@Auditable`, la regla ArchUnit pasa y no hay valores fijos de configuración.
+**Calendario.** La demo es el **23/10/2026** (P-01, resuelta) y solo exige la arquitectura funcionando en localhost, por lo que el alcance de esa fecha es la sección 7.0. Las semanas S1–S8 de las fases siguientes **empiezan el día siguiente a la demo**; su conversión a fechas calendario queda pendiente (P-08). Cada fase termina con CI en verde y una demo interna.
 
-### Fase 0 — Base (repositorio, Docker, seguridad, auditoría, errores, CI)
+### 7.0 Demo 23/10 (esqueleto vertical, mínimo indispensable)
+**Objetivo.** Mostrar la arquitectura funcionando en localhost: pantalla → REST → filtro JWT → controlador → servicio → repositorio → PostgreSQL 18. Es un subconjunto de las fases 0 y 1; lo que se construye aquí **se conserva** (no se tira) cuando se continúe con el plan.
+
+**Dentro de la demo**
+| # | Entrega | Detalle |
+|---|---|---|
+| 1 | Monorepo, Docker y `.run/` | `gesedu/` con `backend/` y `frontend/`, `docker-compose.yml` con `postgres:18` (volumen en `/var/lib/postgresql`) y Mailpit opcional, `.gitattributes`, `.gitignore`, `.editorconfig`, `.env.example`, `.run/` para IntelliJ (Docker Compose, Backend demo, Frontend dev, Pruebas backend) y `scripts/reiniciar-bd.ps1/.sh` |
+| 2 | Backend Spring Boot 4.1 + Java 25 | Estructura `pe.edu.gesedu.<modulo>.{api, aplicacion, dominio, infraestructura}` para los 10 paquetes del plan, aunque **solo se implementen `seguridad`, `auditoria` y `horarios`** (más `academico` solo para `anio_escolar`, que necesita `bloque_horario`). Prueba **ArchUnit** básica: dependencias entre capas, módulos solo vía `aplicacion` y sin ciclos entre módulos |
+| 3 | Flyway mínimo | Se conserva la numeración del plan, con huecos: `V1` extensiones y esquemas, `V2` seguridad (`rol_acceso`, `permiso`, `rol_permiso`, `usuario`, `administrador`), `V3` `academico.anio_escolar`, `V6` `horarios.bloque_horario`, `V9` auditoría (tablas + trigger de solo inserción + `GRANT SELECT, INSERT` a `gesedu_app`), `V11` catálogo de roles y permisos. Roles de BD `gesedu_migrador` y `gesedu_app`. Semilla `db/demo/V1000`: **un usuario por rol y el Directivo** (+ la cuenta `bloqueo@`), el año 2027 y sus **bloques horarios** (§ 7.2). Las migraciones restantes (`V4`, `V5`, `V7`, `V8`, `V10`) se agregan después; mientras no haya despliegue compartido todos reinician la base (S-26) |
+| 4 | Seguridad | Inicio de sesión con **JWT (15 min) y BCrypt 12**, `@PreAuthorize` con permisos, **bloqueo tras 5 intentos** (RNF-06, S-03: 15 min) y errores **RFC 9457** con `codigo`. **Sin refresh token ni recuperación de contraseña** (S-27) |
+| 5 | Endpoints de ejemplo | `GET /api/v1/auth/yo`; `GET /api/v1/anios-escolares/{anio}/bloques` (cualquier rol, permiso `HORARIO_CONSULTAR`); `POST /api/v1/anios-escolares/{anio}/bloques` (solo Administrador, `HORARIO_CONFIGURAR`, `@Auditable`) |
+| 6 | Auditoría | Aspecto `@Auditable` síncrono en la misma transacción; `GET /api/v1/auditoria/registros` con filtros (usuario, módulo, acción, fechas) y paginación, solo Administrador (`AUDITORIA_CONSULTAR`) |
+| 7 | Swagger UI | springdoc 3.x en `/swagger-ui.html` con bearer |
+| 8 | Frontend | React 19 + TypeScript + Vite + TanStack Router + TanStack Query: `/login`, `/intranet/inicio` con menú según el rol, `/intranet/horarios/bloques` y `/intranet/auditoria`. Diseño simple y responsive |
+| 9 | Guion | `docs/demo/guion.md` con los comandos en PowerShell y los pasos de la demo (5 a 10 minutos) |
+
+**Fuera de la demo (queda para después, según el plan):** CI, refresh token y cierre de sesión revocable, recuperación de contraseña, exportación de auditoría, UC-21 completo, UC-02 y matrícula, el resto del esquema (V4, V5, V7, V8, V10) y de los módulos.
+
+**Desviaciones respecto al plan v1.2 (temporales)**
+- En la demo, `GET .../bloques` exige `HORARIO_CONSULTAR` (todos los roles) y no `HORARIO_CONFIGURAR`; en el plan completo la configuración de bloques es solo de gestión.
+- El cierre de sesión de la demo solo borra el token de la SPA: sin refresh token no hay revocación en el servidor (se completa en la fase 0 completa).
+- El token de acceso dura 15 minutos y no se renueva: la demo debe durar menos o se inicia sesión de nuevo.
+
+**Orden de construcción y puntos de control.** (1) Docker, base del repositorio, backend base y migraciones; (2) seguridad y auditoría; (3) endpoints y Swagger; (4) frontend; (5) guion. Al terminar cada parte se verifica con los comandos indicados y se espera la confirmación del equipo antes de continuar.
+
+
+
+### Fase 0 — Base (S1)
 **Tareas**
-1. Monorepo: `.gitignore`, `.editorconfig`, README, `.env.example`, `docker-compose.yml` (postgres:16 con healthcheck y volumen, mailpit 1025/8025), `infra/local/postgres/init/01-roles.sql`.
-2. Backend: Spring Boot 3.3.x, Java 21, Maven wrapper. Dependencias: web, validation, security, data-jpa, aop, actuator, flyway-core + flyway-database-postgresql, postgresql, springdoc-openapi-starter-webmvc-ui 2.x, caffeine, shedlock-spring + shedlock-provider-jdbc-template, uuid-creator, nimbus-jose-jwt (vía spring-security-oauth2-jose), poi-ooxml, openpdf, bucket4j-core (límite de login), AWS SDK v2 s3/ses (perfil aws), spring-boot-starter-mail. Test: testcontainers-postgresql, archunit-junit5, spring-security-test.
-3. `compartido` y `transversal`: excepciones → `ManejadorErrores` (ProblemDetail RFC 7807 + `codigo`, traducción de `DataIntegrityViolationException` por nombre de constraint y de `OptimisticLockingFailureException` a 409), `PaginaRespuesta`, `RelojInstitucional`, `@Auditable`, `AuditoriaContexto`, `UsuarioAutenticado`, OpenAPI con esquema bearer, Jackson (fechas con offset, BigDecimal como string), Caffeine y ShedLock.
-4. Migraciones V1 a V5. `gesedu_app` sin UPDATE/DELETE en auditoría.
-5. **Seguridad** (DA-04, DA-05): `AutenticacionService.login` → busca por correo o DNI; si `bloqueado_hasta > now` → 401 `CUENTA_BLOQUEADA` (sin revelar si la contraseña era correcta); si falla → `intentos_fallidos+1` y al llegar a 5 asigna `bloqueado_hasta = now + SECURITY_BLOQUEO_MINUTOS` y audita "Bloqueó la cuenta…" (UC-24 FA-3). Esto **se confirma (commit)** antes de responder 401 (transacción propia, `noRollbackFor`). Si el login es correcto, reinicia el contador, actualiza `ultimo_acceso` y emite el JWT de 15 min (claims: sub, rolId, perfil, permisos) y el refresh rotatorio (hash SHA-256 en BD, cookie HttpOnly). `JwtFiltro` (OncePerRequestFilter) valida firma y expiración y consulta `EstadoCuentaCache` (Caffeine, TTL 30 s, se invalida al desactivar o bloquear) y `PermisosPorRolCache` (se invalida en PUT /roles/{id}/permisos). Al desactivar una cuenta se revocan sus refresh tokens. `@EnableMethodSecurity` + `@PreAuthorize("hasAuthority('X')")` en los servicios de aplicación. BCrypt con costo `BCRYPT_COST` (12). Límite de peticiones en /auth/login.
-6. **Auditoría** (DA-06): `AuditableAspect` (@Around, `@Order` dentro del advisor transaccional: `@EnableTransactionManagement(order = Ordered.HIGHEST_PRECEDENCE)` y aspecto de menor precedencia) escribe `RegistroAuditoria` + `CambioAuditoria` del `AuditoriaContexto` mediante `AuditoriaService.registrar` (`Propagation.MANDATORY`). Si la operación falla no hay registro y si el registro falla se revierte la operación. Para los jobs se usa el actor "Sistema" (usuario_id NULL).
-7. Frontend: Vite + React 18 + TS estricto, ESLint y Prettier, React Router 6, TanStack Query 5, react-hook-form + zod, Vitest + Testing Library. `http.ts` (Bearer, un solo refresh concurrente ante 401, `ProblemError`), `AuthProvider` (access token **en memoria**, refresh silencioso al cargar), `RutaProtegida`, `RequierePermiso`, `IntranetLayout`, tokens CSS, generación de tipos `npm run api:types`.
-8. CI: workflows de backend (`./mvnw -B verify`) y frontend (`npm ci && npm run lint && npm run typecheck && npm test && npm run build`), con caché y path filters. El trabajo de backend exporta `openapi.json` como artefacto.
-9. Prueba de arquitectura ArchUnit (§2) y `ConfiguracionAsistenciaProperties` validada (`@Validated`, `@PositiveOrZero`, `@NotNull`, más una validación cruzada `studentLateCutoffTime < schoolDayClosingTime` y `ZoneId` válido). Un valor inválido **impide el arranque** con un mensaje de diagnóstico (DA-10).
+1. Repositorio: `.gitattributes`, `.gitignore`, `.editorconfig`, `.env.example`, `README.md`, `.run/*` (§ 2.4), `docker-compose.yml` + `infra/postgres/init` (§ 2.3), y los scripts `.sh`/`.ps1`.
+2. Backend: proyecto Maven con wrapper (Spring Boot 4.1.x, Java 25); paquetes vacíos de los 10 módulos con sus 4 capas; perfiles; `AsistenciaProperties` validado (DA-10); `Clock` con la zona institucional.
+3. Flyway V1 a V11 (todo el esquema, para que los equipos no se bloqueen entre sí; editables hasta el primer despliegue compartido, § 4.4 y S-26) y los roles `gesedu_migrador` y `gesedu_app`.
+4. `compartido`: `EntidadBase` (UUIDv7, auditoría técnica de timestamps), `Dinero` (BigDecimal escala 2, HALF_UP), `ExcepcionNegocio` + `CodigoError` + `ManejadorProblemas` (RFC 9457), paginación, ETag e If-Match.
+5. Seguridad (inicio y cierre de sesión, refresh, bloqueo y permisos; la recuperación de contraseña pasa a la segunda prioridad de la fase 1): BCrypt 12, emisión y validación de JWT HS256 (15 min), refresh rotativo con detección de reutilización, filtro que verifica cuenta activa y no bloqueada (caché Caffeine), permisos con `@PreAuthorize` y caché invalidable (RNF-07), bloqueo tras 5 intentos (RNF-06, S-03), límite de peticiones en `/auth/*` (Caffeine por IP).
+6. Auditoría: aspecto `@Auditable(accion, modulo, tipoEntidad, idEntidad = SpEL)` + `ContextoAuditoria.registrarCambio(campo, anterior, nuevo)`, en la misma transacción (`@Around` dentro de la transacción, `Propagation.MANDATORY` en el repositorio de auditoría), con «Sistema» para los jobs.
+7. Transversal: interfaces `GestorArchivos` (disco y S3) y `Notificador` (SMTP y SES, `@Async` tras el commit), springdoc 3 con bearer, ShedLock configurado, `GeneradorExcel`.
+8. ArchUnit: reglas de § 2.1 + «solo `@Transactional` en `aplicacion`» + «los controladores no devuelven entidades».
+9. Frontend: Vite + React 19 + TS estricto, TanStack Router (plugin) y Query, ESLint 9, Prettier, Vitest + Testing Library + MSW, tokens CSS, `Layout`, cliente de API con refresh transparente y parseo de problem+json, `SesionProvider` (token de acceso en memoria y refresh al cargar), generación de tipos OpenAPI.
+10. CI (§ 10).
 
-**Criterios de aceptación**: `docker compose up -d` + `./mvnw spring-boot:run` arrancan y aplican V1 a V5; `/actuator/health` = UP; con credenciales malas 5 veces la cuenta queda bloqueada y el 6.º intento, aun correcto, recibe 401 `CUENTA_BLOQUEADA` (RNF-06); un endpoint protegido sin permiso devuelve 403 problem+json; `UPDATE auditoria.registro_auditoria` como `gesedu_app` falla; si `GESEDU_ASISTENCIA_SCHOOL_DAY_CLOSING_TIME` es inválido la app no arranca.
-**RF/RNF**: RF-47, RF-48, RF-49, RNF-01, RNF-06, RNF-07, RNF-08, DA-02 a DA-06, DA-08, DA-10.
-**Pruebas**: `BloqueoCuentaIT`, `RefreshTokenIT` (rotación, revocación), `JwtFiltroTest`, `AuditoriaInmutableIT`, `AuditoriaTransaccionalIT` (rollback conjunto), `ManejadorErroresTest`, `ConfiguracionAsistenciaPropertiesTest`, `ReglasModulosTest` (ArchUnit), y en el frontend `http.test.ts` (refresh único).
+**Criterios de aceptación**
+- `docker compose up -d` + `.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local` (o `./mvnw …`) arranca; Flyway aplica V1 a V11 como `gesedu_migrador`; la aplicación se conecta como `gesedu_app`; Swagger UI responde en `/swagger-ui.html`.
+- Con `GESEDU_ASISTENCIA_STUDENT_LATE_CUTOFF_TIME` ≥ `SCHOOL_DAY_CLOSING_TIME`, la aplicación **no arranca** y explica por qué (DA-10).
+- `UPDATE auditoria.registro_auditoria …` como `gesedu_app` → `permission denied`; como dueño → excepción del trigger (RNF-08).
+- `./mvnw -B verify` y `npm run lint && npm run typecheck && npm test && npm run build` pasan en CI.
 
-### Fase 1 — Demo en localhost (UC-24 login y roles, UC-21, UC-02, UC-25 + semillas)
+**RF/RNF:** RF-01 (sin DELETE de usuarios), RF-48, RF-49, RF-50, RF-52, RNF-01, RNF-06, RNF-07, RNF-08 y la base de RNF-03.
+**Pruebas:** ArchUnit; `JwtServiceTest`; `BloqueoCuentaIT` (5 fallos → bloqueado; un éxito reinicia el contador); `AuditoriaInmutableIT`; `AsistenciaPropertiesTest`; `ProblemDetailsIT` (formato y `codigo`).
+
+### Fase 1 — Demo ampliada en localhost (después del 23/10; el alcance del 23/10 está en § 7.0)
+**Corte mínimo de demo (prioridad 1, P1).** Es lo que tiene que funcionar el día de la demo aunque lo demás no llegue:
+- **(a)** Inicio de sesión con los 4 roles y el Directivo, menú según el rol y bloqueo tras 5 intentos (UC-24 FA-3 y FA-4, RF-52, RNF-06, RNF-07).
+- **(b)** UC-21 completo: matriz, validación de cruces en tiempo real, `@Version` y auditoría de las asignaciones (RF-39 a RF-42, RF-47).
+- **(c)** Auditoría con consulta y exportación (UC-25, RF-49, RF-51, RNF-08).
+- **(d)** Swagger UI con springdoc 3.x.
+
+**Segunda prioridad (P2).** UC-02 con su correo (RF-12) y la recuperación de contraseña (UC-24 FA-5). El trabajo en P2 empieza cuando el corte mínimo está en `main`, con CI en verde y ensayado una vez completo; si P2 no llega, se omiten sus pasos del guion (§ 11) y la demo sigue siendo válida. La infraestructura que P2 reutiliza (`Notificador`, `GestorArchivos`, Mailpit) se deja lista en la fase 0 en cualquier caso.
 **Tareas**
-1. **Semillas** (`DemoDataSeeder`, perfil `demo`, idempotente): usuarios Administradora (Carmen Salas Paredes), Directivo (Ricardo Paredes Ortiz, cargo "Coordinación académica"), Docente tutora (Rosa Quispe Mendoza, 3° A), Alumna (Lucía García Rojas) y Apoderada (María Rojas Salazar), más ~10 docentes de los WF. Año 2026 CERRADO mínimo (para recurrentes y para una deuda vencida, FA-3). **Año 2027 PLANIFICADO** con 4 bimestres; grados 1° a 5° con secciones A y B (capacidad 30; 3° A con 4 vacantes, 3° B con 0 y 2° A con **1 vacante** para la demo de concurrencia); 6 cursos y sus competencias (WF p21: Mat 5 h, Com 5 h, CyT 4 h, CCSS 3 h, Ing 3 h, EF 2 h = 22 h); aulas (Aula 101 a 205, Lab. 1, Losa deportiva); bloques L–V 7:45–14:00 (8 por día, recreo 10:00–10:15); vinculaciones, asociaciones docente-curso, disponibilidad confirmada y carga horaria 2027; política de cobranza 2027 (S/ 350.00, 5 %, cronograma de 11 conceptos de WF p6); 8 solicitudes pendientes (MAT-2027-00479…00486) con documentos de ejemplo.
-2. Backend `academico` (lectura de estructura y vacantes), `horarios` (borrador, perspectivas, opciones, validación, CRUD de asignaciones con If-Match, completitud de solo lectura), `ValidadorConflictos` (dominio puro), `matricula` (bandeja, detalle con validaciones, evaluación, rechazo, confirmación) y `pagos.aplicacion.GeneradorObligaciones` (crea las obligaciones del cronograma dentro de la transacción de la matrícula). Notificación por correo a Mailpit (UC-02 paso 13, `@TransactionalEventListener(AFTER_COMMIT)` + `@Async`). `auditoria` (consulta paginada, detalle y exportación xlsx). `usuarios` (lista y desbloquear, para mostrar el bloqueo).
-3. Operaciones auditadas en la demo: login bloqueado, desbloqueo, crear/editar/eliminar asignación, confirmar y rechazar matrícula, evaluación de solicitud.
-4. Frontend: `/login`, `/intranet/inicio` (por rol), menú por permisos, `/intranet/horarios/2027/elaborar` (MatrizHorario + panel de asignación con validación en tiempo real con debounce de 300 ms), `/intranet/matricula/solicitudes[/:codigo]`, `/intranet/auditoria` y `/intranet/usuarios` (lista + desbloquear).
+1. **[P1] Inicio de sesión real** (RF-52, UC-24 FA-3 y FA-4, RNF-06, RNF-07): pantalla `/login` fiel al wireframe (etiqueta «Correo», C-02) con el mensaje de bloqueo; layout con menú lateral y barra inferior según los permisos; `/intranet/inicio` mínimo por rol (saludo, rol y accesos del menú); cierre de sesión que revoca el refresh token.
+2. **[P1]** **UC-21, Elaborar horario** (RF-39 a RF-42, RF-47): borrador por año (lo crea si no existe), perspectivas sección y docente sobre el mismo borrador, `opciones` (cursos con h asignadas/requeridas y docentes asociados con disponibilidad y ocupación), **validación en tiempo real** al elegir curso, docente y bloque (`/validaciones`), confirmación con revalidación transaccional + índices únicos + `@Version` (409 con «recarga la matriz»), alta, modificación y baja con `@Auditable`, y el panel de carga horaria de la sección (informativo, RF-43).
+3. **[P1] UC-25, Auditoría**: consulta con filtros por usuario, módulo, acción y fechas, paginada; detalle con los cambios; exportación a Excel (Apache POI) y CSV. Eventos auditados en el corte mínimo: inicio de sesión fallido con bloqueo y alta, cambio o baja de asignaciones del borrador.
+4. **[P1] Datos semilla** (`V1000__datos_demo.sql`, § 7.2, parte P1) y **Swagger UI** con todos los endpoints de la fase y ejemplos.
+5. **[P2]** **UC-02, Registrar matrícula** (RF-04, RF-05, RF-07, RF-12, RNF-09, RNF-10): bandeja, detalle con las validaciones automáticas (matrícula activa, deudas vencidas de años anteriores, admisión), vacantes por sección, resumen de costos desde `cronograma_cobro` + `politica_cobro`, aceptación de costos, **confirmación atómica** (vacante condicional → matrícula CONFIRMADA → 11 obligaciones → auditoría) y correo al apoderado **después del commit** con el cronograma (RF-12). Rechazos FA-1 a FA-5 con su motivo y correo.
+6. **[P2] Recuperación de contraseña** (UC-24 FA-5, RF-52): `/auth/recuperacion` y `/auth/recuperacion/confirmacion` (token aleatorio de 32 bytes, SHA-256, 30 min, un solo uso, misma respuesta exista o no la cuenta, revoca los refresh y se audita) y las pantallas `/recuperar-contrasena` y `/restablecer-contrasena`; el correo llega a Mailpit.
+7. **[P2] Usuarios (parcial, UC-24):** lista con filtros, estado «Bloqueado · 5 intentos» y acción Desbloquear (auditada). El resto del CRUD queda en la fase 6.
 
-**Criterios de aceptación (ERS)**
-- *UC-24*: login correcto con los 5 usuarios semilla y menú distinto por rol (paso 6, RF-49). FA-3: 5 fallos → bloqueado (mensaje de WF p1) y el admin desbloquea. Acceder por URL a una ruta de otro rol → página 403 y la API devuelve 403.
-- *UC-21*: FB 1–10 (perspectiva, borrador único, asignación con opciones restringidas a docentes asociados al curso y disponibles, RF-46). FE-1 docente no disponible → bloqueo y causa. FE-2 cruce de docente, aula o sección → mensaje con el recurso y la asignación existente (WF p29: "Prof. R. Quispe ya tiene clase en 4° B (Aula 305) el martes de 9:15 a 10:00"). FA-1 modificar (se excluye a sí misma en la búsqueda de cruces), FA-2 eliminar, FA-3 cambiar de perspectiva sin otro borrador. Dos pestañas editando → la segunda recibe 409 y recarga (Arq §4.7).
-- *UC-02*: FB 1–13. FA-1 no admitido, FA-2 duplicidad, FA-3 deudas (alumno recurrente de 2026 con deuda VENCIDA), FA-4 sin vacante (3° B), FA-5 desistimiento. Al confirmar: vacantes 4→3, matrícula CONFIRMADA, 11 obligaciones PENDIENTE y correo en Mailpit. Dos confirmaciones simultáneas en 2° A con 1 vacante → exactamente 1 éxito y 1 `SIN_VACANTE` (RNF-09). Si falla la generación de obligaciones → nada queda persistido.
-- *UC-25*: las operaciones anteriores aparecen con usuario, rol, módulo, acción, detalle y fecha (RF-50, RNF-08). Filtros por usuario, módulo, acción y rango; exportación a Excel con los resultados filtrados; la UI indica "Los registros no se pueden editar ni eliminar".
+**Criterios de aceptación (de la ERS)**
+- **[P1]** *RF-52 y UC-24 (paso 6, FA-3, FA-4):* cada uno de los 4 usuarios (5 con el Directivo) entra con su correo y ve solo su menú. Si un alumno llama a `/api/v1/auditoria/registros` → 403 `ACCESO_DENEGADO` en < 1 s (RNF-07). Al 5.º intento fallido consecutivo → `CUENTA_BLOQUEADA` y la pantalla muestra el mensaje del wireframe; el evento «Bloqueó la cuenta…» aparece en Auditoría (y la cuenta figura «Bloqueado» en Usuarios cuando esté la pantalla P2). **FA-4 (inicio y cierre de sesión):** las credenciales incorrectas muestran un mensaje genérico y suman un intento fallido (el 5.º dispara FA-3); una cuenta inactiva o bloqueada no entra; al cerrar sesión se revoca el refresh token (el siguiente `/auth/refresco` da 401).
+- **[P1]** *UC-21:* flujo básico, pasos 1–10. FA-1 (modificar) y FA-2 (eliminar) actualizan la matriz. FA-3: al cambiar de perspectiva se ve el mismo borrador. **FE-1:** un docente no disponible no se puede seleccionar o el guardado se rechaza con `DOCENTE_NO_DISPONIBLE`. **FE-2:** el cruce de docente o sección se muestra en vivo, «Prof. R. Quispe ya tiene clase en 4° B el martes de 9:15 a 10:00», y el guardado se rechaza con 409 `CONFLICTO_HORARIO`. Solo se ofrecen los docentes asociados al curso (RF-47). Dos navegadores que editan la misma versión → el segundo recibe 409 y recarga. El borrador no es visible para alumnos (RF-44).
+- **[P1]** *UC-25:* flujo básico, pasos 4–6; cada operación anterior aparece con usuario, acción, módulo, entidad y fecha y hora, registrada en < 2 s (en la misma transacción) (RF-49, RNF-08); los registros no se pueden editar (RF-51).
+- **[P1]** Swagger UI en `/swagger-ui.html` con los endpoints de la fase, agrupados por módulo, con bearer y ejemplos; `/v3/api-docs` responde OpenAPI 3.
+- **[P2]** *UC-02:* flujo básico, pasos 1–13: tras confirmar, «3° A pasa a 3 vacantes y se generan 11 compromisos de pago», la solicitud queda APROBADA, la matrícula CONFIRMADA y el correo con el cronograma llega a Mailpit. **FA-1** no admitido → «Rechazada por No Admitido» + correo. **FA-2** matrícula activa → bloqueo + «Rechazada por Duplicidad». **FA-3** deuda vencida de un año anterior → bloqueo + «Rechazada por Deudas» con el importe. **FA-4** sin vacantes → «Rechazada sin Vacante». **FA-5** desistimiento → «Rechazada por Voluntad del Apoderado», sin vacante ni deudas. Postcondición: si se rechaza, no queda matrícula. **Dos confirmaciones simultáneas sobre la última vacante → una sola tiene éxito** (RNF-09).
+- **[P2]** *UC-24 FA-5 (recuperación):* «¿Olvidaste tu contraseña?» con un correo existente o inexistente → mismo mensaje; en Mailpit llega el enlace (solo si la cuenta existe); el enlace funciona una sola vez y caduca a los 30 min. al definir la nueva contraseña el enlace queda invalidado, se revocan las sesiones abiertas de esa cuenta y el evento aparece en Auditoría (RF-49); un enlace usado o vencido se rechaza y permite solicitar otro.
 
-**RF/RNF**: RF-03, RF-04, RF-05, RF-07 (generación), RF-38, RF-39, RF-40, RF-41, RF-46, RF-47 a RF-50, RNF-01, RNF-03, RNF-06, RNF-07, RNF-08, RNF-09, RNF-11.
-**Pruebas**: unitarias `ValidadorConflictosTest` (los 6 tipos, exclusión en edición, solapamiento parcial de horas), `GeneradorObligacionesTest` (11 conceptos, montos exactos), `EvaluacionSolicitudTest`. Integración `VacantesConcurrentesIT` (20 hilos, 1 vacante → 1 éxito, vacantes=0, el CHECK impide negativos), `MatriculaTransaccionalIT` (falla en obligaciones → rollback de matrícula y vacante), `MatriculaUnicaIT` (índice parcial), `AsignacionHorarioIndicesIT` (los 3 UNIQUE ante una carrera), `BorradorVersionIT` (409), `AuditoriaConsultaIT` + exportación. API: `HorarioControllerIT`, `MatriculaControllerIT` y `AuditoriaControllerIT` (401/403/422/409 con forma problem+json). Frontend: `MatrizHorario.test.tsx`, `PanelAsignacion.test.tsx` (muestra conflictos), `RutaProtegida.test.tsx`. E2E opcional con Playwright siguiendo el guion de §9.
+**RF/RNF:** RF-04, RF-05, RF-07, RF-12, RF-39 a RF-42, RF-47, RF-49 a RF-52 (RF-43 parcial); RNF-01 (BCrypt; HTTPS queda para AWS), RNF-02 (pantallas responsive), RNF-03, RNF-06 a RNF-10.
+**Pruebas:** `ValidadorConflictosTest` (cruce de docente, cruce de sección, exclusión de la asignación editada, docente no asociado o no disponible); `HorarioBorradorConcurrenciaIT` (dos inserciones en paralelo → una viola el índice; @Version → 409); `VacantesConcurrentesIT` (20 hilos sobre 1 vacante → 1 éxito, 19 `SIN_VACANTE`, vacantes = 0, nunca < 0); `ConfirmacionMatriculaIT` (rollback total si falla la generación de obligaciones, y el correo no se envía); `GeneradorObligacionesTest` (11 obligaciones, montos BigDecimal); endpoints con `RestTestClient` (401, 403, 409 problem+json); frontend: `Login.test.tsx` (mensaje de bloqueo), `PanelAsignacion.test.tsx` (muestra el conflicto que devuelve MSW), `ConfirmarMatricula.test.tsx`.
+Prioridad de las pruebas: **P1** = `ValidadorConflictosTest`, `HorarioBorradorConcurrenciaIT`, `AuditoriaConsultaExportacionIT`, `Login.test.tsx` y `PanelAsignacion.test.tsx`; **P2** = `VacantesConcurrentesIT`, `ConfirmacionMatriculaIT`, `GeneradorObligacionesTest`, `ConfirmarMatricula.test.tsx` y `RecuperacionContrasenaIT` (respuesta idéntica para un correo inexistente, token caducado o reusado → 400, el correo llega por un `Notificador` falso).
 
-### Fase 2 — Seguridad completa y configuración académica (UC-24, UC-13, UC-14 + configuración S-14)
-**Tareas**: CRUD de usuarios (alta con rol, validación de duplicado por DNI y correo, vínculo con alumno o apoderado, desactivar/activar, edición), gestión de permisos por rol con invalidación de caché, UC-13 (validador de año de 10 a 12 meses y 4 bimestres sin cruce), UC-14 (curso, competencias y copia desde otro año), pantallas de configuración: secciones (capacidad, tutor), aulas, bloques, período de disponibilidad, vinculaciones y asociaciones, carga horaria y política de cobranza.
-**Criterios**: UC-24 FB 1–6, FA-1 cuenta duplicada (WF p34 "Ya existe una cuenta registrada para el DNI…"), FA-2 sin vínculo académico → la cuenta no se habilita; la desactivación corta el acceso **de inmediato** (siguiente petición → 401, refresh revocado). UC-13 FB 1–8, FA-1 rango de año inválido, FA-2 bimestre inválido o cruzado (WF p20). UC-14 FB 1–14 y FA-1 copia.
-**RF/RNF**: RF-01, RF-02, RF-03, RF-04, RF-06, RF-22, RF-23, RF-24, RF-42 (carga), RF-45 (bloques y período), RF-46 (asociaciones), RF-47, RF-49, RNF-07.
-**Pruebas**: `AnioEscolarTest` (10–12 meses, bordes), `BimestresSolapadosIT` (EXCLUDE), `CopiaCursosIT`, `UsuarioDuplicadoIT`, `DesactivacionInmediataIT`, `PermisosPorRolIT` (matriz completa), `CachePermisosIT` (invalidación < 1 s, RNF-07).
+### 7.2 Datos semilla de la demo (perfil `demo`)
+**P1:** usuarios, año 2027 con grados, secciones, cursos, bloques, docentes (vinculaciones, asociaciones y disponibilidad), el borrador parcial y a Lucía con su matrícula 2027 ya confirmada (insertada directamente, sin pasar por UC-02). **P2:** cobros 2027, año 2026 cerrado con su deuda y las solicitudes de matrícula.
+- Contraseña común `Gesedu2027!` (hash BCrypt precalculado en el SQL; solo demo y local). Correos `@demo.gesedu.pe`, que caen en Mailpit:
+  `admin@` Carmen Salas Paredes (Administrador, cargo «Secretaría académica»); `directivo@` Ricardo Paredes Ortiz (Administrador, cargo «Coordinación académica»); `docente@` Rosa Quispe Mendoza (Docente de Matemática, tutora de 3° A); `alumno@` Lucía García Rojas (3° A, matrícula 2027 confirmada); `apoderado@` María Rojas Salazar (madre de Lucía). Además, una cuenta `bloqueo@` para mostrar el bloqueo sin afectar a las demás.
+- Año escolar **2027** (ACTIVO; 15/02/2027–20/12/2027) con 4 bimestres; grados 1° a 5°, secciones A y B (capacidad 30). 3° A con **4 vacantes** y 2° B con **1 vacante** (para la demo de concurrencia).
+- Cursos 2027 (iguales para todos los grados, RF-23): Matemática 5 h, Comunicación 5 h, Ciencia y Tecnología 4 h, Ciencias Sociales 3 h, Inglés 3 h, Educación Física 2 h, con sus competencias (C1–C4 en Matemática, etc.) y las cargas horarias por grado.
+- Bloques L–V: 7:45–8:30, 8:30–9:15, 9:15–10:00, (recreo), 10:15–11:00, 11:00–11:45, 11:45–12:30, 12:30–13:15, 13:15–14:00, 14:00–14:45.
+- Docentes (sin aulas): Rosa Quispe, Fernando Medina, Carlos Ríos (Matemática); Jorge Mendoza (Comunicación); Ana Huamán (CyT); Luis Castro (CCSS); Carmen Villanueva (Inglés); Óscar Cárdenas (EF). Con vinculación 2027, asociaciones con cursos y disponibilidad confirmada; Carlos Ríos no está disponible el martes de 9:15 a 10:00.
+- Borrador 2027 parcialmente armado: Rosa Quispe ya tiene 4° B el martes de 9:15 a 10:00 (para provocar el cruce); 3° A con 19/22 h.
+- Cobros 2027: matrícula S/ 350.00 (vence el 15/02/2027), pensiones de marzo a diciembre S/ 350.00 (vencen a fin de mes; diciembre el 15/12), penalidad del 5 %.
+- Solicitudes pendientes `MAT-2027-00479…00486`, una por flujo alternativo: recurrente OK (Valeria Torres → 3° A), nuevo ingreso no admitido, recurrente con matrícula activa, recurrente con deuda VENCIDA de 2026 (se siembran el año 2026 CERRADO y su obligación vencida), dos solicitudes que compiten por la última vacante de 2° B, y una nueva que acepta costos.
 
-### Fase 3 — Matrícula y pagos (UC-01, UC-03, UC-04, UC-05, UC-06 + jobs)
-**Tareas**: Gestor de Archivos (disco en local + S3 prefirmado en aws, validación de tipo y tamaño: PDF/JPG/PNG ≤ 5 MB [S-15]), UC-01 con código de seguimiento y correo, UC-03, UC-04, UC-05 (`SELECT … FOR UPDATE` de la obligación, verificación de monto = base + penalidad, número de operación único, boleta con secuencia, todo en una transacción), UC-06, `JobVencimientos` (diario 00:05 en Lima, ShedLock: PENDIENTE con vencimiento < hoy → VENCIDA y `monto_penalidad = base × % HALF_UP` una sola vez con `penalidad_aplicada_en`; idempotente).
-**Criterios**: UC-01 FB 1–7, FA-1 incompleto, FA-2 DNI inválido o con trámite vigente (WF p4). UC-03 FB 1–6, FA-1 sin obligaciones, FA-2 matrícula no vigente; muestra el importe actualizado con penalidad (WF p7: S/ 350.00 + S/ 17.50 = S/ 367.50). UC-04 FB 1–6, FA-1 incompleto, FA-2 obligación ya pagada. UC-05 FB 1–9, FA-1 no corresponde → rechazo, FA-2 importe insuficiente → observado con el total pendiente; un comprobante observado o rechazado no cambia la obligación. UC-06 FB 1–6, FA-1 y FA-2, sin modificaciones.
-**RF/RNF**: RF-02, RF-06 a RF-11, RNF-10, RNF-11, RNF-12 (carga directa a almacenamiento), DA-07, DA-08.
-**Pruebas**: unitarias `CalculadoraPenalidadTest` (5 % de 350.00 = 17.50; casos .005 con HALF_UP), `ValidacionPagoTest`. Integración `PagoTransaccionalIT` (se fuerza una excepción después de crear la boleta → obligación sigue PENDIENTE/VENCIDA, sin registro_pago ni auditoría), `PagoConcurrenteIT` (dos validaciones de la misma obligación → 1 éxito), `NumeroOperacionUnicoIT`, `JobVencimientosIT` (idempotencia y ShedLock con 2 ejecuciones), `SolicitudDuplicadaIT`, `GestorArchivosDiscoIT` (token expira).
+### Fase 2 — Matrícula y pagos (S3–S5) · equipo Matrícula y Pagos
+**Tareas:** UC-01 (asistente con subida de documentos prefirmada, validación de DNI duplicado y solicitud en trámite, código de seguimiento), configuración de cobros (RF-06), UC-03, UC-04, UC-05 (transacción única con `FOR UPDATE`), UC-06, el job **Vencimientos y penalidades** (diario a las 00:05 America/Lima, ShedLock: PENDIENTE y vencida → VENCIDA y, si aún no tiene penalidad, `monto_penalidad = round(monto_base × %, 2, HALF_UP)`; idempotente gracias a `penalidad_aplicada_en IS NULL`) (RF-09, RF-10, S-10), y la vista «mis solicitudes» del apoderado.
+**Criterios de aceptación:**
+- UC-01: flujo básico, pasos 1–7. FA-1, campos o documentos faltantes resaltados y envío bloqueado. FA-2, DNI inválido o «Ya existe una solicitud en trámite con este DNI para 2027».
+- UC-03: flujo básico; paso 5, penalidad mostrada como «Importe base + penalidad = total». FA-1, sin obligaciones. FA-2, matrícula no vigente.
+- UC-04: flujo básico; postcondición, la obligación no cambia. FA-1, datos incompletos. FA-2, la obligación ya está pagada.
+- UC-05: flujo básico, pasos 1–9: boleta `B001-…`, obligación PAGADA, aviso al apoderado. FA-1, rechazo. FA-2, observación por monto insuficiente (base + penalidad). El número de operación duplicado se rechaza.
+- UC-06: flujo básico; FA-1 y FA-2; la consulta no modifica nada.
+**RF/RNF:** RF-02, RF-06 a RF-11, RNF-10, RNF-11, RNF-12.
+**Pruebas:** `CalculoPenalidadTest` (HALF_UP, escala 2), `JobVencimientosIT` (doble ejecución = mismo resultado; ShedLock con dos instancias simuladas), `ValidacionPagoIT` (**excepción provocada tras insertar la boleta → todo revertido**; dos validaciones concurrentes de la misma obligación → una espera el `FOR UPDATE` y luego recibe `OBLIGACION_YA_PAGADA`), `NumeroOperacionUnicoIT`, endpoints con alcance (un apoderado no ve a hijos ajenos → 403).
 
-### Fase 4 — Horarios completos (UC-20, UC-22, UC-23)
-**Tareas**: UC-20 (matriz, aviso de insuficiencia frente a la carga de los cursos asociados, cierre por fecha del período), consolidado de disponibilidad y docentes sin registro, UC-22 (validador de completitud y publicación con una nueva versión inmutable y la anterior que deja de estar vigente; se crean o actualizan las `asignacion_docente` C-21), UC-23 (alcance por rol, perspectivas permitidas, detalle, estado "no publicado"), caché Caffeine del horario vigente (se invalida al publicar, RNF-03).
-**Criterios**: UC-20 FB 1–8, FA-1 actualización (queda solo la última versión), FA-2 aviso de insuficiencia (WF p28 "Faltan al menos 4 bloques"), FE-1 período cerrado. UC-22 FB 1–6, FA-1 incompleto → no se puede publicar (WF p30), FE-1 cancelación; el borrador nunca es visible para quien no tiene HORARIO_GESTIONAR (RF-43). UC-23 FB 1–6, FA-1 no publicado (WF p33), FA-2 cambio de perspectiva. Alumno = su sección; apoderado = sección del hijo; docente = sus asignaciones; admin = todo.
-**RF/RNF**: RF-38, RF-42, RF-43, RF-44, RF-45, RF-46, RNF-03.
-**Pruebas**: `ValidadorCompletitudTest`, `PublicacionHorarioIT` (versión vigente única, conservación de anteriores), `AlcanceHorarioIT` (por rol), `DisponibilidadPeriodoIT`.
+### Fase 3 — Configuración académica y horarios (S3–S5) · equipos Académico y Horarios
+**Tareas:** UC-13 (año y 4 bimestres con la restricción EXCLUDE), UC-14 (cursos y competencias, copiar del año anterior), grados, secciones, capacidad, vacantes y tutor (RF-03, RF-04), configuración de bloques, periodo de disponibilidad, vinculaciones, asociaciones y cargas (RF-46, RF-47), UC-20, UC-22 (completitud + publicación inmutable + sincronización de `asignacion_docente` (S-13)), UC-23 (alcance por rol y caché del horario vigente).
+**Criterios de aceptación:**
+- UC-13: flujo básico, pasos 1–8; FA-1, la duración no está entre 10 y 12 meses; FA-2, bimestres fuera del año o cruzados.
+- UC-14: flujo básico, pasos 1–14; FA-1, copia de 2026.
+- UC-20: flujo básico; FA-1, actualización que conserva solo la última versión; FA-2, aviso de insuficiencia («faltan al menos 4 bloques»); FE-1, periodo cerrado.
+- UC-22: flujo básico; FA-1, horario incompleto o excedido que no se puede publicar; FE-1, cancelación; la versión anterior deja de ser vigente.
+- UC-23: flujo básico; FA-1, «aún no publicado»; FA-2, cambio de perspectiva; el alumno y el apoderado solo ven su sección y el docente solo sus asignaciones.
+**RF/RNF:** RF-03, RF-04, RF-23 a RF-25, RF-39, RF-43 a RF-47, RNF-03.
+**Pruebas:** `ValidadorAnioEscolarTest`, `BimestresSuperpuestosIT` (EXCLUDE), `ValidadorCompletitudTest`, `PublicacionHorarioIT` (índice único vigente, inmutabilidad, numeración de versiones), `DisponibilidadInsuficienteTest`, frontend `MatrizHorario.test.tsx` (en móvil, vista por día).
 
-### Fase 5 — Asistencia (UC-07 a UC-12)
-**Tareas**: `CalendarioAcademico` (día lectivo, S-16), `ClasificadorAsistenciaDocente` (dominio puro), UC-07 usando `horarios.aplicacion.ConsultaHorarioService.primerBloqueDelDia(docente, fecha)`, UC-08 (lote atómico), UC-09, UC-10/UC-11 (cálculo bajo demanda + Excel/PDF), `JobCierreDiario` (cron a `SchoolDayClosingTime` en `TimeZone`, ShedLock, idempotente, actor Sistema), pantalla de asistencia docente del día y resumen mensual calculado.
-**Criterios**: UC-07 FB 1–8 (≤ inicio + tolerancia → PUNTUAL; después y antes del cierre → TARDANZA; hora del servidor), FA-1 ya existe (no sobrescribe, unicidad ante peticiones simultáneas), FA-2 sin clases u horario, FA-3 día no lectivo o jornada cerrada (≥ cierre). UC-08 FB 1–8 (solo PUNTUAL/FALTA, orden alfabético, guardado atómico de los pendientes), FA-1 incompleto, FA-2 existentes, FA-3 sin tutoría o alumnos, FA-4 no lectivo o cerrado, FA-5 concurrencia. UC-09 FB 1–5, FA-1 plazo (> StudentLateCutoffTime) o jornada cerrada, FA-2 no elegible, FA-3 fuera de la sección. UC-10 FB 1–7, FA-1 parcial (el día actual solo cuenta tras el cierre), FA-2 sin registros → no se genera archivo, FA-3 alcance no autorizado o futuro, FA-4 falta calendario u horario. UC-11: % = 100 × (P+T)/(P+T+F), redondeado a 2 decimales; los no registrados se muestran aparte y quedan fuera del denominador; sin días → "No disponible". UC-12 FB 1–6, FA-1 no lectivo, FA-2 existentes intactos, FA-3 reejecución sin duplicar, FA-4 sin horario → registra el fallo y no inventa faltas.
-**RF/RNF**: RF-12 a RF-20, RNF-03, DA-08, DA-10.
-**Pruebas**: `ClasificadorAsistenciaDocenteTest` (límite inclusivo, igual al cierre, antes del inicio), `PorcentajeAsistenciaTest` (división entre cero, no registrados), `CalendarioAcademicoTest`, `JobCierreDiarioIT` (idempotencia, ShedLock, día no lectivo), `AsistenciaUnicaConcurrenteIT`, `ActualizacionTardanzaIT` (reloj fijo con `Clock` inyectado), `ReporteAsistenciaIT` (no persiste nada).
+### Fase 4 — Asistencia (S5–S6) · equipo Asistencia (I10 + I2 desde la fase 2; UC-07 y UC-12 necesitan un horario publicado de la fase 3)
+**Tareas:** UC-07, UC-08, UC-09, UC-10 + UC-11 (cálculo bajo demanda, Excel y PDF), consulta de docentes por día, **job de cierre diario** UC-12 (se ejecuta cada minuto y actúa si `now ≥ SchoolDayClosingTime` y la fecha no fue procesada; ShedLock; crea FALTA solo para quien falta; tolerante a reintentos; con FA-4, si falta el horario, registra el fallo y no inventa faltas) y el resumen de asistencia del inicio del alumno.
+**Criterios de aceptación:**
+- UC-07: pasos 1–8 (PUNTUAL si la marcación es ≤ inicio del primer bloque + TeacherLateThresholdMinutes; si no, TARDANZA); FA-1, ya registrada (también ante solicitudes simultáneas); FA-2, sin clases o sin horario publicado; FA-3, día no lectivo o jornada cerrada.
+- UC-08: pasos 1–8, lote atómico; el tutor registra **PUNTUAL** (presente al pasar lista), **TARDANZA** (llegó después de pasar lista pero antes de confirmar el registro) o **FALTA**, sin umbral automático (ERS § 2.1.4, RF-14; ver C-29); FA-1 a FA-5. Un alumno ya registrado como FALTA que llega después se corrige con UC-09.
+- UC-09: pasos 1–5; FA-1, plazo excedido; FA-2, registro no elegible; FA-3, alumno fuera de la sección del tutor.
+- UC-10: FA-1, periodo en curso con fecha de corte; FA-2, sin registros; FA-3, alcance o periodo inválido; FA-4, calendario no disponible.
+- UC-11: % = 100 × (P + T) / registrados, redondeado a 2 decimales; «No disponible» si no hay registros; los días sin registro se muestran aparte.
+- UC-12: FA-1 a FA-4.
+**RF/RNF:** RF-13 a RF-21, RNF-03.
+**Pruebas:** `ClasificadorAsistenciaDocenteTest` (límites inclusivos, `Clock` fijo, zona America/Lima), `CalculoResumenMensualTest`, `CierreDiarioIT` (idempotencia y concurrencia, unicidad docente-fecha), `PaseListaConcurrenteIT` (incluye un lote con los tres estados y el rechazo de un estado inválido), `PlazoTardanzaTest`.
 
-### Fase 6 — Evaluación (UC-15 a UC-19)
-**Tareas**: `EstrategiaConsolidacion` + 3 implementaciones + `ConsolidacionService` con mapa por `TipoRegla` (DA-09). `NivelLogro.desdePromedio` (HALF_UP). UC-15 (grilla, validación de escala, aviso de incompleto, cambio de nota auditado con valor anterior y nuevo), UC-16 (con PROMEDIO_PONDERADO por defecto), UC-17, UC-18 (avance, bloqueo si está incompleto, cálculo por lotes idempotente, en el último bimestre se calcula el FINAL, libretas), UC-19 (alcance, nivel esperado, PDF de informe y libreta con OpenPDF).
-**Criterios**: UC-15 FB 1–7, FA-1 nivel inválido, FA-2 incompleto (WF p22 "Hay 2 alumnos con competencias sin calificar"). UC-16 FB 1–6, FA-1 cambio, FA-2 por defecto promedio ponderado. UC-17 FB 1–5. UC-18 FB 1–4, FA-1 consolidado final, FA-2 incompleto con lista de docentes (WF p25). UC-19 FB 1–7, FA-1 apoderado con varios hijos, FA-2 libreta final.
-**RF/RNF**: RF-21, RF-25 a RF-37, RF-48 (cambios de nota), RNF-03.
-**Pruebas**: `PromedioPonderadoStrategyTest` (AD,A → 3.5 → AD; B,A → 2.5 → A; pesos distintos; entrada vacía), `ModaStrategyTest` (empate → el más reciente), `UltimoRegistroStrategyTest`, `NivelLogroTest`, `ConsolidacionIdempotenteIT`, `ConsolidacionIncompletaIT`, `LibretaPdfIT`, `AlcanceNotasIT`.
+### Fase 5 — Evaluación (S5–S7) · equipo Evaluación
+**Tareas:** UC-15 (rejilla, upsert de RegistroLogro auditado con valor anterior y nuevo, RF-49), UC-16 (regla + pesos por bimestre), UC-17, UC-18 (avance, bloqueo si está incompleto, consolidación idempotente, libretas; el último bimestre dispara el cálculo anual (C-26)), UC-19 (cursos, competencias con nivel esperado, notas por bimestre, PDF del informe y libreta con OpenPDF), FA-1 para apoderados con varios hijos, y el inicio del alumno (notas del bimestre).
+**Motor (DA-09):** interfaz `EstrategiaConsolidacion { TipoRegla tipo(); NivelLogro consolidar(List<LogroPonderado>); }`; `ConsolidacionService` arma un `Map<TipoRegla, EstrategiaConsolidacion>` con todas las implementaciones que inyecta Spring. **PromedioPonderado**: Σ(valor × peso) / Σ peso en BigDecimal y redondeo HALF_UP al entero → `NivelLogro.desdePromedio` (2,5 → A). **Moda**: el más frecuente; si hay empate, el del registro más reciente (S-04). **UltimoRegistro**: el de `fecha_registro` máxima.
+**Criterios de aceptación:**
+- UC-15: pasos 1–7; FA-1, nivel inválido; FA-2, registro incompleto con aviso «2 alumnos con competencias sin calificar».
+- UC-16: flujo básico; FA-1, cambiar la regla; FA-2, por defecto PROMEDIO_PONDERADO.
+- UC-17: flujo básico.
+- UC-18: flujo básico; FA-1, consolidado final; FA-2, incompleto con la lista de docentes pendientes.
+- UC-19: flujo básico; FA-1, varios hijos; FA-2, libreta final.
+- RF-38: 2,5 → A; pesos iguales por defecto y ajustables por bimestre.
+**RF/RNF:** RF-22, RF-26 a RF-38, RNF-03.
+**Pruebas:** `PromedioPonderadoStrategyTest` (tabla de casos: 3,5 → AD, 2,5 → A, 1,49 → C, pesos distintos), `ModaStrategyTest` (empate → el más reciente), `UltimoRegistroStrategyTest`, `NivelLogroTest`, `ConsolidacionIdempotenteIT` (reejecutar no duplica), `LibretaPdfTest` (genera un PDF válido).
 
-### Fase 7 — Endurecimiento y cierre
-k6 con 200 apoderados concurrentes en UC-01/UC-03 (RNF-12), medición de p95 < 2 s (RNF-03) y nuevos índices (V12+), matriz de navegadores (las 2 últimas de Chrome, Firefox, Safari y Edge; RNF-04), revisión de accesibilidad y responsive (RNF-02), perfil `aws` verificado contra LocalStack (S3/SES) [S-17], manual de usuario por perfil y guía de configuración inicial (Visión §13), ayudas contextuales en marcación y publicación (Visión §13.2), cierre de las preguntas abiertas pendientes.
+### Fase 6 — Seguridad completa, endurecimiento y cierre (S6–S8) · equipo Plataforma + QA
+**Tareas:** UC-24 completo (crear, modificar, activar y desactivar; duplicados por DNI o correo, FA-1; vínculo académico obligatorio, FA-2, con el puerto SPI; heredar los permisos del rol; invalidar caché y tokens al desactivar), gestión de roles y permisos (RF-48), revisión responsive y de accesibilidad (RNF-02, RNF-04: Chrome, Firefox, Safari y Edge), prueba de carga k6 con 200 apoderados en UC-01 (RNF-12; `grafana/k6` en Docker), `docs/despliegue/*`, revisión de seguridad y manual breve por perfil.
+**Criterios de aceptación:**
+- UC-24: pasos 1–6; FA-1 a FA-3 (FA-4 y FA-5 ya se entregaron en la fase 1; aquí solo se prueban de nuevo con cuentas creadas desde la pantalla de Usuarios). Desactivar una cuenta revoca sus sesiones de inmediato (el siguiente request da 401).
+- La prueba k6 cumple p95 < 2 s (RNF-03) con 200 usuarios virtuales en local o QA.
+**Pruebas:** `GestionUsuariosIT`, `CachePermisosIT` (cambiar un permiso de un rol se refleja en el siguiente request), Testing Library de `DialogoNuevoUsuario`.
 
-**Paralelismo**: las fases 3, 4, 5 y 6 corren **en paralelo** después de la fase 2. Dependencias que se rompen con semillas o interfaces: la fase 5 usa un horario publicado semilla hasta que la fase 4 termine `ConsultaHorarioService`; la fase 6 usa `asignacion_docente` semilla hasta que la fase 4 la derive al publicar.
+### Cobertura de los 25 UC por fase
+F1: UC-02, UC-21, UC-25 y UC-24 (inicio de sesión, bloqueo, desbloqueo) · F2: UC-01, UC-03 a UC-06 · F3: UC-13, UC-14, UC-20, UC-22, UC-23 · F4: UC-07 a UC-12 · F5: UC-15 a UC-19 · F6: UC-24 completo.
 
 ---
 
-## 7. Reparto para 10 personas (P1–P10)
+## 8. Reparto para 10 personas
 
-| Equipo | Personas | Fase 0–1 | Fases 2–7 | Fronteras (contratos) |
-|---|---|---|---|---|
-| **Plataforma backend** | P1 (líder técnico) | estructura, seguridad JWT/RBAC, errores, ArchUnit, CI | soporte transversal, revisión de PR, Fase 7 rendimiento | `compartido`, `transversal`, `seguridad.aplicacion` |
-| **Plataforma frontend** | P2 | Vite, layout, auth, http, componentes base, MatrizHorario base | componentes compartidos, responsive, accesibilidad, E2E | `components/`, `api/http.ts` |
-| **Seguridad y auditoría** | P3 | aspecto `@Auditable`, auditoría (consulta y export), usuarios (lista y desbloqueo), semillas de usuarios | Fase 2 usuarios y roles, QA transversal de auditoría | `auditoria.aplicacion` |
-| **Académico** | P4 | semillas académicas (año 2027, grados, secciones, cursos) | Fase 2 UC-13, UC-14 y configuración; luego apoyo a evaluación | `academico.aplicacion.ConsultaAcademicaService` |
-| **Horarios** | P5, P6 | P5: backend de UC-21 (ValidadorConflictos, índices, versión). P6: pantalla Elaborar + semillas de bloques, aulas y disponibilidad | Fase 4 UC-20, UC-22, UC-23 | `horarios.aplicacion.ConsultaHorarioService` (lo usan asistencia y evaluación) |
-| **Matrícula y pagos** | P7, P8 | P7: backend de UC-02 + vacantes + concurrencia. P8: bandeja y evaluación (frontend) + generación de obligaciones | Fase 3 (P7 UC-05 y job; P8 UC-01, UC-03, UC-04, UC-06) | `pagos.aplicacion.GeneradorObligaciones`, `ConsultaDeudaService` |
-| **Asistencia** | P9 | demo: apoyo de QA y guion de demo | Fase 5 completa | consume `ConsultaHorarioService` |
-| **Evaluación** | P10 | demo: inicio por rol (frontend) | Fase 6 completa | consume académico y horarios |
-
-Reglas: una rama por historia (`feat/<modulo>-<uc>`), PR con al menos 1 revisión (de otro equipo cuando toque `compartido`), las migraciones de cada módulo solo las edita su equipo y los números de versión se reservan en un canal (o se usa `V<fase><nn>`). Los contratos entre módulos (`*.aplicacion` + OpenAPI) se acuerdan **antes** de implementar.
-
----
-
-## 8. Estrategia de pruebas
-
-| Nivel | Herramienta | Qué cubre | Ubicación |
+| Equipo | Integrantes | Fase 0–1 | Fases 2+ |
 |---|---|---|---|
-| Unitarias de dominio | JUnit 5 + AssertJ, sin Spring | estrategias de consolidación y `NivelLogro` (HALF_UP, empate en la moda, pesos), `ValidadorConflictos` (6 tipos, exclusión propia), `ClasificadorAsistenciaDocente` y porcentaje, `CalculadoraPenalidad` y validación de monto, validación de año y bimestres, generador de cronograma, `CalendarioAcademico` | `<modulo>/dominio/*Test` |
-| Integración | `@SpringBootTest` + **Testcontainers PostgreSQL 16** (contenedor compartido, Flyway real, usuario `gesedu_app` real) | **vacantes concurrentes** (CountDownLatch, N hilos), **reversión de pagos** (fallo inyectado mediante un bean de prueba), **inmutabilidad de la auditoría** (UPDATE, DELETE y TRUNCATE fallan; rollback conjunto), índices anticruce, `@Version`, unicidad de asistencia, idempotencia de jobs y ShedLock, índices parciales | `*IT` (failsafe) |
-| API / endpoints | MockMvc sobre el contexto completo + JWT de prueba | status, problem+json y `codigo`, permisos por rol (403), alcance (apoderado ajeno → 403), paginación y validación de entradas | `<modulo>/api/*ControllerIT` |
-| Arquitectura | ArchUnit | capas, solo `aplicacion` entre módulos, sin ciclos, `@PreAuthorize` en los métodos públicos de los servicios de aplicación | `arquitectura/` |
-| Frontend | Vitest + Testing Library + MSW | MatrizHorario, panel de conflictos, guardas por permiso, formularios (zod), http refresh | `*.test.tsx` |
-| E2E (Fase 1 opcional, Fase 7) | Playwright | guion de la demo | `frontend/e2e/` |
-| Carga | k6 | RNF-12 (200 concurrentes), RNF-03 | `perf/` (Fase 7) |
+| Plataforma backend | 2 (I1, I2) | Seguridad (inicio de sesión, JWT, RBAC, bloqueo), auditoría (aspecto + UC-25), errores, ArchUnit, CI; la recuperación de contraseña es P2 de la fase 1 | I1: UC-24 completo, roles y permisos, k6, despliegue. **I2 apoya a Asistencia junto con I10 desde la fase 2** |
+| Plataforma frontend | 1 (I3) | Proyecto Vite, router, cliente de API, sesión, layout y menú, login, recuperación, pantallas de Auditoría y Usuarios | Componentes compartidos, responsive, accesibilidad, apoyo a los equipos |
+| Matrícula y Pagos | 2 (I4, I5) | UC-02 completo (backend y frontend) + semilla de matrícula y cobros | UC-01, UC-03 a UC-06, job de penalidades |
+| Horarios | 2 (I6, I7) | UC-21 completo (validador, matriz) + semilla de horarios | UC-20, UC-22, UC-23 y configuración de horarios |
+| Académico y Evaluación | 2 (I8, I9) | V3 y V7, semilla académica; apoyo a la semilla; pruebas de dominio del motor (sin UI) | UC-13, UC-14, UC-15 a UC-19 |
+| Asistencia + QA | 1 (I10) → 2 desde la fase 2 (I10 + I2) | `AsistenciaProperties`, Docker, `.run/`, guion de la demo, pruebas de humo | UC-07 a UC-12 (arranque anticipado en la fase 2 con I2: UC-08, UC-09 y los reportes de alumnos; UC-07, UC-12 y los reportes de docentes esperan al horario publicado de la fase 3) |
 
-Reloj controlable: todo el código de dominio y de aplicación recibe un `Clock` (`RelojInstitucional`). Sin `LocalDateTime.now()` directo (lo verifica una regla ArchUnit).
+**Paralelización y dependencias:** el esquema completo (V1 a V11) y `compartido` se crean en la fase 0, lo que evita que los equipos se bloqueen por las migraciones; mientras no haya despliegue compartido se pueden editar (§ 4.4, S-26). Desde la fase 1 cada equipo trabaja en su paquete, coordinándose solo por interfaces de `aplicacion` acordadas en un PR corto. Contratos tempranos que hay que publicar: `academico.aplicacion.SeccionesService` (vacantes, alumnos), `horarios.aplicacion.ConsultaHorarioService.primerBloque(docenteId, fecha)` (para Asistencia), `matricula.aplicacion.NominaService.alumnosDeSeccion(...)` (para Asistencia y Evaluación) y `pagos.aplicacion.ObligacionesService.generarParaMatricula / tieneDeudasVencidas` (para Matrícula). Las semillas son **un archivo por módulo**, que se concatenan en V1000 para evitar conflictos. Convención de ramas: `feat/<modulo>-<uc>`, PR a `main` con CI en verde y una revisión de otro equipo.
 
 ---
 
-## 9. Guion de la demo en localhost
+## 9. Estrategia de pruebas
 
-**Requisitos previos**: Docker Desktop, JDK 21, Node 20 LTS.
-```bash
-cp .env.example .env                      # editar DEMO_PASSWORD y JWT_SECRET (openssl rand -base64 48)
-docker compose up -d                      # postgres:16 + mailpit
-cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local,demo   # aplica Flyway y carga las semillas
-cd frontend && npm ci && npm run dev      # http://localhost:5173 (proxy /api → :8080)
-# alternativa en un solo comando: docker compose --profile full up --build
+1. **Unitarias del dominio (sin Spring):** estrategias de consolidación y `NivelLogro` (RF-38, S-04); `ValidadorConflictos` (RF-41, RF-47); `ValidadorCompletitud` (RF-43); `ClasificadorAsistenciaDocente` y plazo de tardanza (RF-13, RF-19, con `Clock` fijo); `CalculoResumenMensual` (RF-16); `CalculoPenalidad` y `Dinero` (RF-10, RNF-11); `ValidadorAnioEscolar` (UC-13).
+2. **Integración con Testcontainers + `postgres:18`** (`@ServiceConnection` + script de roles; Flyway como migrador y la aplicación como `gesedu_app`, para probar los permisos reales). Un contenedor por JVM (singleton) para mantener la duración baja. Casos clave: **vacantes concurrentes** (RNF-09), **reversión de pagos y `FOR UPDATE`** (RNF-10), **inmutabilidad de la auditoría** (UPDATE, DELETE y TRUNCATE rechazados; INSERT y SELECT permitidos) (RNF-08), índices anticruce y `@Version` (RF-41), jobs idempotentes con ShedLock (UC-12, RF-09, RF-10), restricción EXCLUDE de bimestres y unicidad de asistencia.
+3. **Endpoints:** `@SpringBootTest(webEnvironment=RANDOM_PORT)` + `RestTestClient` para los flujos completos con JWT; slices `@WebMvcTest` + `spring-security-test` para la matriz de permisos (cada endpoint × rol → 2xx/403) y para el formato problem+json.
+4. **Arquitectura:** ArchUnit (§ 2.1).
+5. **Configuración:** `ApplicationContextRunner` para DA-10.
+6. **Frontend:** Vitest + Testing Library + MSW: formularios (zod), guardias de ruta por permiso, `cliente.ts` (refresh tras 401, parseo de problem+json), componentes de matriz y rejilla. Los tipos generados desde OpenAPI se comprueban con `tsc`.
+7. **Carga:** k6 (fase 6, RNF-12).
+Cobertura orientativa: dominio ≥ 80 %; sin umbral global obligatorio (S-24).
+
+## 10. CI en GitHub Actions (`.github/workflows/ci.yml`)
+- Disparadores: `pull_request` y `push` a `main`.
+- **Job backend** (`ubuntu-latest`, que ya trae Docker para Testcontainers): `actions/checkout@v4` → `actions/setup-java@v4` (`distribution: corretto`, `java-version: 25`, `cache: maven`) → `cd backend && ./mvnw -B verify`. Publica los reportes de Surefire y Failsafe como artefactos.
+- **Job frontend:** `actions/setup-node@v4` (`node-version: 22`, `cache: npm`, `cache-dependency-path: frontend/package-lock.json`) → `npm ci` → `npm run lint` → `npm run typecheck` (`tsc -b --noEmit`) → `npm run test -- --run` → `npm run build`.
+- Los dos jobs corren en paralelo y la protección de `main` exige ambos.
+
+## 11. Guion de la demo en localhost
+
+**Preparación (una vez)**
+```powershell
+# PowerShell (Windows 11)
+Copy-Item .env.example .env
+docker compose up -d postgres mailpit
+cd backend; .\mvnw.cmd -B verify -DskipTests; cd ..
+cd frontend; npm ci; cd ..
 ```
-Swagger: http://localhost:8080/swagger-ui.html · Mailpit: http://localhost:8025
+```bash
+# bash
+cp .env.example .env
+docker compose up -d postgres mailpit
+(cd backend && ./mvnw -B verify -DskipTests)
+(cd frontend && npm ci)
+```
+**Arranque**
+```powershell
+cd backend; .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local,demo"   # terminal 1
+cd frontend; npm run dev                                                          # terminal 2
+```
+```bash
+(cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local,demo)       # terminal 1
+(cd frontend && npm run dev)                                                       # terminal 2
+```
+En IntelliJ: ejecutar `Docker Compose`, luego `Backend (demo)`, luego `Frontend dev` desde la lista de configuraciones (`.run/`). Para reiniciar los datos: `.\scripts\reiniciar-bd.ps1` o `./scripts/reiniciar-bd.sh`.
+URL: SPA http://localhost:5173 · Swagger http://localhost:8080/swagger-ui.html · Mailpit http://localhost:8025.
 
-**Pasos en clase (~12 min)**
-1. **Arquitectura** (1 min): mostrar el árbol de paquetes, `ReglasModulosTest` en verde y Swagger con `/api/v1`.
-2. **Login por rol** (2 min): entrar como alumna → menú del alumno; como docente → menú del docente; como apoderada → selector de hijos; como admin → menú completo. Escribir por URL `/intranet/auditoria` como alumna → 403. En DevTools: JWT de 15 min y cookie HttpOnly.
-3. **Bloqueo** (1 min): 5 contraseñas erróneas con el usuario del docente → mensaje de bloqueo (WF p1); como admin en `/intranet/usuarios` se ve "Bloqueado · 5 intentos fallidos" → Desbloquear.
-4. **UC-21** (3 min): `/intranet/horarios/2027/elaborar`, perspectiva 3° A, asignar Matemática el martes 9:15 → se ven solo los docentes de Matemática con su disponibilidad; elegir a R. Quispe (ya dicta en 4° B a esa hora) → conflicto en tiempo real con la causa; cambiar a F. Medina → guardar. Cambiar a la perspectiva por docente y por aula: es el mismo borrador. Abrir una segunda pestaña, editar en ambas → la segunda recibe 409.
-5. **UC-02** (3 min): bandeja → MAT-2027-00482 → validaciones en verde, 3° A 4 vacantes, resumen de costos S/ 3,850.00 → aceptar → confirmar → 3 vacantes y 11 compromisos; el correo llega a Mailpit. Mostrar FA-3 con la solicitud de un recurrente con deuda 2026 → bloqueada. Concurrencia: ejecutar `VacantesConcurrentesIT` (o el script `scripts/demo-concurrencia.sh`, que lanza 2 peticiones paralelas sobre 2° A con 1 vacante) → 1 éxito y 1 `409 SIN_VACANTE`.
-6. **UC-25** (2 min): `/intranet/auditoria` → filtrar por módulo Horarios y Matrícula → ver las acciones recién hechas y el bloqueo → Exportar Excel. En `psql` como `gesedu_app`: `DELETE FROM auditoria.registro_auditoria` → error del trigger o de permisos.
+**Pasos en clase (≈ 15 min; P1 ≈ 10 min)**
+*Corte mínimo (P1)*
+1. Arquitectura: mostrar `docker compose ps` (postgres:18 y mailpit), Swagger UI agrupado por módulo y la prueba ArchUnit en verde.
+2. Inicio de sesión con los 4 roles + el Directivo: menús distintos. Desde el alumno, llamar a `/api/v1/auditoria/registros` → 403 (se muestra en DevTools; la ruta tampoco está en su menú).
+3. Bloqueo: 5 contraseñas incorrectas con `bloqueo@demo.gesedu.pe` → mensaje del wireframe; el evento se muestra en Auditoría (paso 5).
+4. UC-21: Elaborar horario 2027 → 3° A → martes de 9:15 a 10:00 → Matemática → el panel marca a Rosa Quispe «tiene clase en 4° B» y a Carlos Ríos «No disponible» → intentar guardar → 409 con la causa. Elegir a Fernando Medina → se guarda. Cambiar a la perspectiva Docente → el mismo borrador. Abrir dos pestañas → el segundo guardado recibe 409 por versión.
+5. UC-25: Auditoría → filtrar por usuario, módulo Horarios y fechas → ver el registro con sus cambios (también el bloqueo del paso 3) → Exportar a Excel. Mostrar en psql que `DELETE FROM auditoria.registro_auditoria` falla.
 
----
+*Segunda prioridad (P2); se omite si no está lista*
+6. Recuperación: «¿Olvidaste tu contraseña?» → Mailpit → enlace → nueva contraseña → iniciar sesión. Reusar el enlace → error. En Usuarios, desbloquear la cuenta `bloqueo@`.
+7. UC-02: bandeja → MAT-2027-00482 (Valeria Torres) → validaciones en verde → 3° A (4 vacantes) → resumen de costos (S/ 3,850.00) → aceptar → confirmar → «3 vacantes, 11 compromisos» → Mailpit muestra el correo con el cronograma. Mostrar FA-3 (rechazo por deudas) con otra solicitud.
+8. RNF-09 en vivo: ejecutar `VacantesConcurrentesIT` (o dos pestañas confirmando las solicitudes que compiten por 2° B) → una sola tiene éxito.
 
-## 10. Preparación para AWS (sin escribir infraestructura todavía)
-- **Configuración 100 % por entorno**: `application-aws.yml` solo referencia variables (`DB_URL`, `DB_APP_*`, `DB_OWNER_*`, `JWT_SECRET`, `ARCHIVOS_BUCKET`, `AWS_REGION`, `CORREO_REMITENTE`, `GESEDU_ASISTENCIA_*`, `TZ`…). En EB llegan como propiedades de entorno resueltas desde Secrets Manager y Parameter Store (Arq §10.9).
-- **Adaptadores listos**: `S3GestorArchivos` (prefirmado de 5 min, SSE-S3, credenciales del rol de instancia), `SesNotificador`, seleccionados con `ARCHIVOS_PROVEEDOR` y `CORREO_PROVEEDOR`.
-- **Backend sin estado**: JWT + refresh en BD, ShedLock para varias instancias, Flyway al arrancar con el usuario owner (o un paso de despliegue), `/actuator/health` para el ALB, `server.forward-headers-strategy=framework` detrás del ALB, cookie `Secure` activada y JAR ejecutable `gesedu-api.jar` (Arq §10.6).
-- **Frontend**: `npm run build` → `dist/` estático con rutas relativas `/api/v1` (misma origen con CloudFront `/api/*` → ALB), SPA con fallback a `index.html` (configurado luego en CloudFront).
-- **Pendiente para una fase posterior** (fuera de esta entrega): IaC (CloudFormation o Terraform), pipeline de despliegue a S3, EB e invalidación de CloudFront, y script DBA de roles en RDS.
+## 12. Preparación para AWS (sin infraestructura todavía)
+- **Backend:** JAR ejecutable `gesedu-api.jar` (`finalName`) para Elastic Beanstalk con plataforma Corretto 25 / Amazon Linux 2023. Puerto vía `SERVER_PORT=5000` (el proxy de EB). Health check en `/actuator/health`. Perfil `aws` con `SPRING_PROFILES_ACTIVE=aws`. Toda la configuración por variables de entorno o Parameter Store y Secrets Manager (credenciales de BD, `GESEDU_JWT_SECRET`, parámetros de asistencia). Sin estado: no hay sesiones HTTP y los locks de ShedLock están en la BD. `server.forward-headers-strategy=framework` detrás del ALB y CloudFront. Logs JSON hacia CloudWatch.
+- **RDS for PostgreSQL 18:** script `docs/despliegue/rds-bootstrap.sql` (crear la BD y los roles `gesedu_migrador` y `gesedu_app`) que se ejecuta una vez con el usuario maestro. Flyway se ejecuta al arrancar como migrador. JDBC con `sslmode=verify-full`.
+- **S3 + CloudFront (SPA):** `npm run build` → `dist/` al bucket `gesedu-web` (OAC). Comportamientos de CloudFront: `/*` → S3 (con fallback a `index.html` para las rutas de la SPA, vía la respuesta a 403/404) y `/api/*` → ALB sin caché y reenviando `Authorization` y las cookies. Como comparten origen, no hace falta CORS entre la SPA y la API.
+- **Bucket `gesedu-documentos`:** privado, SSE-S3, versionado. Regla CORS en `docs/despliegue/s3-cors.json`:
+  ```json
+  [{"AllowedOrigins":["https://gesedu.<colegio>.edu.pe"],
+    "AllowedMethods":["PUT","GET"],
+    "AllowedHeaders":["Content-Type","Content-MD5","x-amz-*"],
+    "ExposeHeaders":["ETag"],"MaxAgeSeconds":3000}]
+  ```
+  Las URL prefirmadas duran 5 min, con `Content-Type` y tamaño máximo validados (PDF, JPG y PNG ≤ 5 MB, S-19).
+- **SES:** dominio verificado y `GESEDU_MAIL_FROM`; `NotificadorSes` (AWS SDK 2.x) con el perfil `aws`.
+- **Futuro CI/CD** (no ahora): job de despliegue en `main` → `aws s3 sync` + invalidación de CloudFront + `eb deploy`.
 
----
+## 13. Contradicciones e inconsistencias encontradas
 
-## 11. Contradicciones, supuestos y preguntas
+Prioridad aplicada: arquitectura v1.0 > ERS > catálogo v4 > wireframes > resto.
 
-### 11.1 Contradicciones encontradas (cómo se resuelven según la prioridad)
-| ID | Documentos | Contradicción | Resolución |
+| ID | Documentos | Diferencia | Resolución |
 |---|---|---|---|
-| C-01 | Visión §1, §2, §6.3, §8.7, §9 y WF p13–14 vs ERS §2.3, §3.2.2, §3.5.1 y Arq §4.8 y §10.1 | La visión y el WF validan la red o IP del colegio ("Conectado a la red del colegio"); la ERS y la Arq dicen explícitamente que no | **No se valida IP ni red**; se quita el indicador del WF |
-| C-02 | Arq §10.10 vs instrucción del líder | Arq: dos repos (gesedu-frontend, gesedu-backend); instrucción: `backend/` y `frontend/` en un repo | **Monorepo** (instrucción explícita), CI con path filters. Si la Arq debe prevalecer → ver Q-10 |
-| C-03 | ERS §2.1.4, §3.1.7–3.1.12, §3.4 vs Arq tabla 7 y MC p.3 | ERS: `StudentAttendance`/`TeacherAttendance`, `PUNCTUAL/LATE/ABSENT`, `checkInAt`, `TeacherRole`; Arq y MC: `AsistenciaAlumno`/`AsistenciaDocente`, `PUNTUAL/TARDANZA/FALTA`, `horaRegistro` | **Nombres en español (Arq + MC)**. Las claves de configuración se mantienen tal como las escriben la Arq y la ERS |
-| C-04 | Catálogo RF-13 vs ERS UC-08 | RF-13 permite registrar al inicio Puntual, Tardanza o Falta; UC-08 solo PUNTUAL o FALTA (la tardanza se registra por UC-09) | **ERS** |
-| C-05 | WF p17–18 y Procesos §3 vs Catálogo RF-15 y ERS UC-10/11 | El WF muestra "Consolidación mensual" automática con estados "Consolidado" y un % sobre los días lectivos del mes; la ERS pide calcular bajo demanda sin persistir y usar como denominador los días registrados | **ERS**: la pantalla p18 se convierte en "Resumen mensual" calculado y la fórmula es la de UC-11 |
-| C-06 | WF p16 vs ERS UC-09 | El WF guarda el estado anterior, la hora del cambio y el responsable en el módulo; la ERS dice que no hay historial en el módulo | **ERS**: solo `updated_at`. El cambio queda en **auditoría** (WF p35 ya lo muestra); la columna "Última modificación" se lee de `auditoria.aplicacion` |
-| C-07 | Visión RF-23 vs Catálogo y ERS UC-14 | La visión dice que el docente edita las competencias de su curso; el catálogo y la ERS, que lo hace el directivo | **Catálogo y ERS** (directivo) |
-| C-08 | Matriz de trazabilidad vs ERS v3 | La matriz usa una numeración anterior (UC-26, asistencia UC-07 a UC-13…) y en la hoja RFvsRNF los textos de RF-47 y RF-48 están intercambiados | **Numeración de la ERS v3**; actualizar la matriz (tarea de documentación) |
-| C-09 | ERS historial v2.0 vs ERS §3.1.11 | El historial dice "eliminación de UC-11", pero UC-11 sigue especificado | Se mantiene **UC-11** como cálculo incluido en UC-10 (25 UC) |
-| C-10 | WF p1 y p34 vs MC | El login usa "DNI o correo" y la lista de usuarios muestra el DNI de admins y docentes, pero el MC solo tiene `documentoIdentidad` en Alumno y Apoderado | **S-01**: `usuario.numero_documento` |
-| C-11 | MC (nombres solo en Usuario, Alumno 0..1 Usuario) vs ERS UC-01 (se registran datos del alumno y del apoderado sin cuenta) | Faltan nombres en Alumno y Apoderado | **S-02**: se agregan nombres, apellidos, fecha de nacimiento, parentesco y correo |
-| C-12 | Catálogo RF-26 y RF-27 ("automáticamente al cierre") vs ERS UC-17 y UC-18 (un actor pulsa el botón) | Disparo automático o manual | **ERS**: manual (Directivo y Docente); el cálculo es automático una vez disparado |
-| C-13 | MC p.4 `Curso.horasLectivas` (UC-14) vs MC p.5 `CargaHorariaCurso` por grado (RF-42) | Dos fuentes de la carga semanal | `carga_horaria_curso` es la fuente de RF-42 y se **inicializa** desde `horas_lectivas` (editable por grado) |
-| C-14 | WF p20–25 ("Menú del directivo") vs ERS §2.1.1 y Arq §5 ("no constituye un rol adicional") | El menú diferenciado sugiere un rol aparte | **S-03**: perfil Administrador con `cargo`; `RolAcceso` "DIRECTIVO" como conjunto de permisos (no es un nuevo tipo de usuario). Ver Q-03 |
-| C-15 | Catálogo RF-01 ("Eliminar") vs Procesos §11, ERS UC-24 y WF p34 ("desactivar") | Borrado físico o lógico | **Desactivación lógica** (preserva la auditoría y las FK) |
-| C-16 | Arq tabla 8 (LocalStack en desarrollo) vs instrucción (disco o Mailpit permitidos) | Simuladores locales | Disco + Mailpit por defecto; LocalStack opcional para validar el perfil aws (S-17) |
-| C-17 | WF p28–31 (fila "Recreo") vs MC `BloqueHorario` (sin tipo) | Recreo modelado o no | El recreo **no** es un bloque; la UI lo dibuja como hueco entre bloques |
-| C-18 | Procesos §1 (deuda del **estudiante**) vs Catálogo RF-05 y ERS UC-02 FA-3 (deuda VENCIDA del **apoderado** en periodos anteriores) | Sujeto de la verificación de deuda | **Catálogo y ERS**: obligaciones VENCIDAS de años anteriores asociadas al apoderado |
-| C-19 | Visión §8.8–8.9 (moda como regla única, evidencias pedagógicas) vs Catálogo RF-25 y ERS | La visión habla de una sola regla y de registrar evidencias | **3 reglas**; el registro de evidencias queda **fuera** (no hay UC) |
-| C-20 | MC p.4 `AsignacionDocente` vs MC p.5 `AsociacionDocenteCurso`/`AsignacionHorario` | Ningún documento dice cómo se crea `AsignacionDocente` (docente dicta curso en sección) | **S-18**: se deriva del horario publicado (UPSERT, conserva la regla) |
-| C-21 | WF p2 (menú del alumno con "Matrícula y pagos") vs ERS UC-03 (actor: Apoderado) | El alumno ve pagos o no | Alumno: solo la tarjeta de matrícula (solo lectura). Ver Q-07 |
+| C-01 | Arquitectura § 10.10 vs. prompt | Dos repositorios vs. monorepo | **Resuelta (22/10/2026).** Monorepo (decisión del usuario); la § 10.10 de la arquitectura ya lo describe, con CI de dos jobs (backend con ArchUnit y frontend) |
+| C-02 | Wireframe /login vs. RF-52 | «Usuario (DNI o correo)» vs. correo | **Solo correo** (decisión del usuario); cambia la etiqueta |
+| C-03 | Modelo Conceptual (Aula, «aloja»), wireframes (Aula 204, Lab. 1, «Por aula», campo y cruce de aula), visión, procesos vs. ERS § 2.3 y el prompt | Gestión de aulas | **Sin Aula**: no hay entidad, perspectiva ni campo; la UI omite el aula |
+| C-04 | Visión (validación por IP o red), wireframe «✓ Conectado a la red del colegio» vs. ERS § 2.3 y § 3.5.1, arquitectura § 4.8 | Validación de red en la marcación docente | No se valida; se quita la insignia |
+| C-05 | Visión, procesos, wireframe «Consolidación mensual» y «consolidado el 01/09» vs. ERS UC-10 y UC-11, RF-16 | Consolidación mensual guardada | Cálculo bajo demanda; la pantalla de consolidación no se implementa |
+| C-06 | Wireframe de reportes («% sobre el total de días lectivos») vs. ERS UC-11, paso 5 | Denominador del % | Días registrados (ERS); los días sin registro van aparte |
+| C-07 | Wireframe registro del día («se guardará el estado anterior, la hora y el docente», «Última modificación … Prof.») vs. ERS UC-09 (sin historial) | Historial de cambios de asistencia | Sin historial en el módulo; el evento sí queda en Auditoría (como muestra el wireframe de auditoría) |
+| C-08 | RF-14 (estado inicial Puntual, Tardanza o Falta) vs. ERS UC-08 y wireframe (Puntual/Falta) | Tardanza en el pase de lista | **Resuelta (22/10/2026), con una inconsistencia residual (C-29).** Se mantiene RF-14: el pase de lista admite PUNTUAL, TARDANZA o FALTA (ERS § 2.1.4); UC-09 sigue cambiando FALTA → TARDANZA después |
+| C-09 | ERS (StudentAttendance, TeacherAttendance, TeacherRole, PUNCTUAL/LATE/ABSENT, checkInAt) vs. Modelo Conceptual y arquitectura (AsistenciaAlumno, AsistenciaDocente, PUNTUAL/TARDANZA/FALTA, horaRegistro) | Idioma de los nombres | Español (arquitectura Tabla 8); en el código se documenta la correspondencia |
+| C-10 | Curso.horasLectivas (modelo académico, UC-14, wireframe) vs. CargaHorariaCurso por grado (modelo de horarios, RF-43) | Origen de la carga horaria | `carga_horaria_curso` por grado, inicializada desde `horas_lectivas` |
+| C-11 | ERS § 2.1.3 y procesos («pensiones generadas conforme transcurren las fechas») vs. UC-02, paso 12, arquitectura § 4.6 y wireframe («11 compromisos») | Momento en que se generan las pensiones | Todas al confirmar la matrícula |
+| C-12 | Arquitectura § 9.2 y RF-27 (regla aplicada a los registros *del bimestre*) vs. wireframes p. 22–24 (un nivel por competencia y bimestre; regla aplicada *entre bimestres*) | Granularidad de RegistroLogro | Supuesto S-12 + pregunta P-02 |
+| C-13 | Wireframes («Menú del directivo» distinto) vs. ERS y arquitectura (Directivo = Administrador) | ¿Rol aparte? | Un solo rol ADMINISTRADOR; el cargo se muestra y el menú sale de los permisos |
+| C-14 | Visión v3 vs. catálogo v4 | Numeración antigua (RF-01 a RF-50: RF-12 = clasificación de asistencia, RF-37 = conversión, RF-38 = matriz…), «moda» como única regla, RF-23 (competencias por el docente) | Se ignora la Visión en lo funcional; conviene actualizarla |
+| C-15 | Arquitectura, Tabla 9 (LocalStack para S3 y SES) vs. prompt (Mailpit) y la licencia de LocalStack (token obligatorio desde la release 2026.03) | Entorno local | **Resuelta (22/10/2026).** Mailpit + `GestorArchivosDisco` en desarrollo; LocalStack opcional por el token (Tabla 9 de la arquitectura actualizada) |
+| C-16 | Arquitectura § 9.1 «ArchUnit o Spring Modulith» | — | ArchUnit |
+| C-17 | Arquitectura, Tabla 7 (Notificaciones atiende UC-01) vs. ERS UC-01 (sin correo) y matriz (RF-12 solo en UC-02) | Correo en UC-01 | **Resuelta (22/10/2026).** La Tabla 7 ahora asigna Notificaciones a UC-02 y UC-24 (RF-12, RF-52): correo del resultado de matrícula y correo de recuperación de contraseña; UC-01 no envía correo |
+| C-18 | Catálogo (RF-03 en el módulo Matrícula) vs. arquitectura, Tabla 7 (Configuración Académica) | Módulo de RF-03 | Paquete `academico` |
+| C-19 | UC-24, paso 2, cita RF-02 (datos de estudiante y apoderado) para cuentas duplicadas; UC-24 no describe el inicio de sesión ni la recuperación aunque la matriz le asigna RF-52 | Trazabilidad | **Resuelta (22/10/2026).** UC-24 incluye FA-4 (inicio y cierre de sesión) y FA-5 (recuperación); el paso 2 cita RF-01. Quedan detalles en C-30 y C-31 |
+| C-20 | ERS § 2.1.7 nombra subcasos sin ID («Asignar Rol y Permisos», «Filtrar Registros…») | — | Se incluyen en UC-24 y UC-25 |
+| C-21 | Modelo (documentoIdentidad solo en Alumno y Apoderado) vs. wireframe Usuarios (DNI de todos, «Ya existe una cuenta… DNI») | DNI de docentes y administradores | `usuario.documento_identidad` único para todos (no se duplica en alumno ni apoderado) |
+| C-22 | Modelo Conceptual vs. RF y wireframes | Faltan: Seccion.capacidad (RF-04), costos y políticas (RF-06), documentos de la solicitud, motivo de rechazo, fechaNacimiento, parentesco, medio de pago, nivel esperado de la competencia (RF-34), pesos por bimestre (RF-38), tokens técnicos y `version` del borrador | Se agregan (§ 4.1); conviene actualizar el modelo a v2 |
+| C-23 | Catálogo v4 | El historial dice «Versión inicial del Documento de Visión»; RNF-06 no tiene prioridad | **Resuelta (22/10/2026).** El historial del catálogo está corregido y RNF-06 tiene prioridad Alta |
+| C-24 | Wireframe (tolerancia de 5 min) vs. ERS (30 min «solo ejemplo») | Valor del umbral | Configurable; la demo usa 5 / 08:30 / 15:30, tomados de los wireframes |
+| C-25 | Wireframes (p. 2, 7, 13, 31: año escolar 2026) vs. prompt (semilla 2027) | Año | Semilla 2027 + 2026 cerrado para el caso de deuda |
+| C-26 | UC-17 (el docente calcula las finales) vs. UC-18 FA-1 (el directivo, en el último bimestre, calcula las finales) y FA-2 (exige que el docente las haya calculado) | ¿Quién calcula? | Servicio idempotente; UC-18 en el último bimestre recalcula todo y bloquea si hay faltantes |
+| C-27 | ERS § 2.1.1 «Personal Administrativo» de procesos | — | Es un Administrador (la ERS lo asume así) |
+| C-28 | Numeración antigua en la arquitectura o la ERS | Se revisaron todas las citas | **No se encontraron citas con la numeración v3** en la arquitectura, la ERS ni la matriz; solo en la Visión (C-14) |
+| C-29 | ERS § 2.1.4 (el pase de lista admite LATE) vs. ERS UC-08 (paso 5 «PUNCTUAL … ABSENT», FA-2, Puntos de Extensión «alumno inicialmente ausente») y wireframe p. 15 (solo Puntual y Falta) | El flujo de UC-08 y el wireframe no reflejan la corrección de C-08 | **Resuelta (22/10/2026).** UC-08 (paso 5, FA-2 y Puntos de Extensión) ya admite LATE en el pase de lista. El wireframe p. 15 no se actualizará; la pantalla sigue la ERS y agrega la opción Tardanza |
+| C-30 | ERS UC-24 (FA-4 cita RF-52 y RF-50; FA-5 cita RF-52, RF-12 y RF-49) vs. matriz RF×UC (RF-12 solo en UC-02; RF-49 solo en UC-25; RF-02 sigue marcado en UC-24 aunque el paso 2 ahora cita RF-01) | Trazabilidad incompleta. Además, RF-12 es el correo del resultado de matrícula; el de recuperación es RF-52 | **Resuelta (22/10/2026).** FA-5 de UC-24 cita solo RF-52 y la matriz asigna RF-01, RF-48, RF-49, RF-50 y RF-52 a UC-24 (ya no RF-02) |
+| C-31 | ERS UC-24: el actor ya incluye a «cualquier rol», pero el objetivo y las precondiciones siguen siendo solo del administrador («El administrador cuenta con credenciales…») y FA-5 dice «vigencia limitada» sin valor | Redacción incompleta | **Resuelta (22/10/2026).** El objetivo y las precondiciones de UC-24 incluyen a cualquier usuario y el enlace de recuperación vale 30 minutos, igual que en la arquitectura |
 
-### 11.2 Supuestos (propuestos, a confirmar)
-- **S-01** `usuario.numero_documento` único y nullable; el login acepta DNI o correo.
-- **S-02** Alumno y Apoderado guardan sus propios nombres y contacto (pueden existir sin cuenta).
-- **S-03** Perfiles fijos (ADMINISTRADOR, DOCENTE, ALUMNO, APODERADO) y `RolAcceso` configurables (5 semilla, incluido DIRECTIVO). Un rol por usuario (MC: "tiene asignado 1").
-- **S-04** Un solo año ACTIVO. Se permite matricular para un año PLANIFICADO o ACTIVO (campaña 2027 durante 2026).
-- **S-05** `seccion.capacidad` para RF-04 ("capacidad y disponibilidad"); `vacantes_disponibles` se inicializa igual a la capacidad.
-- **S-06** Los cursos aplican a todos los grados (sin tabla curso-grado) y la carga por grado está en horarios.
-- **S-07** `competencia.nivel_esperado_descripcion` para RF-33 (WF p26 "Nivel esperado (A): …").
-- **S-08** Código de seguimiento `MAT-<año>-<5 dígitos>` (WF p6).
-- **S-09** `motivo_rechazo` detalla los estados "Rechazada por…" de la ERS; el MC solo tiene RECHAZADA.
-- **S-10** `politica_cobranza` + `cronograma_cobro` (RF-06 no tiene entidad en el MC). Penalidad = % del importe base, **una sola vez** al vencer (WF p6 y p12: 5 % → S/ 17.50, "aplicada el 01/09"). Cuota de ingreso: no se modela (Q-08).
-- **S-11** `medio_pago` (WF p9 "Banco o medio de pago").
-- **S-12** Número de operación único entre los comprobantes PENDIENTE o APROBADO (uno rechazado puede corregirse y volver a presentarse).
-- **S-13** Boleta = `RegistroPago` con número correlativo `B001-NNNNN` (WF p7). Sin pagos parciales: el monto debe ser igual a base + penalidad.
-- **S-14** Pantallas de configuración sin wireframe (secciones y tutor, aulas, bloques, período de disponibilidad, vinculaciones, carga horaria, cobranza), con el mismo estilo.
-- **S-15** Archivos: PDF, JPG o PNG de hasta 5 MB.
-- **S-16** Día lectivo = fecha dentro de algún bimestre del año ACTIVO y con bloques configurados ese día de la semana. **Sin calendario de feriados** (Q-04).
-- **S-17** LocalStack solo para la verificación del perfil aws en la Fase 7.
-- **S-18** `asignacion_docente` se crea o actualiza al publicar el horario.
-- **S-19** Duración del bloqueo: **15 min** (`SECURITY_BLOQUEO_MINUTOS`), con desbloqueo manual por el admin (WF p34). Criterio pendiente según la Arq §11.3.
-- **S-20** Motor de evaluación (Arq §9.2): redondeo **HALF_UP** (2.5 → A), empate de la moda → **registro más reciente**, **pesos iguales** por defecto guardados por asignación y bimestre.
-- **S-21** Valores de asistencia de ejemplo para local: `TeacherLateThresholdMinutes=5` (WF p13), `StudentLateCutoffTime=08:30` (WF p16), `SchoolDayClosingTime=15:30` (WF p19), `TimeZone=America/Lima`. **No son valores institucionales aprobados** (ERS §3.4).
-- **S-22** Correo solo en UC-01 y UC-02 (Arq §6.2); en los demás "informa al apoderado" se refleja en el estado visible en la intranet.
-- **S-23** Se audita (además de lo que pide la Arq §4.4): bloqueo y desbloqueo de cuentas, cambios de asistencia FALTA→TARDANZA, faltas generadas por el job (WF p35 los muestra), configuración académica y de cobranza.
-- **S-24** Dos usuarios de BD (owner para Flyway y app para runtime) para garantizar la táctica INSERT/SELECT de la auditoría.
-- **S-25** Build con **Maven**; UI sin librería de componentes (CSS propio con tokens) para seguir los wireframes con fidelidad.
+## 14. Supuestos y preguntas abiertas
 
-### 11.3 Preguntas abiertas
-- **Q-01 (importante para la Fase 6)** Granularidad de `RegistroLogro`: ¿el docente registra **una** nota por competencia y bimestre (como el WF p22) o **varias evaluaciones** por bimestre (como sugieren RF-26 y la Arq §9.2, donde la regla se aplica a los registros del bimestre)? Propuesta: varias por bimestre, con la grilla mostrando la última y un botón "Agregar evaluación"; la regla se aplica dentro del bimestre (RF-26) y entre bimestres para el final (RF-27).
-- **Q-02** ¿Cómo obtiene su cuenta un apoderado **nuevo** para hacer UC-01, si UC-24 paso 4 exige una matrícula activa o una relación de apoderado? Propuesta: la secretaría registra al apoderado y la relación con el postulante y habilita la cuenta; el apoderado completa UC-01.
-- **Q-03** ¿Es aceptable el `RolAcceso` DIRECTIVO (S-03) o todos los administradores deben ver las opciones académicas?
-- **Q-04** ¿Hace falta un calendario de feriados o días no lectivos para la asistencia (UC-07, UC-08 y UC-12)?
-- **Q-05** Valores institucionales de la asistencia, la duración del bloqueo y la política de cobranza (montos y %) reales.
-- **Q-06** ¿Cómo se registra el resultado de la admisión de un nuevo ingreso (no hay un módulo de admisión)? Propuesta: el administrador lo marca en la evaluación de la solicitud.
-- **Q-07** ¿El alumno ve sus obligaciones de pago (WF p2) o solo el estado de su matrícula?
-- **Q-08** ¿Existe la "cuota de ingreso" de UC-02 paso 7? ¿Con qué monto y vencimiento?
-- **Q-09** ¿La boleta debe descargarse en PDF o basta con el registro y su número?
-- **Q-10** ¿Confirmas el monorepo (C-02) pese a que la Arq §10.10 indica dos repositorios?
+### Supuestos (validar con el equipo o la institución)
+- **S-01** Pantallas `/recuperar-contrasena` y `/restablecer-contrasena` sin wireframe, con el mismo estilo que /login. Enlace válido **30 min** (arquitectura § 4.3), de un solo uso, guardado como hash SHA-256; al usarse se revocan los refresh tokens. Política de contraseñas: mínimo 8 caracteres, con letra y número.
+- **S-02** Pantallas sin wireframe para RF-03, RF-04, RF-06, RF-46, RF-47 y RF-48, porque son RF del catálogo sin UC propio.
+- **S-03** **Duración del bloqueo temporal: 15 minutos** (la arquitectura no la fija); el administrador puede desbloquear antes (acción del wireframe).
+- **S-04** **Empate en la moda: gana el nivel del registro más reciente** (supuesto de la arquitectura § 9.2, pendiente de confirmar con la institución).
+- **S-05** Redondeo HALF_UP y pesos iguales por defecto: **ya definidos en RF-38**, no son supuestos.
+- **S-06** Refresh token de 7 días con rotación y revocación de toda la familia si se reutiliza; el token de acceso vive en memoria en la SPA.
+- **S-07** Día lectivo = fecha dentro de un bimestre del año ACTIVO cuyo día de la semana tiene bloques configurados. No hay feriados, porque el modelo no tiene esa entidad (P-04).
+- **S-08** El estado de admisión lo registra el administrador en la solicitud: el proceso de admisión está fuera del sistema.
+- **S-09** La cuenta del apoderado la crea el administrador antes de su primera solicitud. La cuenta del alumno se crea inactiva al registrar la solicitud y se habilita con UC-24 cuando hay una matrícula activa (P-03).
+- **S-10** La penalidad se aplica una sola vez: `porcentaje × monto_base`, el día después del vencimiento; no se acumula por días ni por meses (wireframe: «aplicada el 01/09»).
+- **S-11** El número de operación es único entre los comprobantes PENDIENTES o APROBADOS; uno rechazado u observado libera el número para corregirlo.
+- **S-12** Un RegistroLogro por (alumno, competencia, bimestre), como la rejilla del wireframe; editar una celda actualiza el registro y se audita. La nota bimestral es la estrategia aplicada a los logros del bimestre (hoy, uno) y la anual es la estrategia aplicada a los logros del año con los pesos por bimestre de RF-38. Si P-02 cambia, basta con quitar el `UNIQUE`.
+- **S-13** `asignacion_docente` (docente–curso–sección) se crea o actualiza al publicar el horario, a partir de las asignaciones publicadas; la publicación exige un único docente por curso y sección.
+- **S-14** El editor de pesos por bimestre se agrega a la pantalla «Configuración del curso» (el wireframe no lo muestra).
+- **S-15** Al publicar, se copia el borrador a un HorarioPublicado inmutable; el borrador se conserva como base de la siguiente versión.
+- **S-16** El correo de UC-02 se envía después del commit y de forma asíncrona; si falla, se registra y se reintenta (máximo 3 veces). No revierte la matrícula.
+- **S-17** El alumno ve su propia matrícula y su asistencia en el inicio (wireframe p. 2); no hay UC específico.
+- **S-18** La «cuota de ingreso si aplica» de UC-02, paso 7, se modela como un concepto opcional del cronograma (concepto `CUOTA_INGRESO`, solo para nuevo ingreso; vacío en la semilla).
+- **S-19** Archivos: PDF, JPG y PNG de hasta 5 MB; URL prefirmadas de 5 min.
+- **S-20** En local, `GestorArchivosDisco` imita las URL prefirmadas en el mismo origen (`/api/v1/archivos-locales/{token}`).
+- **S-21** Ids `VARCHAR(36)` con UUIDv7 generado por Hibernate 7 (`@UuidGenerator(style = VERSION_7)`): es un String, como dice la ERS.
+- **S-22** Sin librería de componentes UI; CSS propio.
+- **S-23** Los montos viajan como string decimal en JSON.
+- **S-24** Cobertura mínima orientativa del 80 % en el dominio.
+- **S-25** Las rutas de la SPA usan los identificadores legibles de los wireframes (`3A`, `matematica`, `MAT-2027-00482`, `2026-0315`); el backend los resuelve dentro del año activo.
+- **S-26** Migraciones V1 a V11 editables hasta el primer despliegue compartido (§ 4.4); desde entonces, solo hacia adelante con `V12+`.
+- **S-27** La demo del 23/10 no incluye refresh token ni recuperación de contraseña; el token de acceso (15 min) no se renueva.
 
----
+### Preguntas abiertas
+- ~~**P-01** Fecha exacta de la demo~~ **Resuelta:** 23/10/2026.
+- **P-08** Fecha de inicio de la fase 0 completa (después de la demo) para convertir S1–S8 en fechas.
+- **P-02** ¿El docente registra **varios** logros por competencia dentro de un bimestre (RF-27, arquitectura § 9.2) o **uno** por bimestre (wireframes p. 22–24)? Afecta a la UI de UC-15 y al alcance de las estrategias.
+- **P-03** ¿Quién crea la cuenta del apoderado de una familia nueva antes de UC-01? (S-09)
+- **P-04** ¿Hay que registrar feriados o días no lectivos dentro de los bimestres? (S-07)
+- **P-05** Valores institucionales de TeacherLateThresholdMinutes, StudentLateCutoffTime y SchoolDayClosingTime para producción (la ERS dice que los define la institución).
+- **P-06** Confirmar la duración del bloqueo (S-03) y el desempate de la moda (S-04) con la institución.
+- **P-07** Actualizar el Modelo Conceptual (C-22, sin Aula) y la Visión (C-14). La arquitectura, la ERS y la matriz ya quedaron alineadas (C-01, C-15, C-17, C-29 a C-31); el wireframe p. 15 se queda como está (C-29).
 
-## 12. Al aprobar el plan
-1. Guardar este documento como `docs/PLAN.md`.
-2. Crear `CLAUDE.md` en la raíz con: stack y versiones; estructura (§2); **reglas de dependencia entre módulos** (§2) y de capas; convenciones (UUIDv7 String, nombres en español, `NUMERIC(12,2)`/`BigDecimal` HALF_UP, `Clock` inyectado, `@Auditable` en las operaciones críticas, `@PreAuthorize` en los servicios de aplicación, RFC 7807 con `codigo`, paginación, migraciones inmutables, sin configuración fija en el código); cómo correr (§9), probar (`./mvnw verify`, `npm test`) y generar tipos (`npm run api:types`); prioridad de documentos y referencia a `docs/PLAN.md` para contradicciones y supuestos.
-3. Empezar la **Fase 0**.
+## 15. Al aprobar el plan
+1. Guardar este plan en `docs/PLAN.md` (reemplaza la versión borrada que todavía figura en `HEAD`).
+2. Crear `CLAUDE.md` en la raíz con: stack y versiones fijadas (§ 3); estructura (§ 2); reglas de dependencia entre módulos y capas (§ 2.1); convenciones de código (español para el dominio, `record` para DTO, `@Transactional` solo en `aplicacion`, `@Auditable` en las operaciones críticas, BigDecimal para montos, `Clock` inyectado y nunca `LocalDate.now()` sin reloj, errores con `ExcepcionNegocio(CodigoError)`, nada de entidades en los controladores, permisos con `@PreAuthorize` y alcance en el servicio, migraciones nuevas solo hacia adelante); cómo correr y probar en PowerShell y bash (§ 11); prioridad de documentos y la regla de citar RF, RNF, UC y DA con la numeración v4.
+3. No escribir código hasta entonces. Después de crearlos, empezar la fase 0.
 
-## Verificación de este plan
-- Trazabilidad: cada UC-01…UC-25 aparece en §4 (endpoint), §5 (pantalla o job) y §6 (fase y criterios); cada RF-01…RF-50 y RNF-01…RNF-12 aparece en al menos una fase.
-- La demo (§9) se valida de punta a punta al cerrar la Fase 1 con el E2E de Playwright o la ejecución manual del guion, más `./mvnw verify` y `npm test` en verde en CI.
+## Verificación del plan (cuando se implemente)
+- Fase 0: `docker compose up -d`; `.\mvnw.cmd -B verify` / `./mvnw -B verify` en verde (ArchUnit, Testcontainers con postgres:18, auditoría inmutable, DA-10); `npm run lint && npm run typecheck && npm test && npm run build`; CI en verde en el PR.
+- Fase 1: ejecutar el guion de § 11 de punta a punta en una máquina Windows 11 limpia (IntelliJ `.run/`) y en otra con bash; comprobar en Mailpit los correos de recuperación y de matrícula, en Swagger los endpoints ★ y en psql los conteos de vacantes, obligaciones y auditoría.
+- Fases 2 a 6: los criterios de aceptación de cada fase (flujos básicos y alternativos de la ERS) automatizados como pruebas de integración y endpoint, más una demo interna por fase.
