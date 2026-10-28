@@ -122,6 +122,25 @@ public abstract class BaseIT {
         cuentas.invalidarTodas();
     }
 
+    /** Petición con cualquier método; {@code ifMatch} se manda como cabecera If-Match (ediciones con versión). */
+    protected Respuesta enviar(String metodo, String ruta, String cuerpo, String token, String ifMatch)
+            throws IOException, InterruptedException {
+        HttpRequest.Builder peticion = base(ruta).method(metodo,
+                cuerpo == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(cuerpo));
+        if (cuerpo != null) {
+            peticion.header("Content-Type", "application/json");
+        }
+        if (ifMatch != null) {
+            peticion.header("If-Match", ifMatch);
+        }
+        return enviar(peticion, token);
+    }
+
+    /** El ETag de la respuesta (por ejemplo, {@code "3"}) o {@code null}. */
+    protected static String etag(Respuesta respuesta) {
+        return respuesta.cabeceras().firstValue("ETag").orElse(null);
+    }
+
     protected Respuesta get(String ruta, String token) throws IOException, InterruptedException {
         return enviar(base(ruta).GET(), token);
     }

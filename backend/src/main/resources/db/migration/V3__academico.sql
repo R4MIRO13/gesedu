@@ -2,7 +2,7 @@
 
 CREATE TABLE academico.anio_escolar (
     id           VARCHAR(36) PRIMARY KEY,
-    anio         INTEGER     NOT NULL UNIQUE CHECK (anio BETWEEN 2000 AND 2100),
+    anio         INTEGER     NOT NULL UNIQUE CHECK (anio BETWEEN 2000 AND 2999),
     fecha_inicio DATE        NOT NULL,
     fecha_fin    DATE        NOT NULL,
     estado       VARCHAR(12) NOT NULL CHECK (estado IN ('PLANIFICADO', 'ACTIVO', 'CERRADO')),

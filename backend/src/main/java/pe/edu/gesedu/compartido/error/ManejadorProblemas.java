@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -32,6 +33,17 @@ public class ManejadorProblemas extends ResponseEntityExceptionHandler {
     ResponseEntity<Object> alManejarNegocio(ExcepcionNegocio ex, WebRequest peticion) {
         ProblemDetail problema = ProblemaHttp.crear(ex.codigo(), ex.getMessage(), ex.propiedades());
         return handleExceptionInternal(ex, problema, new HttpHeaders(), ex.codigo().estado(), peticion);
+    }
+
+    /**
+     * Dos personas editaron lo mismo a la vez: perdió la que llegó segunda (bloqueo optimista de {@code @Version}).
+     * Debe recargar y volver a intentar.
+     */
+    @ExceptionHandler({OptimisticLockingFailureException.class, jakarta.persistence.OptimisticLockException.class})
+    ResponseEntity<Object> alManejarConcurrencia(Exception ex, WebRequest peticion) {
+        ProblemDetail problema = ProblemaHttp.crear(CodigoError.CONFLICTO_CONCURRENCIA,
+                CodigoError.CONFLICTO_CONCURRENCIA.titulo());
+        return handleExceptionInternal(ex, problema, new HttpHeaders(), HttpStatus.CONFLICT, peticion);
     }
 
     /** 401 y 403 los resuelve Spring Security con sus propios manejadores (mismo formato); aquí solo se relanzan. */
