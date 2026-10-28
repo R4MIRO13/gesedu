@@ -23,12 +23,17 @@ import org.testcontainers.utility.MountableFile;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import pe.edu.gesedu.seguridad.aplicacion.CacheCuentas;
+
 /**
  * Base de las pruebas de integración: PostgreSQL 18 real (Testcontainers) con los roles reales
  * ({@code gesedu_migrador} para Flyway y {@code gesedu_app} para la aplicación), creados por el mismo script
  * que usa docker-compose. El contenedor es único para toda la ejecución.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+// El límite de peticiones a /auth/* se sube: las pruebas inician sesión muchas veces desde la misma IP.
+// LimiteAuthIT lo baja con su propio @SpringBootTest.
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "gesedu.seguridad.limite-auth-por-minuto=100000")
 public abstract class BaseIT {
 
     public static final String CONTRASENA = "Gesedu2027!";
@@ -57,8 +62,21 @@ public abstract class BaseIT {
         registro.add("gesedu.seguridad.jwt-secreto", () -> "clave-de-pruebas-de-al-menos-32-caracteres-0123456789");
     }
 
-    /** Respuesta HTTP ya leída: estado, tipo de contenido y cuerpo JSON. */
-    public record Respuesta(int estado, String tipoContenido, JsonNode cuerpo) {
+    /** Respuesta HTTP ya leída: estado, tipo de contenido, cuerpo JSON y cabeceras. */
+    public record Respuesta(int estado, String tipoContenido, JsonNode cuerpo, java.net.http.HttpHeaders cabeceras) {
+
+        /** Valor de la cookie {@code nombre} que la respuesta manda con Set-Cookie, o {@code null}. */
+        public String valorCookie(String nombre) {
+            return cabeceras.allValues("Set-Cookie").stream()
+                    .filter(c -> c.startsWith(nombre + "="))
+                    .map(c -> c.substring(nombre.length() + 1, c.indexOf(';') < 0 ? c.length() : c.indexOf(';')))
+                    .findFirst().orElse(null);
+        }
+
+        public String cookieCompleta(String nombre) {
+            return cabeceras.allValues("Set-Cookie").stream().filter(c -> c.startsWith(nombre + "="))
+                    .findFirst().orElse(null);
+        }
     }
 
     @Value("${local.server.port}")
@@ -66,6 +84,9 @@ public abstract class BaseIT {
 
     @Autowired
     protected JdbcTemplate jdbc;
+
+    @Autowired
+    protected CacheCuentas cuentas;
 
     @Autowired
     protected PasswordEncoder codificador;
@@ -78,6 +99,20 @@ public abstract class BaseIT {
     protected Respuesta post(String ruta, String cuerpo, String token) throws IOException, InterruptedException {
         return enviar(base(ruta).POST(HttpRequest.BodyPublishers.ofString(cuerpo))
                 .header("Content-Type", "application/json"), token);
+    }
+
+    /** POST que lleva una cookie (por ejemplo, el refresh token). */
+    protected Respuesta postConCookie(String ruta, String token, String cookie) throws IOException, InterruptedException {
+        HttpRequest.Builder peticion = base(ruta).POST(HttpRequest.BodyPublishers.noBody());
+        if (cookie != null) {
+            peticion.header("Cookie", cookie);
+        }
+        return enviar(peticion, token);
+    }
+
+    /** Las pruebas que modifican cuentas directamente en la base deben invalidar la caché de cuentas (RNF-07). */
+    protected void invalidarCuentas() {
+        cuentas.invalidarTodas();
     }
 
     protected Respuesta get(String ruta, String token) throws IOException, InterruptedException {
@@ -107,7 +142,8 @@ public abstract class BaseIT {
         String tipo = respuesta.headers().firstValue("Content-Type").orElse("");
         // Solo se interpretan cuerpos JSON (la Swagger UI responde HTML)
         return new Respuesta(respuesta.statusCode(), tipo,
-                cuerpo == null || cuerpo.isBlank() || !tipo.contains("json") ? null : json.readTree(cuerpo));
+                cuerpo == null || cuerpo.isBlank() || !tipo.contains("json") ? null : json.readTree(cuerpo),
+                respuesta.headers());
     }
 
     /** Crea una cuenta con la contraseña {@link #CONTRASENA} y devuelve su correo (único por llamada). */

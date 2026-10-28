@@ -49,3 +49,8 @@ gesedu:
     # RNF-06: 5 intentos fallidos bloquean la cuenta; S-03: durante 15 minutos
     max-intentos: 5
     bloqueo-minutos: ${GESEDU_BLOQUEO_MINUTOS:15}
+    # DA-04, S-06: refresh token de 7 días con rotación, en cookie HttpOnly / SameSite=Strict
+    refresh-dias: ${GESEDU_REFRESH_DIAS:7}
+    cookie-secure: ${GESEDU_COOKIE_SECURE:true}
+    # Límite de peticiones por IP a /auth/* (inicio de sesión, refresco y recuperación)
+    limite-auth-por-minuto: ${GESEDU_LIMITE_AUTH_POR_MINUTO:30}

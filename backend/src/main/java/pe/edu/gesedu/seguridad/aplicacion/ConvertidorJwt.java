@@ -13,48 +13,40 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
-import pe.edu.gesedu.seguridad.dominio.Permiso;
-import pe.edu.gesedu.seguridad.dominio.Usuario;
-import pe.edu.gesedu.seguridad.infraestructura.UsuarioRepository;
 
 /**
- * Convierte un JWT válido en la autenticación de la petición. Lee la cuenta en cada petición: una cuenta
- * desactivada o bloqueada pierde el acceso de inmediato aunque su token no haya vencido, y los cambios de
- * rol se aplican sin esperar a un nuevo token. (La caché de permisos de RNF-07 se agrega en la fase 0 completa.)
+ * Convierte un JWT válido en la autenticación de la petición. Consulta la cuenta en {@link CacheCuentas}: una
+ * cuenta desactivada o bloqueada pierde el acceso en cuanto se invalida su entrada, aunque su token no haya
+ * vencido, y los cambios de rol se aplican sin esperar a un nuevo token (RNF-07).
  */
 @Component
 public class ConvertidorJwt implements Converter<Jwt, UsernamePasswordAuthenticationToken> {
 
-    private final UsuarioRepository usuarios;
+    private final CacheCuentas cuentas;
     private final Clock reloj;
 
-    ConvertidorJwt(UsuarioRepository usuarios, Clock reloj) {
-        this.usuarios = usuarios;
+    ConvertidorJwt(CacheCuentas cuentas, Clock reloj) {
+        this.cuentas = cuentas;
         this.reloj = reloj;
     }
 
     @Override
-    @Transactional(readOnly = true)
     public UsernamePasswordAuthenticationToken convert(Jwt jwt) {
-        Usuario usuario = usuarios.findConPermisosById(jwt.getSubject())
+        CuentaAutenticada cuenta = cuentas.obtener(jwt.getSubject())
                 .orElseThrow(() -> new BadCredentialsException("La cuenta del token no existe"));
         AuthenticationException rechazo = null;
-        if (!usuario.isActivo()) {
+        if (!cuenta.activo()) {
             rechazo = new DisabledException("La cuenta está desactivada");
-        } else if (usuario.estaBloqueada(reloj.instant())) {
+        } else if (cuenta.estaBloqueada(reloj.instant())) {
             rechazo = new LockedException("La cuenta está bloqueada");
         }
         if (rechazo != null) {
             throw rechazo;
         }
-        List<GrantedAuthority> permisos = usuario.getRolAcceso().getPermisos().stream()
-                .map(Permiso::getCodigo)
+        List<GrantedAuthority> permisos = cuenta.permisos().stream()
                 .<GrantedAuthority>map(SimpleGrantedAuthority::new)
                 .toList();
-        UsuarioAutenticado principal = new UsuarioAutenticado(usuario.getId(), usuario.getNombres(),
-                usuario.getRolAcceso().getCodigo());
+        UsuarioAutenticado principal = new UsuarioAutenticado(cuenta.id(), cuenta.nombres(), cuenta.rol());
         return UsernamePasswordAuthenticationToken.authenticated(principal, jwt, permisos);
     }
 }

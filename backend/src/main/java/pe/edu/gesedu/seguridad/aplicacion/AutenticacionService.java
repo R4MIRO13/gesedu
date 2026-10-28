@@ -16,6 +16,7 @@ import pe.edu.gesedu.seguridad.dominio.Administrador;
 import pe.edu.gesedu.seguridad.dominio.Permiso;
 import pe.edu.gesedu.seguridad.dominio.Usuario;
 import pe.edu.gesedu.seguridad.infraestructura.AdministradorRepository;
+import pe.edu.gesedu.seguridad.infraestructura.PropiedadesSeguridad;
 import pe.edu.gesedu.seguridad.infraestructura.UsuarioRepository;
 
 /** Inicio de sesión (UC-24, RF-52) con bloqueo temporal tras 5 intentos fallidos (RNF-06). */
@@ -27,6 +28,9 @@ public class AutenticacionService {
     private final PasswordEncoder codificador;
     private final EmisorToken emisorToken;
     private final ControlAccesoCuenta control;
+    private final TokensRefresco tokensRefresco;
+    private final CacheCuentas cacheCuentas;
+    private final PropiedadesSeguridad propiedades;
     private final Clock reloj;
 
     // Se calcula una vez; sirve para que un correo inexistente tarde lo mismo que uno existente
@@ -34,12 +38,16 @@ public class AutenticacionService {
 
     AutenticacionService(UsuarioRepository usuarios, AdministradorRepository administradores,
                          PasswordEncoder codificador, EmisorToken emisorToken, ControlAccesoCuenta control,
-                         Clock reloj) {
+                         TokensRefresco tokensRefresco, CacheCuentas cacheCuentas,
+                         PropiedadesSeguridad propiedades, Clock reloj) {
         this.usuarios = usuarios;
         this.administradores = administradores;
         this.codificador = codificador;
         this.emisorToken = emisorToken;
         this.control = control;
+        this.tokensRefresco = tokensRefresco;
+        this.cacheCuentas = cacheCuentas;
+        this.propiedades = propiedades;
         this.reloj = reloj;
     }
 
@@ -48,7 +56,7 @@ public class AutenticacionService {
      * y el bloqueo tienen que quedar guardados.
      */
     @Transactional(noRollbackFor = ExcepcionNegocio.class)
-    public SesionIniciada iniciarSesion(String correo, String contrasena) {
+    public SesionConRefresco iniciarSesion(String correo, String contrasena) {
         Instant ahora = reloj.instant();
         Usuario usuario = usuarios.buscarPorCorreo(correo.trim()).orElse(null);
 
@@ -71,6 +79,38 @@ public class AutenticacionService {
         }
 
         usuario.registrarAccesoExitoso(ahora);
+        cacheCuentas.invalidar(usuario.getId());
+        return new SesionConRefresco(sesionDe(usuario), tokensRefresco.emitir(usuario.getId()));
+    }
+
+    /**
+     * Renueva la sesión con el refresh token de la cookie: entrega un token de acceso nuevo y rota el refresh
+     * (DA-04). Una cuenta que ya no puede entrar pierde también su sesión.
+     */
+    @Transactional(noRollbackFor = ExcepcionNegocio.class)
+    public SesionConRefresco refrescar(String valorRefresco) {
+        TokensRefresco.Rotacion rotacion = tokensRefresco.rotar(valorRefresco);
+        Usuario usuario = usuarios.findConPermisosById(rotacion.usuarioId())
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.SESION_EXPIRADA));
+        if (!usuario.isActivo() || usuario.estaBloqueada(reloj.instant())) {
+            tokensRefresco.revocarTodos(usuario.getId());
+            throw usuario.isActivo() ? cuentaBloqueada(usuario) : new ExcepcionNegocio(CodigoError.CUENTA_INACTIVA);
+        }
+        return new SesionConRefresco(sesionDe(usuario), rotacion.token());
+    }
+
+    /** Cierre de sesión (RF-52, UC-24 FA-4): el refresh token queda revocado y el siguiente refresco da 401. */
+    @Transactional
+    public void cerrarSesion(String valorRefresco) {
+        tokensRefresco.cerrar(valorRefresco);
+    }
+
+    /** La cookie de refresh lleva {@code Secure} salvo que se configure lo contrario. */
+    public boolean cookieRefrescoSegura() {
+        return propiedades.cookieSecure();
+    }
+
+    private SesionIniciada sesionDe(Usuario usuario) {
         EmisorToken.TokenEmitido token = emisorToken.emitir(usuario.getId());
         return new SesionIniciada(token.valor(), token.expiraEn().atZone(reloj.getZone()).toOffsetDateTime(),
                 datosDe(usuario));

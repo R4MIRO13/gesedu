@@ -66,6 +66,7 @@ class JwtYPermisosIT extends BaseIT {
         assertThat(get("/api/v1/prueba/horario", token).estado()).isEqualTo(200);
 
         jdbc.update("UPDATE seguridad.usuario SET activo = FALSE WHERE correo = ?", correo);
+        invalidarCuentas(); // lo que hará el servicio de usuarios al desactivar una cuenta
 
         assertProblema(get("/api/v1/prueba/horario", token), 401, "CUENTA_INACTIVA");
     }
@@ -77,6 +78,7 @@ class JwtYPermisosIT extends BaseIT {
 
         jdbc.update("UPDATE seguridad.usuario SET bloqueado_hasta = now() + interval '10 minutes' WHERE correo = ?",
                 correo);
+        invalidarCuentas();
 
         assertProblema(get("/api/v1/prueba/horario", token), 401, "CUENTA_BLOQUEADA");
     }

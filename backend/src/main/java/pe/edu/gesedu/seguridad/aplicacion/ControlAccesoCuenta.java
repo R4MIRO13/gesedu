@@ -26,10 +26,12 @@ class ControlAccesoCuenta {
     private EntityManager em;
 
     private final PropiedadesSeguridad propiedades;
+    private final CacheCuentas cacheCuentas;
     private final Clock reloj;
 
-    ControlAccesoCuenta(PropiedadesSeguridad propiedades, Clock reloj) {
+    ControlAccesoCuenta(PropiedadesSeguridad propiedades, CacheCuentas cacheCuentas, Clock reloj) {
         this.propiedades = propiedades;
+        this.cacheCuentas = cacheCuentas;
         this.reloj = reloj;
     }
 
@@ -48,6 +50,7 @@ class ControlAccesoCuenta {
                 Duration.ofMinutes(propiedades.bloqueoMinutos()));
         if (bloqueada) {
             ContextoAuditoria.registrarCambio("bloqueado_hasta", null, usuario.getBloqueadoHasta());
+            cacheCuentas.invalidar(usuario.getId());
         }
         return bloqueada;
     }
