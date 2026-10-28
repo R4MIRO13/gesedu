@@ -36,7 +36,12 @@ management:
         enabled: true
 
 gesedu:
-  zona-horaria: ${GESEDU_TIME_ZONE:America/Lima}
+  asistencia:
+    # DA-10: se validan al arrancar (AsistenciaProperties). Valores de los wireframes (C-24); P-05 los fija la institución.
+    time-zone: ${GESEDU_TIME_ZONE:America/Lima}
+    teacher-late-threshold-minutes: ${GESEDU_ASISTENCIA_TEACHER_LATE_THRESHOLD_MINUTES:5}
+    student-late-cutoff-time: ${GESEDU_ASISTENCIA_STUDENT_LATE_CUTOFF_TIME:08:30}
+    school-day-closing-time: ${GESEDU_ASISTENCIA_SCHOOL_DAY_CLOSING_TIME:15:30}
   seguridad:
     # Sin valor por defecto: fuera de local la clave tiene que venir de GESEDU_JWT_SECRET
     jwt-secreto: ${GESEDU_JWT_SECRET}

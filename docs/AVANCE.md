@@ -26,7 +26,7 @@
 | 0.2 | CI GitHub Actions (frontend con matriz Node 22 y 24) + script `typecheck`. Nota: el paso `npm test` del CI falla hasta que 0.11 agregue Vitest y el script `test` | hecha | ver `git log` |
 | 0.3 | Dependencias fijadas: ShedLock 7.10.1, AWS SDK 2.57.5 (s3, sesv2), POI 5.5.1, OpenPDF 3.0.5 (paquete `org.openpdf`), mail, cache, Caffeine | hecha | ver `git log` |
 | 0.4 | `compartido`: `EntidadBase` (Usuario, AnioEscolar y BloqueHorario ya la heredan), `Dinero`, `NivelLogro`, `ParametrosPaginacion`, `Etags`, `CodigoError` completo + `errores.md`. Pruebas: `NucleoCompartidoTest`, `ProblemDetailsIT` | hecha | ver `git log` |
-| 0.5 | `AsistenciaProperties` (DA-10) y zona horaria unificada | pendiente | |
+| 0.5 | `AsistenciaProperties` validado (DA-10), propiedades `gesedu.asistencia.*` con valores 5 / 08:30 / 15:30, zona horaria unificada en `gesedu.asistencia.time-zone` (C-34). Prueba: `AsistenciaPropertiesTest` | hecha | ver `git log` |
 | 0.6 | Migraciones V2–V8, V10 completas | pendiente | |
 | 0.7 | Refresh token, cierre de sesión, caché de permisos, límite de peticiones | pendiente | |
 | 0.8 | `GestorArchivos` y `Notificador` | pendiente | |
@@ -43,6 +43,8 @@
 ## Supuestos tomados
 - **S-28** El cronograma de cobros modificado no crea obligaciones retroactivas ni toca las obligaciones no PENDIENTES. La edición de datos personales reutiliza `USUARIO_GESTIONAR` y el cambio de sección `MATRICULA_REGISTRAR` (sin permisos nuevos).
 - El tag `demo-23-10` no existía en el repositorio; se creó localmente sobre `8f876c6` (no se hizo push).
+
+- **S-29** El diagnóstico legible de DA-10 lo da el `FailureAnalyzer` estándar de Spring Boot (`BindValidationFailureAnalyzer`), que nombra la propiedad y el mensaje de la restricción; no se escribe un analizador propio.
 
 ## Contradicciones nuevas (C-32 a C-43)
 Resoluciones aprobadas en el plan de ejecución; se trasladan a `docs/PLAN.md` § 13 en la tarea 0.1/0.2.

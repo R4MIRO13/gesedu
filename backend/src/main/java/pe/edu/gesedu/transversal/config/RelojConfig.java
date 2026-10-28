@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 public class RelojConfig {
 
     @Bean
-    Clock reloj(@Value("${gesedu.zona-horaria}") String zonaHoraria) {
+    Clock reloj(@Value("${gesedu.asistencia.time-zone}") String zonaHoraria) {
         return Clock.system(ZoneId.of(zonaHoraria));
     }
 }
