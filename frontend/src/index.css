@@ -433,3 +433,51 @@ button.celda:hover {
     display: block;
   }
 }
+
+/* Menú «Exportar ▾» de la auditoría */
+.menu-exportar {
+  position: relative;
+}
+.menu-exportar summary {
+  list-style: none;
+  cursor: pointer;
+}
+.menu-exportar summary::-webkit-details-marker {
+  display: none;
+}
+.menu-exportar-opciones {
+  position: absolute;
+  right: 0;
+  z-index: 4;
+  min-width: 11rem;
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+.menu-exportar-opciones button {
+  padding: 0.5rem 0.9rem;
+  text-align: left;
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.menu-exportar-opciones button:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+.cambios {
+  width: 100%;
+  background: #f8f9fd;
+}
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

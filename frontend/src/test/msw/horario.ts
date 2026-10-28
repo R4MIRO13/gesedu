@@ -4,7 +4,7 @@ import { sesionDe } from './handlers'
 /** Administrador que gestiona horarios (UC-21). */
 export const SESION_GESTOR = sesionDe(
   'ADMINISTRADOR',
-  ['HORARIO_CONSULTAR', 'HORARIO_CONFIGURAR', 'HORARIO_GESTIONAR', 'AUDITORIA_CONSULTAR'],
+  ['HORARIO_CONSULTAR', 'HORARIO_CONFIGURAR', 'HORARIO_GESTIONAR', 'AUDITORIA_CONSULTAR', 'AUDITORIA_EXPORTAR'],
   { cargo: 'Secretaría académica' },
 )
 

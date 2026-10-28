@@ -196,6 +196,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auditoria/registros/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Un registro con los campos que cambiaron (valor anterior y nuevo) */
+        get: operations["detalle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auditoria/registros/exportacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exporta a Excel (xlsx) o CSV los registros que devuelve el mismo filtro de la consulta. Admite hasta 20 000 registros; la exportación queda auditada */
+        get: operations["exportar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auditoria/catalogos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Módulos con sus acciones y usuarios que figuran en la auditoría (para los filtros) */
+        get: operations["catalogos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -333,6 +384,27 @@ export interface components {
             tipoEntidad?: string;
             idEntidadAfectada?: string;
             descripcion?: string;
+        };
+        CambioAuditoriaDto: {
+            campo?: string;
+            valorAnterior?: string;
+            valorNuevo?: string;
+        };
+        DetalleRegistroAuditoriaDto: {
+            registro?: components["schemas"]["RegistroAuditoriaDto"];
+            cambios?: components["schemas"]["CambioAuditoriaDto"][];
+        };
+        CatalogosAuditoriaDto: {
+            modulos?: components["schemas"]["ModuloAuditoriaDto"][];
+            usuarios?: components["schemas"]["UsuarioAuditoriaDto"][];
+        };
+        ModuloAuditoriaDto: {
+            modulo?: string;
+            acciones?: string[];
+        };
+        UsuarioAuditoriaDto: {
+            id?: string;
+            nombre?: string;
         };
     };
     responses: never;
@@ -662,6 +734,75 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PaginaRegistroAuditoriaDto"];
+                };
+            };
+        };
+    };
+    detalle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleRegistroAuditoriaDto"];
+                };
+            };
+        };
+    };
+    exportar: {
+        parameters: {
+            query?: {
+                usuarioId?: string;
+                modulo?: string;
+                accion?: string;
+                desde?: string;
+                hasta?: string;
+                formato?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    catalogos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CatalogosAuditoriaDto"];
                 };
             };
         };

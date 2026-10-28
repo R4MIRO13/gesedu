@@ -11,6 +11,13 @@ import type {
   SolicitudAsignacion,
   Validacion,
 } from '../../modulos/horarios/api'
+import type {
+  CambioAuditoria,
+  CatalogosAuditoria,
+  DetalleRegistroAuditoria,
+  Pagina,
+  RegistroAuditoria,
+} from '../../modulos/auditoria/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -49,5 +56,15 @@ describe('contrato del horario (UC-21)', () => {
     expectTypeOf<ConflictoHorario['tipo']>().toEqualTypeOf<
       'DOCENTE_NO_ASOCIADO' | 'DOCENTE_NO_DISPONIBLE' | 'CRUCE_DOCENTE' | 'CRUCE_SECCION'
     >()
+  })
+})
+
+describe('contrato de la auditoría (UC-25)', () => {
+  it('los tipos de la consulta tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof RegistroAuditoria>().toEqualTypeOf<keyof Esquemas['RegistroAuditoriaDto']>()
+    expectTypeOf<keyof CambioAuditoria>().toEqualTypeOf<keyof Esquemas['CambioAuditoriaDto']>()
+    expectTypeOf<keyof DetalleRegistroAuditoria>().toEqualTypeOf<keyof Esquemas['DetalleRegistroAuditoriaDto']>()
+    expectTypeOf<keyof CatalogosAuditoria>().toEqualTypeOf<keyof Esquemas['CatalogosAuditoriaDto']>()
+    expectTypeOf<keyof Pagina<RegistroAuditoria>>().toEqualTypeOf<keyof Esquemas['PaginaRegistroAuditoriaDto']>()
   })
 })

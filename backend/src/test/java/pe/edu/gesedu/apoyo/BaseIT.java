@@ -136,6 +136,19 @@ public abstract class BaseIT {
         return enviar(peticion, token);
     }
 
+    /** Respuesta binaria (archivos descargables): estado, cabeceras y bytes. */
+    public record Descarga(int estado, java.net.http.HttpHeaders cabeceras, byte[] contenido) {
+    }
+
+    protected Descarga descargar(String ruta, String token) throws IOException, InterruptedException {
+        HttpRequest.Builder peticion = base(ruta).GET();
+        if (token != null) {
+            peticion.header("Authorization", "Bearer " + token);
+        }
+        HttpResponse<byte[]> respuesta = cliente.send(peticion.build(), HttpResponse.BodyHandlers.ofByteArray());
+        return new Descarga(respuesta.statusCode(), respuesta.headers(), respuesta.body());
+    }
+
     /** El ETag de la respuesta (por ejemplo, {@code "3"}) o {@code null}. */
     protected static String etag(Respuesta respuesta) {
         return respuesta.cabeceras().firstValue("ETag").orElse(null);

@@ -59,7 +59,8 @@ class BloquesHorariosIT extends BaseIT {
         // Lo que escribe la API queda en la base con la misma hora…
         post(RUTA, cuerpo("LUNES", "07:45", "08:30"), admin);
         assertThat(jdbc.queryForObject("SELECT hora_inicio::text || '-' || hora_fin::text FROM horarios.bloque_horario "
-                + "WHERE dia_semana = 'LUNES'", String.class)).isEqualTo("07:45:00-08:30:00");
+                + "WHERE dia_semana = 'LUNES' AND anio_escolar_id = (SELECT id FROM academico.anio_escolar WHERE anio = ?)",
+                String.class, ANIO)).isEqualTo("07:45:00-08:30:00");
 
         // …y lo que se siembra con SQL (como db/demo) se lee con la misma hora
         jdbc.update("INSERT INTO horarios.bloque_horario (id, anio_escolar_id, dia_semana, hora_inicio, hora_fin) "
@@ -94,7 +95,8 @@ class BloquesHorariosIT extends BaseIT {
             assertThat(r.cuerpo().get("codigo").asString()).isEqualTo("ACCESO_DENEGADO");
         }
         assertThat(post(RUTA, cuerpo("LUNES", "07:45", "08:30"), null).estado()).isEqualTo(401);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM horarios.bloque_horario", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM horarios.bloque_horario WHERE anio_escolar_id = "
+                + "(SELECT id FROM academico.anio_escolar WHERE anio = ?)", Integer.class, ANIO)).isZero();
     }
 
     @Test
