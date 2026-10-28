@@ -1,5 +1,16 @@
 import { describe, expectTypeOf, it } from 'vitest'
 import type { DatosUsuario, SesionIniciada } from '../auth/sesion'
+import type {
+  Asignacion,
+  Borrador,
+  CargaCurso,
+  CargaSeccion,
+  ConflictoHorario,
+  OpcionDocente,
+  Opciones,
+  SolicitudAsignacion,
+  Validacion,
+} from '../../modulos/horarios/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -18,5 +29,25 @@ describe('contrato de la API', () => {
   it('los tipos de las propiedades son compatibles', () => {
     expectTypeOf<SesionIniciada['tokenAcceso']>().toEqualTypeOf<NonNullable<Esquemas['SesionIniciada']['tokenAcceso']>>()
     expectTypeOf<DatosUsuario['permisos']>().toEqualTypeOf<NonNullable<Esquemas['DatosUsuario']['permisos']>>()
+  })
+})
+
+describe('contrato del horario (UC-21)', () => {
+  it('los tipos del borrador tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof Borrador>().toEqualTypeOf<keyof Esquemas['BorradorDto']>()
+    expectTypeOf<keyof Asignacion>().toEqualTypeOf<keyof Esquemas['AsignacionDto']>()
+    expectTypeOf<keyof CargaCurso>().toEqualTypeOf<keyof Esquemas['CargaCursoDto']>()
+    expectTypeOf<keyof CargaSeccion>().toEqualTypeOf<keyof Esquemas['CargaSeccionDto']>()
+    expectTypeOf<keyof Opciones>().toEqualTypeOf<keyof Esquemas['OpcionesDto']>()
+    expectTypeOf<keyof OpcionDocente>().toEqualTypeOf<keyof Esquemas['OpcionDocenteDto']>()
+    expectTypeOf<keyof ConflictoHorario>().toEqualTypeOf<keyof Esquemas['ConflictoDto']>()
+    expectTypeOf<keyof Validacion>().toEqualTypeOf<keyof Esquemas['ValidacionDto']>()
+    expectTypeOf<keyof SolicitudAsignacion>().toEqualTypeOf<keyof Esquemas['AsignacionRequest']>()
+  })
+
+  it('el código de cada conflicto es uno de los tipos del validador', () => {
+    expectTypeOf<ConflictoHorario['tipo']>().toEqualTypeOf<
+      'DOCENTE_NO_ASOCIADO' | 'DOCENTE_NO_DISPONIBLE' | 'CRUCE_DOCENTE' | 'CRUCE_SECCION'
+    >()
   })
 })

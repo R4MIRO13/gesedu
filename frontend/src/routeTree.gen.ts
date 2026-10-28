@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditoria'
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetHorariosBloquesRouteImport } from './routes/intranet/horarios/bloques'
+import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,12 @@ const IntranetHorariosBloquesRoute = IntranetHorariosBloquesRouteImport.update({
   path: '/horarios/bloques',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetHorariosAnioElaborarRoute =
+  IntranetHorariosAnioElaborarRouteImport.update({
+    id: '/horarios/$anio/elaborar',
+    path: '/horarios/$anio/elaborar',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByFullPath {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +70,7 @@ export interface FileRoutesByTo {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +80,7 @@ export interface FileRoutesById {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +91,7 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
+    | '/intranet/horarios/$anio/elaborar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +100,7 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
+    | '/intranet/horarios/$anio/elaborar'
   id:
     | '__root__'
     | '/'
@@ -97,6 +109,7 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
+    | '/intranet/horarios/$anio/elaborar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -149,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetHorariosBloquesRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/horarios/$anio/elaborar': {
+      id: '/intranet/horarios/$anio/elaborar'
+      path: '/horarios/$anio/elaborar'
+      fullPath: '/intranet/horarios/$anio/elaborar'
+      preLoaderRoute: typeof IntranetHorariosAnioElaborarRouteImport
+      parentRoute: typeof IntranetRoute
+    }
   }
 }
 
@@ -156,12 +176,14 @@ interface IntranetRouteChildren {
   IntranetAuditoriaRoute: typeof IntranetAuditoriaRoute
   IntranetInicioRoute: typeof IntranetInicioRoute
   IntranetHorariosBloquesRoute: typeof IntranetHorariosBloquesRoute
+  IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
 }
 
 const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetAuditoriaRoute: IntranetAuditoriaRoute,
   IntranetInicioRoute: IntranetInicioRoute,
   IntranetHorariosBloquesRoute: IntranetHorariosBloquesRoute,
+  IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,
 }
 
 const IntranetRouteWithChildren = IntranetRoute._addFileChildren(
