@@ -297,3 +297,11 @@ tbody tr:last-child td {
     width: 100%;
   }
 }
+
+.error-campo {
+  color: var(--color-error);
+  font-size: 0.85rem;
+}
+.campo input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
