@@ -12,7 +12,7 @@
 | Fase | Rama | Estado |
 |---|---|---|
 | 0 Base | `feat/fase-0` | **terminada** (0.1–0.11) |
-| 1 Demo ampliada | `feat/fase-1` | pendiente |
+| 1 Demo ampliada | `feat/fase-1` | en curso |
 | 2 Matrícula y pagos | `feat/fase-2` | pendiente |
 | 3 Académico y horarios | `feat/fase-3` | pendiente |
 | 4 Asistencia | `feat/fase-4` | pendiente |
@@ -64,6 +64,11 @@ einiciar-bd.ps1`** (checksums cambiados, S-26) | hecha | ver `git log` |
 ## Contradicciones nuevas (C-32 a C-43)
 Resoluciones aprobadas en el plan de ejecución; se trasladan a `docs/PLAN.md` § 13 en la tarea 0.1/0.2.
 C-32 versiones de frontend (Vite 8, TS 6, oxlint se mantienen) · C-33 Mailpit sin perfil · C-34 `gesedu.asistencia.time-zone` · C-35 `registro_auditoria_id` se mantiene · C-36 tag creado · C-37 validaciones por tipo de estudiante · C-38 Directivo = permiso, no cargo · C-39 asistencia idempotente con 409 + registro existente · C-40 advertencia de disponibilidad en UC-22 · C-41 aviso de UC-05 por correo y pantalla · C-42 códigos de error faltantes · C-43 **resuelta**: RF-02, RF-05 y RF-07 «actualizar» dentro de alcance (tareas 2.8–2.10).
+
+## Resumen de fases cerradas
+### Fase 0 — Base (`feat/fase-0`, 28/10/2026)
+Entregado: CI, dependencias, núcleo compartido, `AsistenciaProperties` (DA-10), esquema completo V1–V11, seguridad con refresh token rotativo / cierre de sesión revocable / caché / límite de peticiones, Gestor de Archivos (disco y S3), Notificador (SMTP y SES), ShedLock, `GeneradorExcel`, ArchUnit completo y frontend base. Backend: `./mvnw -B verify` en verde (124 pruebas); frontend: lint, typecheck, 30 pruebas y build en verde. Las contradicciones C-32 a C-43 están en `docs/PLAN.md` § 13.
+RF/RNF: RF-01 (sin DELETE de usuarios), RF-48, RF-49, RF-50, RF-52, RNF-01, RNF-06, RNF-07, RNF-08 y la base de RNF-03.
 
 ## Cobertura RF / UC
 (Se completa en la tarea 6.6.)
