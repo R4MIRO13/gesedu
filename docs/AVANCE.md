@@ -31,7 +31,7 @@
 einiciar-bd.ps1`** (checksums cambiados, S-26) | hecha | ver `git log` |
 | 0.7 | Backend: refresh token rotativo en cookie HttpOnly/Secure/SameSite=Strict (`/auth/refresco`, `/auth/cierre-sesion`, reutilización revoca la familia), caché Caffeine de cuentas y permisos (`CacheCuentas`), límite de 30 peticiones/min por IP en `/auth/*` (429). Pruebas: `RefreshTokenIT`, `CacheCuentasIT`, `LimiteAuthIT`, `JwtServiceTest`, `TokensOpacosTest`. El consumo desde la SPA (refresco transparente, logout) llega en 0.11 y 1.1 | hecha | ver `git log` |
 | 0.8 | `GestorArchivos` (`GestorArchivosDisco` con URL HMAC de 5 min y endpoint `/api/v1/archivos-locales/{token}`; `GestorArchivosS3` con URL prefirmadas), `ReglasArchivo` (PDF/JPG/PNG ≤ 5 MB), `Notificador` (SMTP/SES), `Plantillas` HTML y `Notificaciones` (después del commit, asíncrono, 3 intentos). Mailpit sin perfil de compose (C-33). Pruebas: `ReglasYDiscoTest`, `GestorArchivosS3Test`, `ArchivosLocalesIT`, `PlantillasYSesTest`, `NotificacionesIT`, `NotificadorSmtpIT` (Mailpit en Testcontainers) | hecha | ver `git log` |
-| 0.9 | ShedLock, usuario «Sistema», `GeneradorExcel` | pendiente | |
+| 0.9 | `ConfiguracionPlanificador` (`@EnableScheduling`, ShedLock con `JdbcTemplateLockProvider` sobre `transversal.shedlock` y hora de la BD), actor «Sistema» en jobs (auditoría con `usuario_id` nulo), `GeneradorExcel` (POI; zona institucional; sin AWT). Pruebas: `ShedLockIT`, `GeneradorExcelTest` | hecha | ver `git log` |
 | 0.10 | ArchUnit completo | pendiente | |
 | 0.11 | Frontend base | pendiente | |
 | 1.1–1.9 | Ver plan aprobado (fase 1) | pendiente | |
