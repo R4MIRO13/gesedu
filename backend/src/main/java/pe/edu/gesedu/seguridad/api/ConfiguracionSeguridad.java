@@ -38,7 +38,8 @@ class ConfiguracionSeguridad {
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/inicio-sesion", "/api/v1/auth/refresco")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/inicio-sesion", "/api/v1/auth/refresco",
+                                "/api/v1/auth/recuperacion", "/api/v1/auth/recuperacion/confirmacion")
                         .permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
                         // URL prefirmadas del desarrollo local: las autoriza el token firmado, no la sesión (S-20)

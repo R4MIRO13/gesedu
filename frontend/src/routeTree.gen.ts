@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IntranetRouteImport } from './routes/intranet'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as RecuperarContrasenaRouteImport } from './routes/recuperar-contrasena'
+import { Route as RestablecerContrasenaRouteImport } from './routes/restablecer-contrasena'
 import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditoria'
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetHorariosBloquesRouteImport } from './routes/intranet/horarios/bloques'
@@ -30,6 +32,16 @@ const IntranetRoute = IntranetRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarContrasenaRoute = RecuperarContrasenaRouteImport.update({
+  id: '/recuperar-contrasena',
+  path: '/recuperar-contrasena',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestablecerContrasenaRoute = RestablecerContrasenaRouteImport.update({
+  id: '/restablecer-contrasena',
+  path: '/restablecer-contrasena',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntranetAuditoriaRoute = IntranetAuditoriaRouteImport.update({
@@ -58,6 +70,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
+  '/recuperar-contrasena': typeof RecuperarContrasenaRoute
+  '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
@@ -67,6 +81,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
+  '/recuperar-contrasena': typeof RecuperarContrasenaRoute
+  '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
@@ -77,6 +93,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
+  '/recuperar-contrasena': typeof RecuperarContrasenaRoute
+  '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
@@ -88,6 +106,8 @@ export interface FileRouteTypes {
     | '/'
     | '/intranet'
     | '/login'
+    | '/recuperar-contrasena'
+    | '/restablecer-contrasena'
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
@@ -97,6 +117,8 @@ export interface FileRouteTypes {
     | '/'
     | '/intranet'
     | '/login'
+    | '/recuperar-contrasena'
+    | '/restablecer-contrasena'
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
@@ -106,6 +128,8 @@ export interface FileRouteTypes {
     | '/'
     | '/intranet'
     | '/login'
+    | '/recuperar-contrasena'
+    | '/restablecer-contrasena'
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
@@ -116,6 +140,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   IntranetRoute: typeof IntranetRouteWithChildren
   LoginRoute: typeof LoginRoute
+  RecuperarContrasenaRoute: typeof RecuperarContrasenaRoute
+  RestablecerContrasenaRoute: typeof RestablecerContrasenaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -139,6 +165,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-contrasena': {
+      id: '/recuperar-contrasena'
+      path: '/recuperar-contrasena'
+      fullPath: '/recuperar-contrasena'
+      preLoaderRoute: typeof RecuperarContrasenaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restablecer-contrasena': {
+      id: '/restablecer-contrasena'
+      path: '/restablecer-contrasena'
+      fullPath: '/restablecer-contrasena'
+      preLoaderRoute: typeof RestablecerContrasenaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/intranet/auditoria': {
@@ -194,6 +234,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   IntranetRoute: IntranetRouteWithChildren,
   LoginRoute: LoginRoute,
+  RecuperarContrasenaRoute: RecuperarContrasenaRoute,
+  RestablecerContrasenaRoute: RestablecerContrasenaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

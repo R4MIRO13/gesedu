@@ -76,6 +76,15 @@ public class Usuario extends EntidadBase {
         return false;
     }
 
+    /**
+     * Define una contraseña nueva (recuperación, RF-52). Reinicia el contador de intentos fallidos; un bloqueo
+     * temporal vigente no se levanta: lo levanta el paso del tiempo o el administrador.
+     */
+    public void cambiarContrasena(String nuevoHash) {
+        this.hashContrasena = nuevoHash;
+        this.intentosFallidos = 0;
+    }
+
     /** Un inicio de sesión correcto reinicia el contador y levanta cualquier bloqueo vencido. */
     public void registrarAccesoExitoso(Instant ahora) {
         intentosFallidos = 0;

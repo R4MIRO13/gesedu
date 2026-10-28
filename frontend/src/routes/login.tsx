@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { redirigirSiHaySesion } from '../compartido/auth/guardias'
 import { guardarSesion } from '../compartido/auth/sesion'
@@ -72,6 +72,9 @@ function Login() {
         <button className="btn btn-primario" type="submit" disabled={iniciar.isPending}>
           {iniciar.isPending ? 'Ingresando…' : 'Ingresar'}
         </button>
+        <p>
+          <Link to="/recuperar-contrasena">¿Olvidaste tu contraseña?</Link>
+        </p>
       </form>
     </main>
   )
