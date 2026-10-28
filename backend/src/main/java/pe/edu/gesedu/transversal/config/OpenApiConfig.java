@@ -39,7 +39,7 @@ public class OpenApiConfig {
     @Bean
     GroupedOpenApi grupoHorarios() {
         return GroupedOpenApi.builder().group("2-horarios").displayName("Horarios")
-                .pathsToMatch("/api/v1/anios-escolares/*/bloques/**").build();
+                .pathsToMatch("/api/v1/anios-escolares/*/bloques/**", "/api/v1/horarios/**").build();
     }
 
     @Bean

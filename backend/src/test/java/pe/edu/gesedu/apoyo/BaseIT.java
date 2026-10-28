@@ -55,10 +55,17 @@ public abstract class BaseIT {
         POSTGRES.start();
     }
 
+    /**
+     * Base de datos a la que apunta la aplicación de las pruebas. Una prueba que necesite la suya (la de la semilla
+     * de demo) la fija en su {@code @BeforeAll}, antes de que se cree su contexto, y la restablece en {@code @AfterAll}.
+     * La URL se lee al crear el contexto, no al registrar la propiedad.
+     */
+    protected static volatile String baseDeDatos = "gesedu";
+
     @DynamicPropertySource
     static void propiedades(DynamicPropertyRegistry registro) {
-        String url = "jdbc:postgresql://" + POSTGRES.getHost() + ":" + POSTGRES.getMappedPort(5432) + "/gesedu";
-        registro.add("spring.datasource.url", () -> url);
+        registro.add("spring.datasource.url", () -> "jdbc:postgresql://" + POSTGRES.getHost() + ":"
+                + POSTGRES.getMappedPort(5432) + "/" + baseDeDatos);
         registro.add("spring.datasource.username", () -> "gesedu_app");
         registro.add("spring.datasource.password", () -> "gesedu_app");
         registro.add("spring.flyway.user", () -> "gesedu_migrador");
