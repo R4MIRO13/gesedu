@@ -1,12 +1,11 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, type SubmitEvent } from 'react'
-import { guardarSesion, obtenerSesion } from '../compartido/sesion'
+import { redirigirSiHaySesion } from '../compartido/auth/guardias'
+import { guardarSesion } from '../compartido/auth/sesion'
 import { useIniciarSesion } from '../modulos/seguridad/api'
 
 export const Route = createFileRoute('/login')({
-  beforeLoad: () => {
-    if (obtenerSesion()) throw redirect({ to: '/intranet/inicio' })
-  },
+  beforeLoad: () => redirigirSiHaySesion(),
   component: Login,
 })
 

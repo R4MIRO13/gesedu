@@ -11,7 +11,7 @@
 ## Estado por fase
 | Fase | Rama | Estado |
 |---|---|---|
-| 0 Base | `feat/fase-0` | en curso |
+| 0 Base | `feat/fase-0` | **terminada** (0.1–0.11) |
 | 1 Demo ampliada | `feat/fase-1` | pendiente |
 | 2 Matrícula y pagos | `feat/fase-2` | pendiente |
 | 3 Académico y horarios | `feat/fase-3` | pendiente |
@@ -23,7 +23,7 @@
 | Tarea | Descripción | Estado | Commit |
 |---|---|---|---|
 | 0.1 | Higiene: restaurar `routeTree.gen.ts`, tag local `demo-23-10`, AVANCE y README | hecha | (ver `git log`) |
-| 0.2 | CI GitHub Actions (frontend con matriz Node 22 y 24) + script `typecheck`. Nota: el paso `npm test` del CI falla hasta que 0.11 agregue Vitest y el script `test` | hecha | ver `git log` |
+| 0.2 | CI GitHub Actions (frontend con matriz Node 22 y 24) + script `typecheck` (el script `test` llegó con 0.11) | hecha | ver `git log` |
 | 0.3 | Dependencias fijadas: ShedLock 7.10.1, AWS SDK 2.57.5 (s3, sesv2), POI 5.5.1, OpenPDF 3.0.5 (paquete `org.openpdf`), mail, cache, Caffeine | hecha | ver `git log` |
 | 0.4 | `compartido`: `EntidadBase` (Usuario, AnioEscolar y BloqueHorario ya la heredan), `Dinero`, `NivelLogro`, `ParametrosPaginacion`, `Etags`, `CodigoError` completo + `errores.md`. Pruebas: `NucleoCompartidoTest`, `ProblemDetailsIT` | hecha | ver `git log` |
 | 0.5 | `AsistenciaProperties` validado (DA-10), propiedades `gesedu.asistencia.*` con valores 5 / 08:30 / 15:30, zona horaria unificada en `gesedu.asistencia.time-zone` (C-34). Prueba: `AsistenciaPropertiesTest` | hecha | ver `git log` |
@@ -33,7 +33,7 @@ einiciar-bd.ps1`** (checksums cambiados, S-26) | hecha | ver `git log` |
 | 0.8 | `GestorArchivos` (`GestorArchivosDisco` con URL HMAC de 5 min y endpoint `/api/v1/archivos-locales/{token}`; `GestorArchivosS3` con URL prefirmadas), `ReglasArchivo` (PDF/JPG/PNG ≤ 5 MB), `Notificador` (SMTP/SES), `Plantillas` HTML y `Notificaciones` (después del commit, asíncrono, 3 intentos). Mailpit sin perfil de compose (C-33). Pruebas: `ReglasYDiscoTest`, `GestorArchivosS3Test`, `ArchivosLocalesIT`, `PlantillasYSesTest`, `NotificacionesIT`, `NotificadorSmtpIT` (Mailpit en Testcontainers) | hecha | ver `git log` |
 | 0.9 | `ConfiguracionPlanificador` (`@EnableScheduling`, ShedLock con `JdbcTemplateLockProvider` sobre `transversal.shedlock` y hora de la BD), actor «Sistema» en jobs (auditoría con `usuario_id` nulo), `GeneradorExcel` (POI; zona institucional; sin AWT). Pruebas: `ShedLockIT`, `GeneradorExcelTest` | hecha | ver `git log` |
 | 0.10 | ArchUnit completo: capas, módulos solo vía `aplicacion`, sin ciclos, `@Transactional` solo en `aplicacion`, controladores sin entidades (retorno ni parámetros), entidades en `dominio`, repositorios en `infraestructura`, tiempo solo desde `Clock` y comprobación de que las reglas tienen código que revisar. Se eliminó `archunit.properties` (`failOnEmptyShould=false`): ya no hace falta | hecha | ver `git log` |
-| 0.11 | Frontend base | pendiente | |
+| 0.11 | Frontend base: `strict` + `noUncheckedIndexedAccess`; Vitest 5 + Testing Library + MSW 3; react-hook-form + zod + Prettier instalados; sesión solo en memoria (`sesion.ts`) con `SesionProvider` que la restaura con la cookie de refresh; cliente `api` con refresco transparente de una sola petición compartida, `ApiError` con `codigo`/`errores`/propiedades y soporte de cabeceras (ETag); guardias `exigirSesion/exigirPermiso`; `Layout` con menú lateral y barra inferior móvil; `tokens.css` y `responsive.css`; `scripts/generar-tipos-api.ps1/.sh` + `tipos.gen.ts` generado y comprobado por `tsc`. Pruebas: `cliente.test.ts`, `guardias.test.ts`, `SesionProvider.test.tsx`, `Layout.test.tsx`, `login.test.tsx`, `contrato.test.ts`. Prueba de humo real: backend `local,demo` arrancado con Flyway V1–V11 + V1000, login/refresh/reutilización verificados con curl | hecha | ver `git log` |
 | 1.1–1.9 | Ver plan aprobado (fase 1) | pendiente | |
 | 2.1–2.10 | Ver plan aprobado (fase 2, incluye RF-02/RF-05/RF-07 «actualizar») | pendiente | |
 | 3.1–3.7 | Fase 3 | pendiente | |
@@ -55,6 +55,11 @@ einiciar-bd.ps1`** (checksums cambiados, S-26) | hecha | ver `git log` |
 
 - **S-33** El indicador de salud del correo está desactivado (`management.health.mail.enabled=false`): un SMTP o SES caído no debe sacar la instancia del balanceador; el envío ya se reintenta.
 - **S-34** Las plantillas de correo reales (recuperación de contraseña, resultado de matrícula) se agregan junto con sus casos de uso (1.6, 1.7); el motor ya está probado con una plantilla de prueba.
+
+- **S-35** Versiones de las herramientas nuevas del frontend (las más recientes publicadas, compatibles con Vite 8): Vitest 5.0, MSW 3.0 (la opción de peticiones sin handler es `onUnhandledFrame`), jsdom 29, Testing Library 16, jest-dom 7, react-hook-form 7.91, @hookform/resolvers 6, zod 4.6. El plan citaba Vitest 3/4 y MSW 2 (C-32). `lint` sigue siendo `oxlint`.
+- **S-36** `openapi-typescript` 7.13 declara `typescript@^5` como peer y el repo usa TS 6: se fuerza con `overrides` en `package.json` (solo herramienta de generación).
+- **S-37** Los esquemas OpenAPI generados marcan todas las propiedades como opcionales (springdoc sin `@Schema(required)`), por lo que los tipos del frontend se mantienen a mano y `contrato.test.ts` comprueba con `tsc` que coinciden con el contrato generado.
+- **S-38** La SPA ya no guarda nada en el navegador: el token de acceso vive en memoria y se recupera tras recargar con la cookie de refresh (`SesionProvider`). La pantalla de login con react-hook-form + zod, el mensaje de bloqueo y el enlace de recuperación quedan para la tarea 1.1.
 
 ## Contradicciones nuevas (C-32 a C-43)
 Resoluciones aprobadas en el plan de ejecución; se trasladan a `docs/PLAN.md` § 13 en la tarea 0.1/0.2.

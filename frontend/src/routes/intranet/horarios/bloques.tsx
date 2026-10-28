@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, type SubmitEvent } from 'react'
-import { obtenerSesion, tienePermiso, useSesion } from '../../../compartido/sesion'
+import { exigirPermiso } from '../../../compartido/auth/guardias'
+import { obtenerSesion, tienePermiso, useSesion } from '../../../compartido/auth/sesion'
 import {
   DIAS,
   NOMBRE_DIA,
@@ -11,6 +12,7 @@ import {
 } from '../../../modulos/horarios/api'
 
 export const Route = createFileRoute('/intranet/horarios/bloques')({
+  beforeLoad: () => exigirPermiso('HORARIO_CONSULTAR'),
   component: Bloques,
 })
 

@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
-import { api } from '../../compartido/api'
-import type { SesionIniciada } from '../../compartido/sesion'
+import { api } from '../../compartido/api/cliente'
+import type { SesionIniciada } from '../../compartido/auth/sesion'
 
 export function useIniciarSesion() {
   return useMutation({

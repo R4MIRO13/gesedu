@@ -1,12 +1,10 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { obtenerSesion, tienePermiso } from '../../compartido/sesion'
+import { exigirPermiso } from '../../compartido/auth/guardias'
 import { useRegistrosAuditoria, type FiltrosAuditoria } from '../../modulos/auditoria/api'
 
 export const Route = createFileRoute('/intranet/auditoria')({
-  beforeLoad: () => {
-    if (!tienePermiso(obtenerSesion(), 'AUDITORIA_CONSULTAR')) throw redirect({ to: '/intranet/inicio' })
-  },
+  beforeLoad: () => exigirPermiso('AUDITORIA_CONSULTAR'),
   component: Auditoria,
 })
 

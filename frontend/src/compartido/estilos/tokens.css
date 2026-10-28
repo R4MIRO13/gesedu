@@ -1,0 +1,27 @@
+/* Tokens de diseño: colores, radios, sombras y medidas del layout. Sin librería de componentes (S-22). */
+:root {
+  --color-fondo: #f4f6fb;
+  --color-superficie: #ffffff;
+  --color-texto: #1c2434;
+  --color-suave: #5d6a85;
+  --color-borde: #dfe3ee;
+  --color-primario: #2748b5;
+  --color-primario-oscuro: #1c378d;
+  --color-error-fondo: #fdecec;
+  --color-error: #a61b1b;
+  --color-ok-fondo: #e6f6ec;
+  --color-ok: #17692f;
+  --color-hover: #eef1f8;
+
+  --radio: 10px;
+  --sombra: 0 1px 3px rgb(20 30 60 / 8%);
+
+  /* Layout (RNF-02): menú lateral en escritorio y barra inferior en móvil */
+  --ancho-lateral: 232px;
+  --alto-barra-inferior: 60px;
+  --punto-quiebre: 768px;
+
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-texto);
+  line-height: 1.5;
+}

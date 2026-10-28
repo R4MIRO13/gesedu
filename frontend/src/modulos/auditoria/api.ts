@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { api } from '../../compartido/api'
+import { api } from '../../compartido/api/cliente'
 
 export interface RegistroAuditoria {
   id: string

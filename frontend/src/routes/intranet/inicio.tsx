@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { OPCIONES_MENU } from '../../compartido/menu'
-import { obtenerSesion, ROLES, tienePermiso } from '../../compartido/sesion'
+import { obtenerSesion, ROLES, tienePermiso } from '../../compartido/auth/sesion'
 
 export const Route = createFileRoute('/intranet/inicio')({
   component: Inicio,
