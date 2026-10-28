@@ -24,7 +24,7 @@
 |---|---|---|---|
 | 0.1 | Higiene: restaurar `routeTree.gen.ts`, tag local `demo-23-10`, AVANCE y README | hecha | (ver `git log`) |
 | 0.2 | CI GitHub Actions (frontend con matriz Node 22 y 24) + script `typecheck`. Nota: el paso `npm test` del CI falla hasta que 0.11 agregue Vitest y el script `test` | hecha | ver `git log` |
-| 0.3 | Dependencias (mail, caché, ShedLock, AWS, POI, OpenPDF) | pendiente | |
+| 0.3 | Dependencias fijadas: ShedLock 7.10.1, AWS SDK 2.57.5 (s3, sesv2), POI 5.5.1, OpenPDF 3.0.5 (paquete `org.openpdf`), mail, cache, Caffeine | hecha | ver `git log` |
 | 0.4 | `compartido`: EntidadBase, Dinero, NivelLogro, paginación, ETag, CodigoError | pendiente | |
 | 0.5 | `AsistenciaProperties` (DA-10) y zona horaria unificada | pendiente | |
 | 0.6 | Migraciones V2–V8, V10 completas | pendiente | |
