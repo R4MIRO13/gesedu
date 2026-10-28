@@ -21,7 +21,7 @@ class BloquesHorariosIT extends BaseIT {
         jdbc.update("DELETE FROM horarios.bloque_horario WHERE anio_escolar_id IN "
                 + "(SELECT id FROM academico.anio_escolar WHERE anio = ?)", ANIO);
         jdbc.update("INSERT INTO academico.anio_escolar (id, anio, fecha_inicio, fecha_fin, estado) "
-                + "VALUES (?, ?, DATE '2088-03-01', DATE '2088-12-20', 'PLANIFICADO') ON CONFLICT (anio) DO NOTHING",
+                + "VALUES (?, ?, DATE '2088-02-01', DATE '2088-12-20', 'PLANIFICADO') ON CONFLICT (anio) DO NOTHING",
                 java.util.UUID.randomUUID().toString(), ANIO);
     }
 

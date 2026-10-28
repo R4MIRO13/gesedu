@@ -27,7 +27,7 @@
 | 0.3 | Dependencias fijadas: ShedLock 7.10.1, AWS SDK 2.57.5 (s3, sesv2), POI 5.5.1, OpenPDF 3.0.5 (paquete `org.openpdf`), mail, cache, Caffeine | hecha | ver `git log` |
 | 0.4 | `compartido`: `EntidadBase` (Usuario, AnioEscolar y BloqueHorario ya la heredan), `Dinero`, `NivelLogro`, `ParametrosPaginacion`, `Etags`, `CodigoError` completo + `errores.md`. Pruebas: `NucleoCompartidoTest`, `ProblemDetailsIT` | hecha | ver `git log` |
 | 0.5 | `AsistenciaProperties` validado (DA-10), propiedades `gesedu.asistencia.*` con valores 5 / 08:30 / 15:30, zona horaria unificada en `gesedu.asistencia.time-zone` (C-34). Prueba: `AsistenciaPropertiesTest` | hecha | ver `git log` |
-| 0.6 | Migraciones V2–V8, V10 completas | pendiente | |
+| 0.6 | Migraciones completas: V2 (docente, apoderado, alumno, refresh_token, token_recuperacion), V3 (bimestre con EXCLUDE, grado, seccion, curso, competencia, CHECK de 10–12 meses), V4 pagos, V5 matrícula, V6 horarios completo con triggers de inmutabilidad, V7 evaluación, V8 asistencia (+ `cierre_diario`), V10 shedlock. Prueba: `MigracionesIT` (13 casos). **Cada integrante debe ejecutar `.\scriptseiniciar-bd.ps1`** (checksums cambiados, S-26) | hecha | ver `git log` |
 | 0.7 | Refresh token, cierre de sesión, caché de permisos, límite de peticiones | pendiente | |
 | 0.8 | `GestorArchivos` y `Notificador` | pendiente | |
 | 0.9 | ShedLock, usuario «Sistema», `GeneradorExcel` | pendiente | |
@@ -45,6 +45,9 @@
 - El tag `demo-23-10` no existía en el repositorio; se creó localmente sobre `8f876c6` (no se hizo push).
 
 - **S-29** El diagnóstico legible de DA-10 lo da el `FailureAnalyzer` estándar de Spring Boot (`BindValidationFailureAnalyzer`), que nombra la propiedad y el mensaje de la restricción; no se escribe un analizador propio.
+
+- **S-30** Se agrega la tabla `asistencia.cierre_diario` (fechas procesadas por el cierre diario, UC-12) y la columna `pagos.obligacion_pago.anio_escolar_id` (para RF-07, el job y las deudas de años anteriores); el plan no las nombra. `asignacion_docente` no lleva `anio_escolar_id` (se deriva de la sección).
+- El CHECK de duración del año escolar (UC-13, 10–12 meses) obligó a corregir las fechas de la fixture de `BloquesHorariosIT` (2088-03-01 → 2088-02-01); la intención de la prueba no cambia.
 
 ## Contradicciones nuevas (C-32 a C-43)
 Resoluciones aprobadas en el plan de ejecución; se trasladan a `docs/PLAN.md` § 13 en la tarea 0.1/0.2.
