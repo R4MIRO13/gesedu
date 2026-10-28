@@ -41,6 +41,8 @@ class ConfiguracionSeguridad {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/inicio-sesion", "/api/v1/auth/refresco")
                         .permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
+                        // URL prefirmadas del desarrollo local: las autoriza el token firmado, no la sesión (S-20)
+                        .requestMatchers("/api/v1/archivos-locales/**").permitAll()
                         // Documentación de la API (Swagger UI): pública en la demo
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated())

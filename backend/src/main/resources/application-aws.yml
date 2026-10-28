@@ -12,3 +12,14 @@ spring:
 
 server:
   port: ${SERVER_PORT:5000}
+
+gesedu:
+  # S3 privado para los documentos y SES para el correo (DA-07, docs/PLAN.md § 12)
+  archivos:
+    tipo: s3
+    bucket: ${GESEDU_S3_BUCKET}
+    region: ${AWS_REGION}
+  notificaciones:
+    tipo: ses
+    remitente: ${GESEDU_MAIL_FROM}
+    region: ${AWS_REGION}

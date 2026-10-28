@@ -47,6 +47,10 @@ public abstract class BaseIT {
             // El script de inicio reinicia el servidor: hay que esperar el segundo "ready"
             .waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*\\n", 2));
 
+    /** Carpeta de los archivos subidos durante las pruebas (GestorArchivosDisco). */
+    protected static final java.nio.file.Path ARCHIVOS = java.nio.file.Path.of(
+            System.getProperty("java.io.tmpdir"), "gesedu-archivos-pruebas");
+
     static {
         POSTGRES.start();
     }
@@ -60,6 +64,9 @@ public abstract class BaseIT {
         registro.add("spring.flyway.user", () -> "gesedu_migrador");
         registro.add("spring.flyway.password", () -> "gesedu_migrador");
         registro.add("gesedu.seguridad.jwt-secreto", () -> "clave-de-pruebas-de-al-menos-32-caracteres-0123456789");
+        registro.add("gesedu.archivos.secreto-url", () -> "secreto-de-pruebas-para-las-url-de-archivos-0123456789");
+        registro.add("gesedu.archivos.directorio", () -> ARCHIVOS.toString());
+        registro.add("gesedu.notificaciones.reintento-ms", () -> "20");
     }
 
     /** Respuesta HTTP ya leída: estado, tipo de contenido, cuerpo JSON y cabeceras. */

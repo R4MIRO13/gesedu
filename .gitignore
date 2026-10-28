@@ -21,3 +21,7 @@ coverage/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# Archivos subidos en desarrollo local (GestorArchivosDisco)
+datos-archivos/
+backend/datos-archivos/

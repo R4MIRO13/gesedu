@@ -22,6 +22,11 @@ spring:
     password: ${GESEDU_DB_MIGRATOR_PASSWORD}
     locations: classpath:db/migration
 
+  # SMTP: Mailpit en local (docker compose up -d postgres mailpit); en AWS el perfil aws usa SES
+  mail:
+    host: ${GESEDU_MAIL_HOST:localhost}
+    port: ${GESEDU_MAIL_PORT:1025}
+
 server:
   forward-headers-strategy: framework
 
@@ -34,6 +39,10 @@ management:
     health:
       probes:
         enabled: true
+  health:
+    # Un SMTP o SES caído no debe sacar a la instancia del balanceador: el correo se reintenta (S-16)
+    mail:
+      enabled: false
 
 gesedu:
   asistencia:
@@ -54,3 +63,18 @@ gesedu:
     cookie-secure: ${GESEDU_COOKIE_SECURE:true}
     # Límite de peticiones por IP a /auth/* (inicio de sesión, refresco y recuperación)
     limite-auth-por-minuto: ${GESEDU_LIMITE_AUTH_POR_MINUTO:30}
+  archivos:
+    # disco (local, imita las URL prefirmadas, S-20) o s3 (perfil aws)
+    tipo: ${GESEDU_ARCHIVOS_TIPO:disco}
+    directorio: ${GESEDU_ARCHIVOS_DIRECTORIO:./datos-archivos}
+    # Clave HMAC de las URL del tipo disco; sin valor por defecto fuera de local (mínimo 32 caracteres)
+    secreto-url: ${GESEDU_ARCHIVOS_SECRETO:}
+    bucket: ${GESEDU_S3_BUCKET:}
+    region: ${AWS_REGION:us-east-1}
+    endpoint: ${GESEDU_S3_ENDPOINT:}
+  notificaciones:
+    tipo: ${GESEDU_NOTIFICACIONES_TIPO:smtp}
+    remitente: ${GESEDU_MAIL_FROM:no-reply@gesedu.pe}
+    # Espera entre los 3 intentos de envío (S-16)
+    reintento-ms: ${GESEDU_MAIL_REINTENTO_MS:1000}
+    region: ${AWS_REGION:us-east-1}

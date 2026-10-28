@@ -30,7 +30,7 @@
 | 0.6 | Migraciones completas: V2 (docente, apoderado, alumno, refresh_token, token_recuperacion), V3 (bimestre con EXCLUDE, grado, seccion, curso, competencia, CHECK de 10–12 meses), V4 pagos, V5 matrícula, V6 horarios completo con triggers de inmutabilidad, V7 evaluación, V8 asistencia (+ `cierre_diario`), V10 shedlock. Prueba: `MigracionesIT` (13 casos). **Cada integrante debe ejecutar `.\scripts
 einiciar-bd.ps1`** (checksums cambiados, S-26) | hecha | ver `git log` |
 | 0.7 | Backend: refresh token rotativo en cookie HttpOnly/Secure/SameSite=Strict (`/auth/refresco`, `/auth/cierre-sesion`, reutilización revoca la familia), caché Caffeine de cuentas y permisos (`CacheCuentas`), límite de 30 peticiones/min por IP en `/auth/*` (429). Pruebas: `RefreshTokenIT`, `CacheCuentasIT`, `LimiteAuthIT`, `JwtServiceTest`, `TokensOpacosTest`. El consumo desde la SPA (refresco transparente, logout) llega en 0.11 y 1.1 | hecha | ver `git log` |
-| 0.8 | `GestorArchivos` y `Notificador` | pendiente | |
+| 0.8 | `GestorArchivos` (`GestorArchivosDisco` con URL HMAC de 5 min y endpoint `/api/v1/archivos-locales/{token}`; `GestorArchivosS3` con URL prefirmadas), `ReglasArchivo` (PDF/JPG/PNG ≤ 5 MB), `Notificador` (SMTP/SES), `Plantillas` HTML y `Notificaciones` (después del commit, asíncrono, 3 intentos). Mailpit sin perfil de compose (C-33). Pruebas: `ReglasYDiscoTest`, `GestorArchivosS3Test`, `ArchivosLocalesIT`, `PlantillasYSesTest`, `NotificacionesIT`, `NotificadorSmtpIT` (Mailpit en Testcontainers) | hecha | ver `git log` |
 | 0.9 | ShedLock, usuario «Sistema», `GeneradorExcel` | pendiente | |
 | 0.10 | ArchUnit completo | pendiente | |
 | 0.11 | Frontend base | pendiente | |
@@ -52,6 +52,9 @@ einiciar-bd.ps1`** (checksums cambiados, S-26) | hecha | ver `git log` |
 
 - **S-31** `BaseIT` sube el límite de peticiones a `/auth/*` (100000/min) para que las pruebas puedan iniciar sesión muchas veces; `LimiteAuthIT` lo baja a 3. Las pruebas que modifican cuentas directamente en la base ahora invalidan la caché (`invalidarCuentas()`), como lo hará el servicio de usuarios.
 - **S-32** La cookie de refresh tiene `Path=/api/v1/auth` y `Max-Age` de 7 días; `gesedu.seguridad.cookie-secure=true` también en local.
+
+- **S-33** El indicador de salud del correo está desactivado (`management.health.mail.enabled=false`): un SMTP o SES caído no debe sacar la instancia del balanceador; el envío ya se reintenta.
+- **S-34** Las plantillas de correo reales (recuperación de contraseña, resultado de matrícula) se agregan junto con sus casos de uso (1.6, 1.7); el motor ya está probado con una plantilla de prueba.
 
 ## Contradicciones nuevas (C-32 a C-43)
 Resoluciones aprobadas en el plan de ejecución; se trasladan a `docs/PLAN.md` § 13 en la tarea 0.1/0.2.
