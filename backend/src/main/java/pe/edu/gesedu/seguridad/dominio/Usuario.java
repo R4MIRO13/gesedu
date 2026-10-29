@@ -27,6 +27,9 @@ public class Usuario extends EntidadBase {
     @Column(nullable = false, length = 100)
     private String apellidos;
 
+    @Column(name = "documento_identidad", nullable = false, length = 20)
+    private String documentoIdentidad;
+
     // CITEXT: la comparación ignora mayúsculas; columnDefinition hace que Flyway validate lo acepte
     @Column(columnDefinition = "citext")
     private String correo;
@@ -54,6 +57,17 @@ public class Usuario extends EntidadBase {
     private long version;
 
     protected Usuario() {
+    }
+
+    /** Cuenta sin credenciales ni acceso (el alumno que registra su apoderado): se habilita después (UC-24). */
+    public static Usuario sinAcceso(String nombres, String apellidos, String documentoIdentidad, RolAcceso rolAcceso) {
+        Usuario u = new Usuario();
+        u.nombres = nombres;
+        u.apellidos = apellidos;
+        u.documentoIdentidad = documentoIdentidad;
+        u.rolAcceso = rolAcceso;
+        u.activo = false;
+        return u;
     }
 
     public boolean estaBloqueada(Instant ahora) {
@@ -106,6 +120,10 @@ public class Usuario extends EntidadBase {
         return apellidos;
     }
 
+    public String getDocumentoIdentidad() {
+        return documentoIdentidad;
+    }
+
     public String getCorreo() {
         return correo;
     }
@@ -130,7 +148,21 @@ public class Usuario extends EntidadBase {
         return bloqueadoHasta;
     }
 
+    public long getVersion() {
+        return version;
+    }
+
     public RolAcceso getRolAcceso() {
         return rolAcceso;
+    }
+
+    /** El administrador corrige los datos personales de la cuenta (RF-02). */
+    public void actualizarDatosPersonales(String nombres, String apellidos, String documentoIdentidad, String correo,
+                                          Instant ahora) {
+        tocar(ahora);
+        this.nombres = nombres;
+        this.apellidos = apellidos;
+        this.documentoIdentidad = documentoIdentidad;
+        this.correo = correo;
     }
 }

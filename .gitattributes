@@ -15,3 +15,6 @@ Dockerfile      text eol=lf
 *.jpg           binary
 *.ico           binary
 *.jar           binary
+
+# Las plantillas de correo se comparan literalmente en las pruebas: siempre LF
+*.html          text eol=lf

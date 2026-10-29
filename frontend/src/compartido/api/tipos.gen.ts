@@ -39,6 +39,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/apoderados/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ficha del apoderado para editarla. Devuelve ETag con la versión de la cuenta */
+        get: operations["apoderado"];
+        /** Edita los datos personales del apoderado (RF-02). Exige If-Match; 409 DOCUMENTO_DUPLICADO, CORREO_DUPLICADO o CONFLICTO_CONCURRENCIA. Queda auditado con el valor anterior y el nuevo */
+        put: operations["actualizarApoderado"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/cobros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cronograma de cobros y porcentaje de penalidad del año */
+        get: operations["obtener"];
+        /** Guarda el cronograma completo (reemplaza al anterior) y la penalidad, y actualiza el monto y el vencimiento de las obligaciones PENDIENTES del año (RF-07): las pagadas y las vencidas no cambian y las líneas nuevas no crean obligaciones retroactivas. `obligacionesActualizadas` dice cuántas cambiaron. Queda auditado */
+        put: operations["guardar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ficha del estudiante para editarla. Devuelve ETag con la versión de la cuenta */
+        get: operations["alumno"];
+        /** Edita los datos personales del estudiante (RF-02). Exige If-Match; 409 DOCUMENTO_DUPLICADO, CORREO_DUPLICADO o CONFLICTO_CONCURRENCIA. Queda auditado con el valor anterior y el nuevo */
+        put: operations["actualizarAlumno"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/solicitudes-matricula": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bandeja de solicitudes (paso 1), paginada y filtrable por estado y texto */
+        get: operations["listar"];
+        put?: never;
+        /** Registra la solicitud (pasos 4 a 7): queda «Pendiente de revisión» con un código de seguimiento. 400 si faltan campos o documentos; 409 SOLICITUD_EN_TRAMITE o DOCUMENTO_DUPLICADO */
+        post: operations["registrar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/solicitudes-matricula/{codigo}/rechazo": {
         parameters: {
             query?: never;
@@ -73,6 +145,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/solicitudes-matricula/archivos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pide una URL prefirmada de 5 minutos para subir un documento (PDF, JPG o PNG de hasta 5 MB). El navegador sube el archivo directo y luego declara la clave en la solicitud */
+        post: operations["pedirSubida"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/obligaciones/{obligacionId}/comprobantes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Presenta el comprobante: queda PENDIENTE de revisión y la obligación no cambia. 422 si la obligación ya está pagada; 409 COMPROBANTE_PENDIENTE o NUMERO_OPERACION_DUPLICADO; 403 si la obligación no es de un hijo del apoderado */
+        post: operations["presentar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/obligaciones/{obligacionId}/comprobantes/archivo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pide una URL prefirmada de 5 minutos para subir el voucher (PDF, JPG o PNG de hasta 5 MB) */
+        post: operations["pedirSubida_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/horarios/{anio}/borrador/validaciones": {
         parameters: {
             query?: never;
@@ -101,6 +224,57 @@ export interface paths {
         put?: never;
         /** Agrega una clase al borrador. Exige If-Match. 409 por cruce o por versión; 422 si el docente no está asociado al curso o no está disponible */
         post: operations["crear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes/{id}/validacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Valida el pago (pasos 5 a 9): emite la boleta B001-NNNNN, aprueba el comprobante, deja la obligación PAGADA y avisa al apoderado, todo en una transacción con la obligación bloqueada. 422 OBLIGACION_YA_PAGADA o MONTO_INSUFICIENTE; 409 si el comprobante ya fue revisado */
+        post: operations["validar_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes/{id}/rechazo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rechaza el comprobante (FA-1): no corresponde al estudiante o a la obligación; la obligación no cambia y el apoderado debe presentar la información correcta */
+        post: operations["rechazar_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes/{id}/observacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Observa el comprobante (FA-2): la obligación no cambia y el apoderado recibe el importe total pendiente para presentar uno nuevo */
+        post: operations["observar"];
         delete?: never;
         options?: never;
         head?: never;
@@ -200,7 +374,7 @@ export interface paths {
             cookie?: never;
         };
         /** Lista los bloques horarios del año, ordenados por día y hora */
-        get: operations["listar"];
+        get: operations["listar_1"];
         put?: never;
         /** Crea un bloque horario (solo Administrador). 409 si se superpone con otro del mismo día */
         post: operations["crear_1"];
@@ -227,6 +401,23 @@ export interface paths {
         patch: operations["desbloquear"];
         trace?: never;
     };
+    "/api/v1/matriculas/{matriculaId}/seccion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Cambia el grado o la sección de una matrícula confirmada de un año vigente (RF-05). En una sola transacción descuenta la vacante del destino y devuelve la del origen. 409 SIN_VACANTE si el destino está lleno (no se libera nada); 422 MATRICULA_NO_VIGENTE si está anulada o es de un año cerrado; misma sección = sin cambios. Queda auditado */
+        patch: operations["cambiarSeccion"];
+        trace?: never;
+    };
     "/api/v1/usuarios": {
         parameters: {
             query?: never;
@@ -235,23 +426,6 @@ export interface paths {
             cookie?: never;
         };
         /** Lista las cuentas, paginada, filtrable por texto (nombre o correo), rol y estado */
-        get: operations["listar_1"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/solicitudes-matricula": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Bandeja de solicitudes (paso 1), paginada y filtrable por estado y texto */
         get: operations["listar_2"];
         put?: never;
         post?: never;
@@ -295,6 +469,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/solicitudes-matricula/opciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Grados del año y documentos que se exigen según el tipo de estudiante (paso 1) */
+        get: operations["opciones"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/solicitudes-matricula/mias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mis solicitudes: estado de cada trámite del apoderado, de la más reciente a la más antigua */
+        get: operations["mias"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/matriculas/mias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Estudiantes a cargo del apoderado (o el propio alumno) con su matrícula vigente: año, grado, sección y estado. Sin matrícula vigente, `matricula` es nulo (FA-2). Con `alumnoId` solo ese estudiante; 403 si no está en el alcance */
+        get: operations["mias_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/matriculas/alumno/{alumnoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Matrícula vigente de un estudiante con las secciones de su año y su cupo, para trasladarlo (RF-05). 404 si no tiene una matrícula vigente */
+        get: operations["matriculaDeAlumno"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/horarios/{anio}/borrador": {
         parameters: {
             query?: never;
@@ -306,7 +548,7 @@ export interface paths {
          * El borrador del año para una perspectiva (lo crea si no existe). Devuelve ETag con la versión
          * @description perspectiva=SECCION con seccionId, o perspectiva=DOCENTE con docenteId; ambas ven el mismo borrador. Sin id se toma la primera sección o el primer docente.
          */
-        get: operations["obtener"];
+        get: operations["obtener_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -323,7 +565,41 @@ export interface paths {
             cookie?: never;
         };
         /** Cursos de la sección con sus horas y, si se elige un curso, los docentes asociados con su disponibilidad en el bloque y si ya tienen clase en él */
-        get: operations["opciones"];
+        get: operations["opciones_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bandeja de comprobantes (paso 1), paginada; por defecto los PENDIENTES, del más antiguo al más reciente */
+        get: operations["listar_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comprobantes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalle para revisar: obligación con importe base, penalidad y total, lo declarado por el apoderado, las comprobaciones del sistema y la URL prefirmada del voucher (5 minutos) */
+        get: operations["detalle_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -357,7 +633,7 @@ export interface paths {
             cookie?: never;
         };
         /** Consulta los registros de auditoría (más recientes primero). desde y hasta son fechas yyyy-MM-dd, inclusive; sort: fechaHora, accion o modulo, con ,asc o ,desc */
-        get: operations["listar_3"];
+        get: operations["listar_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -374,7 +650,7 @@ export interface paths {
             cookie?: never;
         };
         /** Un registro con los campos que cambiaron (valor anterior y nuevo) */
-        get: operations["detalle_1"];
+        get: operations["detalle_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -409,6 +685,57 @@ export interface paths {
         };
         /** Módulos con sus acciones y usuarios que figuran en la auditoría (para los filtros) */
         get: operations["catalogos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{codigoAlumno}/historial-financiero": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Historial financiero del estudiante (todos los años): resumen, obligaciones con su boleta, pagos registrados, deudas vencidas y penalidades. No modifica nada. `sinHistorial` (FA-1) y `sinPagos` (FA-2) */
+        get: operations["historial"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{alumnoId}/obligaciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Obligaciones de un hijo del apoderado en los años no cerrados: concepto, periodo, importe base, penalidad, total, vencimiento y estado, con su boleta y el estado del último comprobante. 403 si el estudiante no está a cargo del apoderado */
+        get: operations["obligaciones"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/busqueda": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Busca estudiantes por nombre, DNI o código (hasta 15): para elegir el historial que se consulta o el estudiante cuyos datos se editan */
+        get: operations["buscar"];
         put?: never;
         post?: never;
         delete?: never;
@@ -546,6 +873,151 @@ export interface components {
             docenteId?: string;
             docente?: string;
         };
+        ApoderadoRequest: {
+            /** @example Marcos */
+            nombres: string;
+            /** @example Torres Lima */
+            apellidos: string;
+            /** @example 40100004 */
+            documento: string;
+            /**
+             * Format: email
+             * @example familia.torres@demo.gesedu.pe
+             */
+            correo?: string;
+            /** @example 977100004 */
+            telefono?: string;
+        };
+        FichaApoderado: {
+            id?: string;
+            nombres?: string;
+            apellidos?: string;
+            documento?: string;
+            correo?: string;
+            telefono?: string;
+            cuentaActiva?: boolean;
+            /** Format: int64 */
+            version?: number;
+        };
+        CobrosRequest: {
+            /** @example 5 */
+            porcentajePenalidad: number;
+            lineas: components["schemas"]["LineaRequest"][];
+        };
+        LineaRequest: {
+            /**
+             * @example PENSION
+             * @enum {string}
+             */
+            concepto: "MATRICULA" | "PENSION" | "CUOTA_INGRESO";
+            /**
+             * @description El año (matrícula y cuota de ingreso) o AAAA-MM (pensión)
+             * @example 2027-03
+             */
+            periodo: string;
+            /**
+             * @description Monto en soles como texto decimal
+             * @example 350.00
+             */
+            monto: string;
+            /**
+             * Format: date
+             * @example 2027-03-31
+             */
+            fechaVencimiento: string;
+        };
+        ConfiguracionCobros: {
+            /** Format: int32 */
+            anio?: number;
+            porcentajePenalidad?: number;
+            lineas?: components["schemas"]["LineaCobro"][];
+            configurado?: boolean;
+            /** Format: int32 */
+            obligacionesActualizadas?: number;
+        };
+        LineaCobro: {
+            /** @enum {string} */
+            concepto?: "MATRICULA" | "PENSION" | "CUOTA_INGRESO";
+            periodo?: string;
+            monto?: string;
+            /** Format: date */
+            fechaVencimiento?: string;
+        };
+        AlumnoRequest: {
+            /** @example Valeria */
+            nombres: string;
+            /** @example Torres Gil */
+            apellidos: string;
+            /** @example 77100004 */
+            documento: string;
+            /**
+             * Format: email
+             * @description Opcional; la cuenta de un estudiante puede no tener correo
+             */
+            correo?: string;
+            /**
+             * Format: date
+             * @example 2012-09-09
+             */
+            fechaNacimiento: string;
+            /** @example PADRE */
+            parentesco: string;
+        };
+        FichaAlumno: {
+            id?: string;
+            codigo?: string;
+            nombres?: string;
+            apellidos?: string;
+            documento?: string;
+            correo?: string;
+            /** Format: date */
+            fechaNacimiento?: string;
+            parentesco?: string;
+            apoderadoId?: string;
+            apoderado?: string;
+            cuentaActiva?: boolean;
+            /** Format: int64 */
+            version?: number;
+        };
+        DocumentoRequest: {
+            /** @example CERTIFICADO_ESTUDIOS */
+            tipo: string;
+            claveObjeto: string;
+            nombreArchivo: string;
+            contentType: string;
+            /** Format: int64 */
+            tamanoBytes?: number;
+        };
+        SolicitudRequest: {
+            /**
+             * Format: int32
+             * @example 2027
+             */
+            anio?: number;
+            /**
+             * @example NUEVO_INGRESO
+             * @enum {string}
+             */
+            tipoEstudiante: "NUEVO_INGRESO" | "RECURRENTE";
+            gradoId: string;
+            alumno: components["schemas"]["AlumnoRequest"];
+            /** @example 977100004 */
+            telefonoApoderado?: string;
+            documentos: components["schemas"]["DocumentoRequest"][];
+        };
+        SolicitudRegistrada: {
+            codigo?: string;
+            /** @enum {string} */
+            estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
+            estadoVisible?: string;
+            /** Format: date */
+            fechaSolicitud?: string;
+            /** Format: int32 */
+            anio?: number;
+            alumno?: string;
+            grado?: string;
+            mensaje?: string;
+        };
         RechazoRequest: {
             /**
              * @example VOLUNTAD_APODERADO
@@ -582,6 +1054,63 @@ export interface components {
             compromisosGenerados?: number;
             total?: string;
         };
+        ArchivoRequest: {
+            /** @example certificado-estudios.pdf */
+            nombreArchivo: string;
+            /** @example application/pdf */
+            contentType: string;
+            /**
+             * Format: int64
+             * @example 184320
+             */
+            tamanoBytes?: number;
+        };
+        ArchivoSubida: {
+            claveObjeto?: string;
+            subida?: components["schemas"]["UrlPrefirmada"];
+        };
+        UrlPrefirmada: {
+            url?: string;
+            metodo?: string;
+            /** Format: date-time */
+            expiraEn?: string;
+            cabeceras?: {
+                [key: string]: string;
+            };
+        };
+        ComprobanteRequest: {
+            /** @example 00458712 */
+            numeroOperacion: string;
+            /**
+             * Format: date
+             * @example 2027-09-28
+             */
+            fechaPago: string;
+            /**
+             * @description Monto pagado en soles como texto decimal
+             * @example 350.00
+             */
+            montoPagado: string;
+            /** @example Transferencia bancaria - BCP */
+            medioPago: string;
+            /** @description Clave devuelta al pedir la URL de subida */
+            claveObjeto: string;
+            /** @example image/jpeg */
+            contentType: string;
+            /** Format: int64 */
+            tamanoBytes?: number;
+        };
+        ComprobanteResumen: {
+            id?: string;
+            /** @enum {string} */
+            estado?: "PENDIENTE" | "APROBADO" | "OBSERVADO" | "RECHAZADO";
+            observacion?: string;
+            numeroOperacion?: string;
+            /** Format: date */
+            fechaPago?: string;
+            montoPresentado?: string;
+            medioPago?: string;
+        };
         ConflictoDto: {
             tipo?: string;
             mensaje?: string;
@@ -592,6 +1121,28 @@ export interface components {
         ValidacionDto: {
             valido?: boolean;
             conflictos?: components["schemas"]["ConflictoDto"][];
+        };
+        ResultadoValidacion: {
+            comprobanteId?: string;
+            numeroBoleta?: string;
+            montoTotal?: string;
+            /** Format: date-time */
+            fechaRegistro?: string;
+            /** @enum {string} */
+            estadoObligacion?: "PENDIENTE" | "PAGADA" | "VENCIDA";
+        };
+        RevisionRequest: {
+            /** @example El monto no cubre la penalidad: faltan S/ 17.50 */
+            observacion: string;
+        };
+        ResultadoRevision: {
+            comprobanteId?: string;
+            /** @enum {string} */
+            estado?: "PENDIENTE" | "APROBADO" | "OBSERVADO" | "RECHAZADO";
+            observacion?: string;
+            /** @enum {string} */
+            estadoObligacion?: "PENDIENTE" | "PAGADA" | "VENCIDA";
+            totalPendiente?: string;
         };
         DatosUsuario: {
             nombres?: string;
@@ -664,6 +1215,21 @@ export interface components {
             /** Format: date-time */
             ultimoAcceso?: string;
         };
+        CambioSeccionRequest: {
+            /** @description Sección de destino, del mismo año; puede ser de otro grado */
+            seccionId: string;
+        };
+        ResultadoCambioSeccion: {
+            matriculaId?: string;
+            alumno?: string;
+            seccionAnterior?: string;
+            seccionNueva?: string;
+            /** Format: int32 */
+            vacantesOrigen?: number;
+            /** Format: int32 */
+            vacantesDestino?: number;
+            sinCambios?: boolean;
+        };
         PaginaUsuarioFila: {
             contenido?: components["schemas"]["UsuarioFila"][];
             /** Format: int32 */
@@ -702,14 +1268,70 @@ export interface components {
             motivoRechazo?: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
             estadoVisible?: string;
         };
-        UrlPrefirmada: {
-            url?: string;
-            metodo?: string;
-            /** Format: date-time */
-            expiraEn?: string;
-            cabeceras?: {
-                [key: string]: string;
+        DatosApoderado: {
+            nombre?: string;
+            documento?: string;
+            correo?: string;
+            telefono?: string;
+        };
+        GradoOpcion: {
+            id?: string;
+            nombre?: string;
+        };
+        OpcionesSolicitud: {
+            /** Format: int32 */
+            anio?: number;
+            apoderado?: components["schemas"]["DatosApoderado"];
+            grados?: components["schemas"]["GradoOpcion"][];
+            documentosRequeridos?: {
+                [key: string]: string[];
             };
+            costosConfigurados?: boolean;
+        };
+        SolicitudPropia: {
+            codigo?: string;
+            alumno?: string;
+            grado?: string;
+            /** Format: int32 */
+            anio?: number;
+            /** Format: date */
+            fechaSolicitud?: string;
+            /** @enum {string} */
+            tipoEstudiante?: "NUEVO_INGRESO" | "RECURRENTE";
+            /** @enum {string} */
+            estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
+            estadoVisible?: string;
+            observacion?: string;
+        };
+        HijoMatricula: {
+            alumnoId?: string;
+            codigoAlumno?: string;
+            alumno?: string;
+            matricula?: components["schemas"]["MatriculaVigente"];
+        };
+        MatriculaVigente: {
+            matriculaId?: string;
+            /** Format: int32 */
+            anio?: number;
+            grado?: string;
+            seccion?: string;
+            estado?: string;
+            /** Format: date */
+            fechaMatricula?: string;
+        };
+        MatriculaGestionable: {
+            matriculaId?: string;
+            alumnoId?: string;
+            alumno?: string;
+            /** Format: int32 */
+            anio?: number;
+            grado?: string;
+            seccionId?: string;
+            seccion?: string;
+            estado?: string;
+            /** Format: int64 */
+            version?: number;
+            secciones?: components["schemas"]["SeccionConVacantes"][];
         };
         BorradorDto: {
             id?: string;
@@ -761,6 +1383,73 @@ export interface components {
             cursos?: components["schemas"]["CargaCursoDto"][];
             docentes?: components["schemas"]["OpcionDocenteDto"][];
         };
+        ComprobanteBandeja: {
+            id?: string;
+            /** Format: date-time */
+            enviado?: string;
+            estudiante?: string;
+            codigoAlumno?: string;
+            /** @enum {string} */
+            concepto?: "MATRICULA" | "PENSION" | "CUOTA_INGRESO";
+            periodo?: string;
+            montoPresentado?: string;
+            numeroOperacion?: string;
+            /** @enum {string} */
+            estado?: "PENDIENTE" | "APROBADO" | "OBSERVADO" | "RECHAZADO";
+        };
+        PaginaComprobanteBandeja: {
+            contenido?: components["schemas"]["ComprobanteBandeja"][];
+            /** Format: int32 */
+            pagina?: number;
+            /** Format: int32 */
+            tamano?: number;
+            /** Format: int64 */
+            totalElementos?: number;
+            /** Format: int32 */
+            totalPaginas?: number;
+        };
+        DatosDeclarados: {
+            apoderado?: string;
+            numeroOperacion?: string;
+            /** Format: date */
+            fechaPago?: string;
+            medioPago?: string;
+            montoPresentado?: string;
+        };
+        DetalleComprobante: {
+            id?: string;
+            /** @enum {string} */
+            estado?: "PENDIENTE" | "APROBADO" | "OBSERVADO" | "RECHAZADO";
+            /** Format: date-time */
+            enviado?: string;
+            observacion?: string;
+            obligacion?: components["schemas"]["ObligacionRevisada"];
+            declarado?: components["schemas"]["DatosDeclarados"];
+            verificaciones?: components["schemas"]["Verificaciones"];
+            puedeRevisar?: boolean;
+            voucher?: components["schemas"]["UrlPrefirmada"];
+        };
+        ObligacionRevisada: {
+            id?: string;
+            alumno?: string;
+            codigoAlumno?: string;
+            /** @enum {string} */
+            concepto?: "MATRICULA" | "PENSION" | "CUOTA_INGRESO";
+            periodo?: string;
+            /** @enum {string} */
+            estado?: "PENDIENTE" | "PAGADA" | "VENCIDA";
+            /** Format: date */
+            fechaVencimiento?: string;
+            montoBase?: string;
+            montoPenalidad?: string;
+            total?: string;
+        };
+        Verificaciones: {
+            montoCubreTotal?: boolean;
+            montoCoincide?: boolean;
+            numeroOperacionNuevo?: boolean;
+            obligacionPorPagar?: boolean;
+        };
         PaginaRegistroAuditoriaDto: {
             contenido?: components["schemas"]["RegistroAuditoriaDto"][];
             /** Format: int32 */
@@ -804,6 +1493,128 @@ export interface components {
         UsuarioAuditoriaDto: {
             id?: string;
             nombre?: string;
+        };
+        BoletaDto: {
+            numero?: string;
+            /** Format: date-time */
+            fechaRegistro?: string;
+            monto?: string;
+        };
+        DeudaVencida: {
+            obligacionId?: string;
+            /** @enum {string} */
+            concepto?: "MATRICULA" | "PENSION" | "CUOTA_INGRESO";
+            periodo?: string;
+            /** Format: date */
+            fechaVencimiento?: string;
+            montoBase?: string;
+            montoPenalidad?: string;
+            total?: string;
+            /** Format: date-time */
+            penalidadAplicadaEn?: string;
+        };
+        EstudianteHistorial: {
+            id?: string;
+            codigo?: string;
+            nombre?: string;
+            documento?: string;
+            apoderado?: string;
+        };
+        HistorialFinanciero: {
+            estudiante?: components["schemas"]["EstudianteHistorial"];
+            matricula?: components["schemas"]["MatriculaHistorial"];
+            resumen?: components["schemas"]["ResumenHistorial"];
+            obligaciones?: components["schemas"]["ObligacionDto"][];
+            pagos?: components["schemas"]["PagoRegistrado"][];
+            deudas?: components["schemas"]["DeudaVencida"][];
+            sinHistorial?: boolean;
+            sinPagos?: boolean;
+        };
+        MatriculaHistorial: {
+            /** Format: int32 */
+            anio?: number;
+            grado?: string;
+            seccion?: string;
+            estado?: string;
+        };
+        ObligacionDto: {
+            id?: string;
+            /** @enum {string} */
+            concepto?: "MATRICULA" | "PENSION" | "CUOTA_INGRESO";
+            periodo?: string;
+            montoBase?: string;
+            montoPenalidad?: string;
+            total?: string;
+            /** Format: date */
+            fechaVencimiento?: string;
+            /** @enum {string} */
+            estado?: "PENDIENTE" | "PAGADA" | "VENCIDA";
+            /** Format: date-time */
+            penalidadAplicadaEn?: string;
+            boleta?: components["schemas"]["BoletaDto"];
+            comprobante?: components["schemas"]["ComprobanteResumen"];
+            puedePresentarComprobante?: boolean;
+        };
+        PagoRegistrado: {
+            numeroBoleta?: string;
+            /** Format: date-time */
+            fechaRegistro?: string;
+            /** @enum {string} */
+            concepto?: "MATRICULA" | "PENSION" | "CUOTA_INGRESO";
+            periodo?: string;
+            monto?: string;
+            numeroOperacion?: string;
+            /** Format: date */
+            fechaPago?: string;
+            medioPago?: string;
+        };
+        ResumenHistorial: {
+            totalPagado?: string;
+            totalPendiente?: string;
+            deudaVencida?: string;
+            penalidadesAplicadas?: string;
+            /** Format: int32 */
+            obligaciones?: number;
+            /** Format: int32 */
+            pagadas?: number;
+            /** Format: int32 */
+            pendientes?: number;
+            /** Format: int32 */
+            vencidas?: number;
+        };
+        ObligacionesAlumno: {
+            alumnoId?: string;
+            codigoAlumno?: string;
+            alumno?: string;
+            obligaciones?: components["schemas"]["ObligacionDto"][];
+            resumen?: components["schemas"]["ResumenObligaciones"];
+        };
+        ProximoVencimiento: {
+            concepto?: string;
+            periodo?: string;
+            /** Format: date */
+            fechaVencimiento?: string;
+            total?: string;
+        };
+        ResumenObligaciones: {
+            totalPagado?: string;
+            totalPendiente?: string;
+            deudaVencida?: string;
+            /** Format: int32 */
+            obligaciones?: number;
+            /** Format: int32 */
+            pagadas?: number;
+            /** Format: int32 */
+            pendientes?: number;
+            /** Format: int32 */
+            vencidas?: number;
+            proximoVencimiento?: components["schemas"]["ProximoVencimiento"];
+        };
+        AlumnoBusqueda: {
+            id?: string;
+            codigo?: string;
+            nombre?: string;
+            documento?: string;
         };
     };
     responses: never;
@@ -894,6 +1705,204 @@ export interface operations {
             };
         };
     };
+    apoderado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FichaApoderado"];
+                };
+            };
+        };
+    };
+    actualizarApoderado: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApoderadoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FichaApoderado"];
+                };
+            };
+        };
+    };
+    obtener: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConfiguracionCobros"];
+                };
+            };
+        };
+    };
+    guardar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CobrosRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConfiguracionCobros"];
+                };
+            };
+        };
+    };
+    alumno: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FichaAlumno"];
+                };
+            };
+        };
+    };
+    actualizarAlumno: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlumnoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["FichaAlumno"];
+                };
+            };
+        };
+    };
+    listar: {
+        parameters: {
+            query?: {
+                estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
+                q?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PaginaSolicitudResumen"];
+                };
+            };
+        };
+    };
+    registrar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SolicitudRegistrada"];
+                };
+            };
+        };
+    };
     rechazar: {
         parameters: {
             query?: never;
@@ -950,6 +1959,82 @@ export interface operations {
             };
         };
     };
+    pedirSubida: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchivoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchivoSubida"];
+                };
+            };
+        };
+    };
+    presentar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                obligacionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComprobanteRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ComprobanteResumen"];
+                };
+            };
+        };
+    };
+    pedirSubida_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                obligacionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchivoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ArchivoSubida"];
+                };
+            };
+        };
+    };
     validar: {
         parameters: {
             query?: never;
@@ -1000,6 +2085,80 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AsignacionDto"];
+                };
+            };
+        };
+    };
+    validar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResultadoValidacion"];
+                };
+            };
+        };
+    };
+    rechazar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevisionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResultadoRevision"];
+                };
+            };
+        };
+    };
+    observar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevisionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResultadoRevision"];
                 };
             };
         };
@@ -1116,7 +2275,7 @@ export interface operations {
             };
         };
     };
-    listar: {
+    listar_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1186,7 +2345,33 @@ export interface operations {
             };
         };
     };
-    listar_1: {
+    cambiarSeccion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                matriculaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CambioSeccionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResultadoCambioSeccion"];
+                };
+            };
+        };
+    };
+    listar_2: {
         parameters: {
             query?: {
                 q?: string;
@@ -1209,32 +2394,6 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["PaginaUsuarioFila"];
-                };
-            };
-        };
-    };
-    listar_2: {
-        parameters: {
-            query?: {
-                estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
-                q?: string;
-                page?: number;
-                size?: number;
-                sort?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "*/*": components["schemas"]["PaginaSolicitudResumen"];
                 };
             };
         };
@@ -1284,7 +2443,93 @@ export interface operations {
             };
         };
     };
-    obtener: {
+    opciones: {
+        parameters: {
+            query: {
+                anio: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OpcionesSolicitud"];
+                };
+            };
+        };
+    };
+    mias: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SolicitudPropia"][];
+                };
+            };
+        };
+    };
+    mias_1: {
+        parameters: {
+            query?: {
+                alumnoId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HijoMatricula"][];
+                };
+            };
+        };
+    };
+    matriculaDeAlumno: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alumnoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MatriculaGestionable"];
+                };
+            };
+        };
+    };
+    obtener_1: {
         parameters: {
             query?: {
                 perspectiva?: "SECCION" | "DOCENTE";
@@ -1310,7 +2555,7 @@ export interface operations {
             };
         };
     };
-    opciones: {
+    opciones_1: {
         parameters: {
             query: {
                 bloqueId: string;
@@ -1338,6 +2583,53 @@ export interface operations {
             };
         };
     };
+    listar_3: {
+        parameters: {
+            query?: {
+                estado?: "PENDIENTE" | "APROBADO" | "OBSERVADO" | "RECHAZADO";
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PaginaComprobanteBandeja"];
+                };
+            };
+        };
+    };
+    detalle_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleComprobante"];
+                };
+            };
+        };
+    };
     yo: {
         parameters: {
             query?: never;
@@ -1358,7 +2650,7 @@ export interface operations {
             };
         };
     };
-    listar_3: {
+    listar_4: {
         parameters: {
             query?: {
                 usuarioId?: string;
@@ -1387,7 +2679,7 @@ export interface operations {
             };
         };
     };
-    detalle_1: {
+    detalle_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1452,6 +2744,72 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CatalogosAuditoriaDto"];
+                };
+            };
+        };
+    };
+    historial: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                codigoAlumno: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HistorialFinanciero"];
+                };
+            };
+        };
+    };
+    obligaciones: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alumnoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ObligacionesAlumno"];
+                };
+            };
+        };
+    };
+    buscar: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AlumnoBusqueda"][];
                 };
             };
         };

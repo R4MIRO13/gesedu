@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.edu.gesedu.academico.dominio.Curso;
 import pe.edu.gesedu.academico.dominio.Grado;
 import pe.edu.gesedu.academico.dominio.Seccion;
+import pe.edu.gesedu.academico.dominio.MovimientoVacantes;
+import pe.edu.gesedu.academico.dominio.MovimientoVacantes.Cupo;
 import pe.edu.gesedu.academico.infraestructura.CursoRepository;
 import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
@@ -78,6 +80,25 @@ public class CatalogoAcademicoService {
         return new GradoResumen(grado.getId(), grado.getAnioEscolarId(), grado.getNumeroNivel());
     }
 
+    /** Una sección con su grado (para mostrar «3° A»). */
+    @Transactional(readOnly = true)
+    public SeccionResumen seccion(String seccionId) {
+        Seccion seccion = secciones.findById(seccionId).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe la sección"));
+        Grado grado = grados.findById(seccion.getGradoId()).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el grado"));
+        return aResumen(seccion, grado);
+    }
+
+    /** Grados del año ordenados por nivel (las solicitudes de matrícula eligen uno). */
+    @Transactional(readOnly = true)
+    public List<GradoResumen> gradosDelAnio(String anioEscolarId) {
+        return grados.findByAnioEscolarId(anioEscolarId).stream()
+                .map(g -> new GradoResumen(g.getId(), g.getAnioEscolarId(), g.getNumeroNivel()))
+                .sorted(Comparator.comparingInt(GradoResumen::numeroNivel))
+                .toList();
+    }
+
     /** Secciones del grado con sus vacantes, ordenadas por letra. */
     @Transactional(readOnly = true)
     public List<SeccionConVacantes> seccionesDelGrado(String gradoId) {
@@ -100,6 +121,68 @@ public class CatalogoAcademicoService {
         if (secciones.reservarVacante(seccionId) == 0) {
             throw new ExcepcionNegocio(CodigoError.SIN_VACANTE);
         }
+    }
+
+    /** Id del año escolar de la sección. */
+    @Transactional(readOnly = true)
+    public String anioEscolarDe(String seccionId) {
+        return secciones.findById(seccionId).map(Seccion::getAnioEscolarId).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe la sección"));
+    }
+
+    /** Todas las secciones del año con su cupo, ordenadas por grado y letra (para elegir el destino de un traslado). */
+    @Transactional(readOnly = true)
+    public List<SeccionConVacantes> seccionesConVacantesDelAnio(String anioEscolarId) {
+        Map<String, Grado> gradosPorId = grados.findByAnioEscolarId(anioEscolarId).stream()
+                .collect(Collectors.toMap(Grado::getId, Function.identity()));
+        return secciones.findByAnioEscolarId(anioEscolarId).stream()
+                .sorted(Comparator.comparingInt((Seccion s) -> gradosPorId.get(s.getGradoId()).getNumeroNivel())
+                        .thenComparing(Seccion::getLetra))
+                .map(s -> new SeccionConVacantes(s.getId(), s.getGradoId(),
+                        gradosPorId.get(s.getGradoId()).getNumeroNivel() + "° " + s.getLetra(), s.getCapacidad(),
+                        s.getVacantesDisponibles()))
+                .toList();
+    }
+
+    /**
+     * Traslada una vacante de {@code origen} a {@code destino} (RF-05) en la transacción del llamador: descuenta del
+     * destino con un UPDATE condicional y devuelve al origen sin pasar de su capacidad. Las dos secciones se bloquean
+     * en orden de id para que traslados cruzados no se interbloqueen. Si el destino está lleno responde
+     * {@code SIN_VACANTE} sin haber liberado nada.
+     *
+     * @return {@code false} si origen y destino son la misma sección (no hubo movimiento)
+     */
+    @Transactional
+    public boolean moverVacante(String origenId, String destinoId) {
+        if (origenId.equals(destinoId)) {
+            return false;
+        }
+        Map<String, Cupo> cupos = secciones.bloquearCupos(List.of(origenId, destinoId)).stream()
+                .collect(Collectors.toMap(f -> f.getId(), f -> new Cupo(f.getId(), f.getCapacidad(), f.getVacantes())));
+        Cupo origen = cupos.get(origenId);
+        Cupo destino = cupos.get(destinoId);
+        if (origen == null || destino == null) {
+            throw new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe la sección");
+        }
+        switch (MovimientoVacantes.evaluar(origen, destino)) {
+            case SIN_CAMBIO -> {
+                return false;
+            }
+            case SIN_VACANTE -> throw new ExcepcionNegocio(CodigoError.SIN_VACANTE);
+            case ORIGEN_INCONSISTENTE -> throw new ExcepcionNegocio(CodigoError.ERROR_INTERNO,
+                    "La sección de origen ya tiene todas sus vacantes libres");
+            case PERMITIDO -> {
+                // Los UPDATE condicionales respaldan la evaluación; si alguno no aplica, todo se revierte
+                if (secciones.reservarVacante(destinoId) == 0) {
+                    throw new ExcepcionNegocio(CodigoError.SIN_VACANTE);
+                }
+                if (secciones.liberarVacante(origenId) == 0) {
+                    throw new ExcepcionNegocio(CodigoError.ERROR_INTERNO, "No se pudo devolver la vacante a la sección de origen");
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Vacantes actuales de la sección, tras la última escritura. */

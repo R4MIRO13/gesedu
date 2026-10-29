@@ -35,6 +35,20 @@ public class CronogramaCobro extends EntidadBase {
     protected CronogramaCobro() {
     }
 
+    public CronogramaCobro(String anioEscolarId, ConceptoPago concepto, String periodo, BigDecimal monto,
+                           LocalDate fechaVencimiento) {
+        this.anioEscolarId = anioEscolarId;
+        this.concepto = concepto;
+        this.periodo = periodo;
+        this.monto = monto;
+        this.fechaVencimiento = fechaVencimiento;
+    }
+
+    public void actualizar(BigDecimal monto, LocalDate fechaVencimiento) {
+        this.monto = monto;
+        this.fechaVencimiento = fechaVencimiento;
+    }
+
     public String getAnioEscolarId() {
         return anioEscolarId;
     }

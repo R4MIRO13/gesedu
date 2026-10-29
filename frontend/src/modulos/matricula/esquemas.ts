@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { hoyLima } from '../../compartido/formato'
 
 /** Confirmación de UC-02 (paso 9): la sección elegida y la aceptación de los costos por el apoderado. */
 export const esquemaConfirmacion = z.object({
@@ -23,3 +24,21 @@ export const esquemaEvaluacion = z.object({
 })
 
 export type DatosEvaluacion = z.infer<typeof esquemaEvaluacion>
+
+/** Solicitud de matrícula del apoderado (UC-01, pasos 2 a 4). Los documentos adjuntos se validan aparte. */
+export const esquemaSolicitud = z.object({
+  nombres: z.string().trim().min(1, 'Ingresa los nombres del estudiante.').max(100, 'Admite hasta 100 caracteres.'),
+  apellidos: z.string().trim().min(1, 'Ingresa los apellidos del estudiante.').max(100, 'Admite hasta 100 caracteres.'),
+  documento: z.string().trim().regex(/^\d{8}$/, 'El DNI debe tener 8 dígitos.'),
+  fechaNacimiento: z
+    .string()
+    .min(1, 'Indica la fecha de nacimiento.')
+    .refine((v) => v < hoyLima(), 'La fecha de nacimiento debe ser pasada.'),
+  parentesco: z.string().min(1, 'Elige el parentesco.'),
+  telefono: z.string().trim().regex(/^\d[\d ]{6,18}\d$/, 'Ingresa un celular válido, por ejemplo 987 654 321.'),
+  tipoEstudiante: z.enum(['NUEVO_INGRESO', 'RECURRENTE']),
+  gradoId: z.string().min(1, 'Elige el grado al que postula.'),
+  declaracion: z.boolean().refine((v) => v, 'Debes declarar que la información es verídica.'),
+})
+
+export type DatosSolicitud = z.infer<typeof esquemaSolicitud>

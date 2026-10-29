@@ -70,6 +70,19 @@ public class Matricula extends EntidadBase {
         return seccionId;
     }
 
+    /** El administrador traslada al alumno a otra sección del mismo año (RF-05). */
+    public void cambiarSeccion(String seccionId) {
+        this.seccionId = seccionId;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    public LocalDate getFechaMatricula() {
+        return fechaMatricula;
+    }
+
     public EstadoMatricula getEstado() {
         return estado;
     }

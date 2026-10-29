@@ -38,6 +38,7 @@ public enum CodigoError {
     CORREO_DUPLICADO(HttpStatus.CONFLICT, "Ya existe una cuenta registrada con ese correo"),
     CONFLICTO_HORARIO(HttpStatus.CONFLICT, "El horario entra en conflicto con otro existente"),
     NUMERO_OPERACION_DUPLICADO(HttpStatus.CONFLICT, "El número de operación ya fue presentado"),
+    COMPROBANTE_PENDIENTE(HttpStatus.CONFLICT, "La obligación ya tiene un comprobante pendiente de revisión"),
     ASISTENCIA_YA_REGISTRADA(HttpStatus.CONFLICT, "La asistencia ya fue registrada"),
 
     // 422
@@ -45,6 +46,7 @@ public enum CodigoError {
     NO_ADMITIDO(HttpStatus.UNPROCESSABLE_ENTITY, "El alumno no fue admitido"),
     DOCUMENTACION_INCOMPLETA(HttpStatus.UNPROCESSABLE_ENTITY, "La documentación está incompleta"),
     OBLIGACION_YA_PAGADA(HttpStatus.UNPROCESSABLE_ENTITY, "La obligación ya fue pagada"),
+    MATRICULA_NO_VIGENTE(HttpStatus.UNPROCESSABLE_ENTITY, "La matrícula no está vigente"),
     MONTO_INSUFICIENTE(HttpStatus.UNPROCESSABLE_ENTITY, "El monto no cubre la obligación"),
     DOCENTE_NO_ASOCIADO(HttpStatus.UNPROCESSABLE_ENTITY, "El docente no está asociado al curso"),
     DOCENTE_NO_DISPONIBLE(HttpStatus.UNPROCESSABLE_ENTITY, "El docente no está disponible en ese bloque"),

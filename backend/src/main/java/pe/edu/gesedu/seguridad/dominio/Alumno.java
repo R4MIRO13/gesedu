@@ -31,6 +31,15 @@ public class Alumno extends EntidadBase {
     protected Alumno() {
     }
 
+    public Alumno(String usuarioId, String codigoAlumno, LocalDate fechaNacimiento, String apoderadoId,
+                  String parentescoApoderado) {
+        this.usuarioId = usuarioId;
+        this.codigoAlumno = codigoAlumno;
+        this.fechaNacimiento = fechaNacimiento;
+        this.apoderadoId = apoderadoId;
+        this.parentescoApoderado = parentescoApoderado;
+    }
+
     public String getUsuarioId() {
         return usuarioId;
     }
@@ -49,5 +58,11 @@ public class Alumno extends EntidadBase {
 
     public String getParentescoApoderado() {
         return parentescoApoderado;
+    }
+
+    /** El administrador corrige la fecha de nacimiento y el parentesco del apoderado (RF-02). */
+    public void actualizarDatos(LocalDate fechaNacimiento, String parentescoApoderado) {
+        this.fechaNacimiento = fechaNacimiento;
+        this.parentescoApoderado = parentescoApoderado;
     }
 }

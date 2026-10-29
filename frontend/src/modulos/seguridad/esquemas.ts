@@ -35,3 +35,33 @@ export const esquemaNuevaContrasena = z
   })
 
 export type DatosNuevaContrasena = z.infer<typeof esquemaNuevaContrasena>
+
+/** Documento de identidad: un DNI de 8 dígitos; el backend conserva sin validar el que la cuenta ya tenía (S-50). */
+const documento = z.string().trim().min(4, 'Ingresa el documento de identidad.').max(20, 'Admite hasta 20 caracteres.')
+const correoOpcional = z
+  .string()
+  .trim()
+  .refine((v) => v === '' || z.email().safeParse(v).success, 'Ingresa un correo válido.')
+
+/** Datos personales del estudiante que corrige el administrador (RF-02). */
+export const esquemaDatosAlumno = z.object({
+  nombres: z.string().trim().min(1, 'Ingresa los nombres.').max(100, 'Admite hasta 100 caracteres.'),
+  apellidos: z.string().trim().min(1, 'Ingresa los apellidos.').max(100, 'Admite hasta 100 caracteres.'),
+  documento,
+  correo: correoOpcional,
+  fechaNacimiento: z.string().min(1, 'Indica la fecha de nacimiento.'),
+  parentesco: z.string().trim().min(1, 'Indica el parentesco del apoderado.').max(30, 'Admite hasta 30 caracteres.'),
+})
+
+export type DatosAlumno = z.infer<typeof esquemaDatosAlumno>
+
+/** Datos personales del apoderado que corrige el administrador (RF-02). */
+export const esquemaDatosApoderado = z.object({
+  nombres: z.string().trim().min(1, 'Ingresa los nombres.').max(100, 'Admite hasta 100 caracteres.'),
+  apellidos: z.string().trim().min(1, 'Ingresa los apellidos.').max(100, 'Admite hasta 100 caracteres.'),
+  documento,
+  correo: correoOpcional,
+  telefono: z.string().trim().max(20, 'Admite hasta 20 caracteres.'),
+})
+
+export type DatosApoderado = z.infer<typeof esquemaDatosApoderado>

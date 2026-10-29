@@ -27,6 +27,48 @@ export const OPCIONES_MENU = [
     permiso: 'MATRICULA_EVALUAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/matricula/solicitud' }),
+    titulo: 'Solicitar matrícula',
+    descripcion: 'Presenta la solicitud de matrícula de un estudiante con sus documentos.',
+    permiso: 'MATRICULA_SOLICITAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/matricula/solicitudes' }),
+    titulo: 'Mis solicitudes',
+    descripcion: 'Sigue el estado de las solicitudes de matrícula que presentaste.',
+    permiso: 'MATRICULA_SOLICITAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/pagos' }),
+    titulo: 'Matrícula y pagos',
+    descripcion: 'Consulta la matrícula de tus hijos, sus obligaciones de pago y presenta comprobantes.',
+    permiso: 'OBLIGACION_CONSULTAR_PROPIA',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/pagos/validar' }),
+    titulo: 'Validar comprobantes',
+    descripcion: 'Revisa los comprobantes de pago, valida el importe y registra la boleta.',
+    permiso: 'COMPROBANTE_VALIDAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/pagos/historial' }),
+    titulo: 'Historial financiero',
+    descripcion: 'Consulta las obligaciones, boletas, deudas y penalidades de un estudiante.',
+    permiso: 'PAGO_HISTORIAL_CONSULTAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/pagos/configuracion' }),
+    titulo: 'Configuración de cobros',
+    descripcion: 'Costos, vencimientos y penalidad del año escolar.',
+    permiso: 'COBRO_CONFIGURAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/estudiantes' }),
+    titulo: 'Datos de estudiantes',
+    descripcion: 'Corrige los datos personales de los estudiantes y de sus apoderados.',
+    permiso: 'USUARIO_GESTIONAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/usuarios' }),
     titulo: 'Usuarios',
     descripcion: 'Cuentas del sistema: estado, bloqueos y desbloqueo.',

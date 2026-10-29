@@ -20,6 +20,10 @@ public class Apoderado extends EntidadBase {
     protected Apoderado() {
     }
 
+    public void actualizarTelefono(String numeroTelefono) {
+        this.numeroTelefono = numeroTelefono;
+    }
+
     public String getUsuarioId() {
         return usuarioId;
     }

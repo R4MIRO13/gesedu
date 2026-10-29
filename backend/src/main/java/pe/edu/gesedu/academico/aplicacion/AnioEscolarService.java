@@ -44,4 +44,10 @@ public class AnioEscolarService {
     public List<String> idsAnterioresA(int anio) {
         return anios.findByAnioLessThan(anio).stream().map(a -> a.getId()).toList();
     }
+
+    /** Ids de los años que no están cerrados: los «vigentes» para el apoderado (matrícula y obligaciones). */
+    @Transactional(readOnly = true)
+    public List<String> idsNoCerrados() {
+        return anios.findByEstadoNot("CERRADO").stream().map(a -> a.getId()).toList();
+    }
 }

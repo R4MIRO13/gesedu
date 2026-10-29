@@ -94,7 +94,7 @@ public abstract class BaseIT {
     }
 
     @Value("${local.server.port}")
-    private int puerto;
+    protected int puerto;
 
     @Autowired
     protected JdbcTemplate jdbc;

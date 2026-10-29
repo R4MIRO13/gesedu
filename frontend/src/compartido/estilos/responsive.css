@@ -43,6 +43,8 @@
 
 .principal {
   grid-area: principal;
+  /* Sin esto, una tabla ancha ensancha todo el layout en móvil en vez de desplazarse dentro de su contenedor */
+  min-width: 0;
 }
 
 .menu {
@@ -117,9 +119,12 @@
     background: var(--color-superficie);
     border-top: 1px solid var(--color-borde);
     z-index: 3;
+    /* Con muchas opciones (administrador) la barra se desplaza en vez de ensanchar la página */
+    overflow-x: auto;
   }
   .barra-inferior a {
-    flex: 1;
+    flex: 1 0 auto;
+    min-width: 4.5rem;
     display: flex;
     align-items: center;
     justify-content: center;

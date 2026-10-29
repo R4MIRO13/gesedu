@@ -17,10 +17,20 @@ import { Route as RestablecerContrasenaRouteImport } from './routes/restablecer-
 import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditoria'
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetUsuariosRouteImport } from './routes/intranet/usuarios'
+import { Route as IntranetEstudiantesIndexRouteImport } from './routes/intranet/estudiantes/index'
+import { Route as IntranetEstudiantesIdRouteImport } from './routes/intranet/estudiantes/$id'
 import { Route as IntranetHorariosBloquesRouteImport } from './routes/intranet/horarios/bloques'
+import { Route as IntranetMatriculaSolicitudRouteImport } from './routes/intranet/matricula/solicitud'
+import { Route as IntranetMatriculaSolicitudesRouteImport } from './routes/intranet/matricula/solicitudes'
 import { Route as IntranetMatriculasIndexRouteImport } from './routes/intranet/matriculas/index'
 import { Route as IntranetMatriculasCodigoRouteImport } from './routes/intranet/matriculas/$codigo'
+import { Route as IntranetPagosIndexRouteImport } from './routes/intranet/pagos/index'
+import { Route as IntranetPagosComprobanteRouteImport } from './routes/intranet/pagos/comprobante'
+import { Route as IntranetPagosConfiguracionRouteImport } from './routes/intranet/pagos/configuracion'
+import { Route as IntranetPagosValidarRouteImport } from './routes/intranet/pagos/validar'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
+import { Route as IntranetPagosHistorialIndexRouteImport } from './routes/intranet/pagos/historial/index'
+import { Route as IntranetPagosHistorialCodigoRouteImport } from './routes/intranet/pagos/historial/$codigo'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -62,11 +72,34 @@ const IntranetUsuariosRoute = IntranetUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetEstudiantesIndexRoute =
+  IntranetEstudiantesIndexRouteImport.update({
+    id: '/estudiantes/',
+    path: '/estudiantes/',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetEstudiantesIdRoute = IntranetEstudiantesIdRouteImport.update({
+  id: '/estudiantes/$id',
+  path: '/estudiantes/$id',
+  getParentRoute: () => IntranetRoute,
+} as any)
 const IntranetHorariosBloquesRoute = IntranetHorariosBloquesRouteImport.update({
   id: '/horarios/bloques',
   path: '/horarios/bloques',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetMatriculaSolicitudRoute =
+  IntranetMatriculaSolicitudRouteImport.update({
+    id: '/matricula/solicitud',
+    path: '/matricula/solicitud',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetMatriculaSolicitudesRoute =
+  IntranetMatriculaSolicitudesRouteImport.update({
+    id: '/matricula/solicitudes',
+    path: '/matricula/solicitudes',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetMatriculasIndexRoute = IntranetMatriculasIndexRouteImport.update({
   id: '/matriculas/',
   path: '/matriculas/',
@@ -78,10 +111,44 @@ const IntranetMatriculasCodigoRoute =
     path: '/matriculas/$codigo',
     getParentRoute: () => IntranetRoute,
   } as any)
+const IntranetPagosIndexRoute = IntranetPagosIndexRouteImport.update({
+  id: '/pagos/',
+  path: '/pagos/',
+  getParentRoute: () => IntranetRoute,
+} as any)
+const IntranetPagosComprobanteRoute =
+  IntranetPagosComprobanteRouteImport.update({
+    id: '/pagos/comprobante',
+    path: '/pagos/comprobante',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetPagosConfiguracionRoute =
+  IntranetPagosConfiguracionRouteImport.update({
+    id: '/pagos/configuracion',
+    path: '/pagos/configuracion',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetPagosValidarRoute = IntranetPagosValidarRouteImport.update({
+  id: '/pagos/validar',
+  path: '/pagos/validar',
+  getParentRoute: () => IntranetRoute,
+} as any)
 const IntranetHorariosAnioElaborarRoute =
   IntranetHorariosAnioElaborarRouteImport.update({
     id: '/horarios/$anio/elaborar',
     path: '/horarios/$anio/elaborar',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetPagosHistorialIndexRoute =
+  IntranetPagosHistorialIndexRouteImport.update({
+    id: '/pagos/historial/',
+    path: '/pagos/historial/',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetPagosHistorialCodigoRoute =
+  IntranetPagosHistorialCodigoRouteImport.update({
+    id: '/pagos/historial/$codigo',
+    path: '/pagos/historial/$codigo',
     getParentRoute: () => IntranetRoute,
   } as any)
 
@@ -94,10 +161,20 @@ export interface FileRoutesByFullPath {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
+  '/intranet/estudiantes/$id': typeof IntranetEstudiantesIdRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
+  '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
+  '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
+  '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
+  '/intranet/estudiantes/': typeof IntranetEstudiantesIndexRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
+  '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
+  '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
+  '/intranet/pagos/historial/': typeof IntranetPagosHistorialIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,10 +185,20 @@ export interface FileRoutesByTo {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
+  '/intranet/estudiantes/$id': typeof IntranetEstudiantesIdRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
+  '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
+  '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
+  '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
+  '/intranet/estudiantes': typeof IntranetEstudiantesIndexRoute
   '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
+  '/intranet/pagos': typeof IntranetPagosIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
+  '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
+  '/intranet/pagos/historial': typeof IntranetPagosHistorialIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -123,10 +210,20 @@ export interface FileRoutesById {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
+  '/intranet/estudiantes/$id': typeof IntranetEstudiantesIdRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
+  '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
+  '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
+  '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
+  '/intranet/estudiantes/': typeof IntranetEstudiantesIndexRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
+  '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
+  '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
+  '/intranet/pagos/historial/': typeof IntranetPagosHistorialIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,10 +236,20 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/usuarios'
+    | '/intranet/estudiantes/$id'
     | '/intranet/horarios/bloques'
+    | '/intranet/matricula/solicitud'
+    | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
+    | '/intranet/pagos/comprobante'
+    | '/intranet/pagos/configuracion'
+    | '/intranet/pagos/validar'
+    | '/intranet/estudiantes/'
     | '/intranet/matriculas/'
+    | '/intranet/pagos/'
     | '/intranet/horarios/$anio/elaborar'
+    | '/intranet/pagos/historial/$codigo'
+    | '/intranet/pagos/historial/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -153,10 +260,20 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/usuarios'
+    | '/intranet/estudiantes/$id'
     | '/intranet/horarios/bloques'
+    | '/intranet/matricula/solicitud'
+    | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
+    | '/intranet/pagos/comprobante'
+    | '/intranet/pagos/configuracion'
+    | '/intranet/pagos/validar'
+    | '/intranet/estudiantes'
     | '/intranet/matriculas'
+    | '/intranet/pagos'
     | '/intranet/horarios/$anio/elaborar'
+    | '/intranet/pagos/historial/$codigo'
+    | '/intranet/pagos/historial'
   id:
     | '__root__'
     | '/'
@@ -167,10 +284,20 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/usuarios'
+    | '/intranet/estudiantes/$id'
     | '/intranet/horarios/bloques'
+    | '/intranet/matricula/solicitud'
+    | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
+    | '/intranet/pagos/comprobante'
+    | '/intranet/pagos/configuracion'
+    | '/intranet/pagos/validar'
+    | '/intranet/estudiantes/'
     | '/intranet/matriculas/'
+    | '/intranet/pagos/'
     | '/intranet/horarios/$anio/elaborar'
+    | '/intranet/pagos/historial/$codigo'
+    | '/intranet/pagos/historial/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -239,11 +366,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetUsuariosRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/estudiantes/': {
+      id: '/intranet/estudiantes/'
+      path: '/estudiantes'
+      fullPath: '/intranet/estudiantes/'
+      preLoaderRoute: typeof IntranetEstudiantesIndexRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/estudiantes/$id': {
+      id: '/intranet/estudiantes/$id'
+      path: '/estudiantes/$id'
+      fullPath: '/intranet/estudiantes/$id'
+      preLoaderRoute: typeof IntranetEstudiantesIdRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/bloques': {
       id: '/intranet/horarios/bloques'
       path: '/horarios/bloques'
       fullPath: '/intranet/horarios/bloques'
       preLoaderRoute: typeof IntranetHorariosBloquesRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/matricula/solicitud': {
+      id: '/intranet/matricula/solicitud'
+      path: '/matricula/solicitud'
+      fullPath: '/intranet/matricula/solicitud'
+      preLoaderRoute: typeof IntranetMatriculaSolicitudRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/matricula/solicitudes': {
+      id: '/intranet/matricula/solicitudes'
+      path: '/matricula/solicitudes'
+      fullPath: '/intranet/matricula/solicitudes'
+      preLoaderRoute: typeof IntranetMatriculaSolicitudesRouteImport
       parentRoute: typeof IntranetRoute
     }
     '/intranet/matriculas/': {
@@ -260,11 +415,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetMatriculasCodigoRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/pagos/': {
+      id: '/intranet/pagos/'
+      path: '/pagos'
+      fullPath: '/intranet/pagos/'
+      preLoaderRoute: typeof IntranetPagosIndexRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/pagos/comprobante': {
+      id: '/intranet/pagos/comprobante'
+      path: '/pagos/comprobante'
+      fullPath: '/intranet/pagos/comprobante'
+      preLoaderRoute: typeof IntranetPagosComprobanteRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/pagos/configuracion': {
+      id: '/intranet/pagos/configuracion'
+      path: '/pagos/configuracion'
+      fullPath: '/intranet/pagos/configuracion'
+      preLoaderRoute: typeof IntranetPagosConfiguracionRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/pagos/validar': {
+      id: '/intranet/pagos/validar'
+      path: '/pagos/validar'
+      fullPath: '/intranet/pagos/validar'
+      preLoaderRoute: typeof IntranetPagosValidarRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/$anio/elaborar': {
       id: '/intranet/horarios/$anio/elaborar'
       path: '/horarios/$anio/elaborar'
       fullPath: '/intranet/horarios/$anio/elaborar'
       preLoaderRoute: typeof IntranetHorariosAnioElaborarRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/pagos/historial/': {
+      id: '/intranet/pagos/historial/'
+      path: '/pagos/historial'
+      fullPath: '/intranet/pagos/historial/'
+      preLoaderRoute: typeof IntranetPagosHistorialIndexRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/pagos/historial/$codigo': {
+      id: '/intranet/pagos/historial/$codigo'
+      path: '/pagos/historial/$codigo'
+      fullPath: '/intranet/pagos/historial/$codigo'
+      preLoaderRoute: typeof IntranetPagosHistorialCodigoRouteImport
       parentRoute: typeof IntranetRoute
     }
   }
@@ -274,20 +471,40 @@ interface IntranetRouteChildren {
   IntranetAuditoriaRoute: typeof IntranetAuditoriaRoute
   IntranetInicioRoute: typeof IntranetInicioRoute
   IntranetUsuariosRoute: typeof IntranetUsuariosRoute
+  IntranetEstudiantesIdRoute: typeof IntranetEstudiantesIdRoute
   IntranetHorariosBloquesRoute: typeof IntranetHorariosBloquesRoute
+  IntranetMatriculaSolicitudRoute: typeof IntranetMatriculaSolicitudRoute
+  IntranetMatriculaSolicitudesRoute: typeof IntranetMatriculaSolicitudesRoute
   IntranetMatriculasCodigoRoute: typeof IntranetMatriculasCodigoRoute
+  IntranetPagosComprobanteRoute: typeof IntranetPagosComprobanteRoute
+  IntranetPagosConfiguracionRoute: typeof IntranetPagosConfiguracionRoute
+  IntranetPagosValidarRoute: typeof IntranetPagosValidarRoute
+  IntranetEstudiantesIndexRoute: typeof IntranetEstudiantesIndexRoute
   IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
+  IntranetPagosIndexRoute: typeof IntranetPagosIndexRoute
   IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
+  IntranetPagosHistorialCodigoRoute: typeof IntranetPagosHistorialCodigoRoute
+  IntranetPagosHistorialIndexRoute: typeof IntranetPagosHistorialIndexRoute
 }
 
 const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetAuditoriaRoute: IntranetAuditoriaRoute,
   IntranetInicioRoute: IntranetInicioRoute,
   IntranetUsuariosRoute: IntranetUsuariosRoute,
+  IntranetEstudiantesIdRoute: IntranetEstudiantesIdRoute,
   IntranetHorariosBloquesRoute: IntranetHorariosBloquesRoute,
+  IntranetMatriculaSolicitudRoute: IntranetMatriculaSolicitudRoute,
+  IntranetMatriculaSolicitudesRoute: IntranetMatriculaSolicitudesRoute,
   IntranetMatriculasCodigoRoute: IntranetMatriculasCodigoRoute,
+  IntranetPagosComprobanteRoute: IntranetPagosComprobanteRoute,
+  IntranetPagosConfiguracionRoute: IntranetPagosConfiguracionRoute,
+  IntranetPagosValidarRoute: IntranetPagosValidarRoute,
+  IntranetEstudiantesIndexRoute: IntranetEstudiantesIndexRoute,
   IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,
+  IntranetPagosIndexRoute: IntranetPagosIndexRoute,
   IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,
+  IntranetPagosHistorialCodigoRoute: IntranetPagosHistorialCodigoRoute,
+  IntranetPagosHistorialIndexRoute: IntranetPagosHistorialIndexRoute,
 }
 
 const IntranetRouteWithChildren = IntranetRoute._addFileChildren(

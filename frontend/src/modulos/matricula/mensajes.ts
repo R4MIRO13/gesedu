@@ -24,6 +24,37 @@ export function mensajeDeMatricula(error: unknown): string {
   }
 }
 
+/** Mensaje del cambio de sección (RF-05). */
+export function mensajeDeCambioSeccion(error: unknown): string {
+  if (!(error instanceof ApiError)) return 'No se pudo cambiar la sección. Inténtalo de nuevo.'
+  switch (error.codigo) {
+    case 'SIN_VACANTE':
+      return 'La sección elegida ya no tiene vacantes. Elige otra; no se movió nada.'
+    case 'MATRICULA_NO_VIGENTE':
+      return 'Solo se puede cambiar de sección una matrícula confirmada de un año vigente.'
+    case 'CONFLICTO_CONCURRENCIA':
+      return 'La matrícula cambió mientras la editabas. Recarga la página para ver su estado actual.'
+    case 'SIN_CONEXION':
+      return 'No se pudo conectar con el servidor. Revisa tu conexión.'
+    default:
+      return error.message
+  }
+}
+
 export function esConflictoDeVersion(error: unknown): boolean {
   return error instanceof ApiError && error.codigo === 'CONFLICTO_CONCURRENCIA'
+}
+
+/** Campo del formulario de la solicitud al que corresponde el `campo` que devuelve la API (`alumno.documento`…). */
+export function campoDeSolicitud(campo: string): string {
+  const mapa: Record<string, string> = {
+    'alumno.nombres': 'nombres',
+    'alumno.apellidos': 'apellidos',
+    'alumno.documento': 'documento',
+    'alumno.fechaNacimiento': 'fechaNacimiento',
+    'alumno.parentesco': 'parentesco',
+    telefonoApoderado: 'telefono',
+    gradoId: 'gradoId',
+  }
+  return mapa[campo] ?? campo
 }

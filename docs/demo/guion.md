@@ -1,4 +1,4 @@
-# Guion de la demo ampliada (fase 1)
+# Guion de la demo ampliada (fase 1 y pagos de la fase 2)
 
 Duración: **15 minutos** (el corte mínimo, pasos 0 a 6, dura unos **10**). Hilo conductor: el **diagrama de contenedores** (`docs/arquitectura.pdf`, Figura 3, § 7). Tenerlo abierto en una pestaña y volver a él en cada bloque.
 
@@ -17,6 +17,7 @@ Credenciales: todas las cuentas usan la contraseña `Gesedu2027!`.
 | `directivo@demo.gesedu.pe` | Administrador (Ricardo, Coordinación académica) |
 | `docente@demo.gesedu.pe`, `alumno@demo.gesedu.pe`, `apoderado@demo.gesedu.pe` | Docente (Rosa Quispe), Alumno (Lucía García), Apoderado (María Rojas) |
 | `bloqueo@demo.gesedu.pe` | Docente (Hugo), reservada para mostrar el bloqueo |
+| `familia.torres@demo.gesedu.pe` | Apoderado (Marcos Torres): hijo **Tomás** ya matriculado en 1° A con sus 11 compromisos; su otra hija, Valeria, tiene la solicitud `00482` pendiente. Para los pagos (paso 11) |
 
 Qué cubre cada paso:
 
@@ -28,6 +29,7 @@ Qué cubre cada paso:
 | 5 | Elaborar horario | P1 | UC-21, RF-39 a RF-42, RF-47 |
 | 6 | Auditoría y exportación | P1 | UC-25, RF-49, RF-51, RNF-08 |
 | 7 | Recuperación de contraseña y desbloqueo | P2 | UC-24 FA-5, RF-52 |
+| 11 | Pagos: consulta, comprobante, validación e historial *(fase 2)* | P2 | UC-03 a UC-06, RF-08 a RF-11, RNF-10, RNF-11 |
 | 8 | Registrar matrícula | P2 | UC-02, RF-04, RF-05, RF-07, RF-12, RNF-10 |
 | 9 | Última vacante en vivo | P2 | RNF-09 |
 | 10 | ArchUnit | P1 | DA-02 |
@@ -293,6 +295,18 @@ BUILD SUCCESS
 
 > La verificación completa del backend (pruebas de integración con Testcontainers incluidas) es `.\mvnw.cmd -B verify` y tarda varios minutos: **no ejecutarla en vivo**.
 
+### 11. Pagos: del comprobante a la boleta (5 min) — UC-03 a UC-06 *(fase 2)*
+Se usa a la familia Torres, que ya viene lista en la semilla (no hace falta confirmar nada antes ni tocar la base).
+
+1. Con `familia.torres@demo.gesedu.pe`: menú **Matrícula y pagos**. Arriba, los botones **Tomás · 1° A** y **Valeria** (Valeria todavía no tiene matrícula vigente: «no tiene una matrícula vigente», UC-03 FA-2). En Tomás: matrícula *Confirmada*, 11 obligaciones de S/ 350.00, «Próximo vencimiento S/ 350.00 · Matrícula · 28/02/2027», deuda vencida S/ 0.00.
+2. En la fila **Matrícula**, **Subir comprobante** → número de operación `00458712`, medio «Transferencia - BCP», cualquier PDF o foto de hasta 5 MB como voucher → **Enviar comprobante**: «Está pendiente de validación» y la obligación sigue *Pendiente* (UC-04: presentar no cambia nada). De vuelta en la lista, esa fila dice «Comprobante en revisión» y ya no ofrece subir otro.
+3. Repetir con la fila de **Pensión marzo** y el **mismo número** `00458712`: «El número de operación ya fue presentado en otro comprobante» (RF-08).
+4. Con `admin@demo.gesedu.pe`: **Validar comprobantes** → abrir el comprobante de Tomás Torres Gil: obligación con importe base y total, lo declarado por el apoderado y las verificaciones (número no registrado antes, monto cubre el total). **Validar y registrar boleta**: «Pago registrado. Boleta B001-00001 por S/ 350.00». En Mailpit (http://localhost:8025) llegó «Pago registrado: Matrícula 2027» al apoderado (después del commit).
+5. De nuevo como Torres: la matrícula figura **Pagada** con «Boleta B001-00001». En **Auditoría**, `PRESENTAR_COMPROBANTE` y `VALIDAR_PAGO` (con el estado de la obligación PENDIENTE → PAGADA).
+6. Alternativas (admin): presentar otro comprobante y **Observar** con un texto («El monto no cubre la penalidad») → el apoderado recibe el correo con el importe total pendiente y puede volver a presentar; o **Rechazar** (UC-05 FA-1 y FA-2). Ninguna toca la obligación.
+7. **Historial financiero** → buscar «Torres» → Tomás: tarjetas *Total pagado S/ 350.00*, *Pendiente*, pestañas Obligaciones / Boletas y pagos / Deudas y penalidades (UC-06, solo consulta).
+8. **Configuración de cobros**: cambiar el monto de una pensión pendiente (por ejemplo, mayo a 400.00) → «Se actualizaron N compromisos pendientes»; en la cuenta de Torres esa pensión ya dice S/ 400.00 y la ya pagada no cambió (RF-07). El job de penalidades (00:05) no tiene pantalla: se muestra su prueba, `JobVencimientosIT`.
+
 ### Cierre (30 s)
 Volver a la Figura 3. «Vimos tres casos de uso completos sobre el esqueleto: seguridad por permisos, horarios sin cruces ni pisadas, matrícula atómica con correo, y una auditoría que nadie puede borrar. El resto de módulos se construye sobre esto.»
 
@@ -327,4 +341,4 @@ Solo desbloquear la cuenta de `bloqueo@` (desde **Usuarios → Desbloquear**, o 
 ```powershell
 psql-duenio -c "UPDATE seguridad.usuario SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE correo = 'bloqueo@demo.gesedu.pe';"
 ```
-Esto **no** deshace las matrículas confirmadas, las clases guardadas ni los registros de auditoría. Para volver al estado inicial por completo (8 solicitudes pendientes, 3° A con 4 vacantes, 2° B con 1, contraseñas de la semilla): detener el backend, ejecutar `.\scripts\reiniciar-bd.ps1`, y arrancar el backend con `local,demo`. Mailpit conserva sus correos hasta que se borre desde su pantalla (*Delete all*) o se reinicie con `docker compose restart mailpit`.
+Esto **no** deshace las matrículas confirmadas, las clases guardadas, los comprobantes y boletas del paso 11 ni los registros de auditoría. Para volver al estado inicial por completo (8 solicitudes pendientes, 3° A con 4 vacantes, 2° B con 1, Tomás Torres con sus 11 compromisos pendientes, contraseñas de la semilla): detener el backend, ejecutar `.\scripts\reiniciar-bd.ps1`, y arrancar el backend con `local,demo`. Mailpit conserva sus correos hasta que se borre desde su pantalla (*Delete all*) o se reinicie con `docker compose restart mailpit`.

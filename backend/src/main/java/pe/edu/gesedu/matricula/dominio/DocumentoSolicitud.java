@@ -32,6 +32,16 @@ public class DocumentoSolicitud extends EntidadBase {
     protected DocumentoSolicitud() {
     }
 
+    public DocumentoSolicitud(String solicitudId, String tipo, String claveObjeto, String nombreArchivo,
+                              String contentType, long tamanoBytes) {
+        this.solicitudId = solicitudId;
+        this.tipo = tipo;
+        this.claveObjeto = claveObjeto;
+        this.nombreArchivo = nombreArchivo;
+        this.contentType = contentType;
+        this.tamanoBytes = tamanoBytes;
+    }
+
     public String getSolicitudId() {
         return solicitudId;
     }

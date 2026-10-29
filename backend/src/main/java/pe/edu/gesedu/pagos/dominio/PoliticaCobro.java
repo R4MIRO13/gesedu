@@ -22,6 +22,15 @@ public class PoliticaCobro extends EntidadBase {
     protected PoliticaCobro() {
     }
 
+    public PoliticaCobro(String anioEscolarId, BigDecimal porcentajePenalidad) {
+        this.anioEscolarId = anioEscolarId;
+        this.porcentajePenalidad = porcentajePenalidad;
+    }
+
+    public void actualizar(BigDecimal porcentajePenalidad) {
+        this.porcentajePenalidad = porcentajePenalidad;
+    }
+
     public String getAnioEscolarId() {
         return anioEscolarId;
     }

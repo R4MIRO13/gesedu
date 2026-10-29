@@ -304,11 +304,7 @@ public class EvaluacionMatriculaService {
     }
 
     private static String estadoVisible(SolicitudMatricula s) {
-        return switch (s.getEstado()) {
-            case PENDIENTE_REVISION -> "Pendiente de revisión";
-            case APROBADA -> "Aprobada";
-            case RECHAZADA -> s.getMotivoRechazo().estadoVisible();
-        };
+        return s.estadoVisible();
     }
 
     private void notificarConfirmacion(SolicitudMatricula s, int anio, AlumnoResumen alumno, String seccion,

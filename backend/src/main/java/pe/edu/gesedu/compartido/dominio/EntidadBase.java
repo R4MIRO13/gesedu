@@ -31,6 +31,14 @@ public abstract class EntidadBase {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /**
+     * Marca la entidad como modificada: obliga al UPDATE y, con él, a que {@code @Version} suba aunque ningún dato de
+     * negocio haya cambiado (por ejemplo, cuando se edita un perfil que cuelga de la cuenta).
+     */
+    public void tocar(Instant ahora) {
+        this.updatedAt = ahora;
+    }
+
     public String getId() {
         return id;
     }

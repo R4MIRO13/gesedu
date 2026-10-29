@@ -138,6 +138,38 @@ class DatosDemoIT extends BaseIT {
                 .containsEntry("codigo_seguimiento", "MAT-2027-00478");
     }
 
+    // --- Semilla P2: la familia Torres para probar pagos (UC-03, UC-04, UC-05) ---
+
+    @Test
+    void laFamiliaTorresEntraYTieneAlHijoMatriculadoConSusOnceCompromisos() throws Exception {
+        Respuesta sesion = iniciarSesion("familia.torres@demo.gesedu.pe", CONTRASENA);
+        assertThat(sesion.estado()).isEqualTo(200);
+        assertThat(sesion.cuerpo().get("usuario").get("rol").asString()).isEqualTo("APODERADO");
+        String token = sesion.cuerpo().get("tokenAcceso").asString();
+
+        JsonNode hijos = get("/api/v1/matriculas/mias", token).cuerpo();
+        assertThat(hijos.valueStream().map(h -> h.get("alumno").asString()).toList())
+                .containsExactly("Tomás Torres Gil", "Valeria Torres Gil");
+        JsonNode tomas = hijos.get(0);
+        assertThat(tomas.get("matricula").get("estado").asString()).isEqualTo("Confirmada");
+        assertThat(tomas.get("matricula").get("seccion").asString()).isEqualTo("1° A");
+        assertThat(tomas.get("matricula").get("anio").asInt()).isEqualTo(2027);
+        assertThat(hijos.get(1).get("matricula").isNull()).as("Valeria sigue con su solicitud pendiente").isTrue();
+
+        JsonNode obligaciones = get("/api/v1/alumnos/" + tomas.get("alumnoId").asString() + "/obligaciones", token).cuerpo();
+        assertThat(obligaciones.get("obligaciones")).hasSize(11);
+        assertThat(obligaciones.get("resumen").get("totalPendiente").asString()).isEqualTo("3850.00");
+        assertThat(obligaciones.get("obligaciones").get(0).get("puedePresentarComprobante").asBoolean()).isTrue();
+    }
+
+    @Test
+    void laMatriculaDeTomasNoAlteraLasVacantesNiLasSolicitudesDelGuion() throws Exception {
+        assertThat(jdbc.queryForObject("SELECT s.vacantes_disponibles FROM academico.seccion s JOIN academico.grado g ON g.id = s.grado_id "
+                + "WHERE g.numero_nivel = 1 AND s.letra = 'A' AND g.anio_escolar_id = " + ANIO_2027, Integer.class)).isEqualTo(29);
+        assertThat(jdbc.queryForObject("SELECT estado FROM matricula.solicitud_matricula WHERE codigo_seguimiento = 'MAT-2027-00482'",
+                String.class)).isEqualTo("PENDIENTE_REVISION");
+    }
+
     // --- Semilla P2: UC-02 (docs/PLAN.md § 11, paso 7) ---
 
     @Test

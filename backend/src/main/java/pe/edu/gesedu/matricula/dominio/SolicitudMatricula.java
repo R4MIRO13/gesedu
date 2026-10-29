@@ -73,6 +73,29 @@ public class SolicitudMatricula extends EntidadBase {
     protected SolicitudMatricula() {
     }
 
+    /** Solicitud recién presentada por el apoderado (UC-01): pendiente de revisión y con la documentación completa. */
+    public SolicitudMatricula(String codigoSeguimiento, String anioEscolarId, String alumnoId, String apoderadoId,
+                              String gradoId, LocalDate fechaSolicitud, TipoEstudiante tipoEstudiante) {
+        this.codigoSeguimiento = codigoSeguimiento;
+        this.anioEscolarId = anioEscolarId;
+        this.alumnoId = alumnoId;
+        this.apoderadoId = apoderadoId;
+        this.gradoId = gradoId;
+        this.fechaSolicitud = fechaSolicitud;
+        this.tipoEstudiante = tipoEstudiante;
+        this.estadoDocumentacion = EstadoDocumentacion.COMPLETA;
+        this.estadoAdmision = EstadoAdmision.NO_APLICA;
+    }
+
+    /** Estado tal como se muestra: «Pendiente de revisión», «Aprobada», «Rechazada por Deudas»… */
+    public String estadoVisible() {
+        return switch (estado) {
+            case PENDIENTE_REVISION -> "Pendiente de revisión";
+            case APROBADA -> "Aprobada";
+            case RECHAZADA -> motivoRechazo.estadoVisible();
+        };
+    }
+
     public boolean estaPendiente() {
         return estado == EstadoSolicitud.PENDIENTE_REVISION;
     }

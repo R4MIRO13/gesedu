@@ -26,8 +26,8 @@ SELECT uuidv7()::text, g.id, g.anio_escolar_id, 'A', 30, 29
 FROM academico.grado g JOIN academico.anio_escolar a ON a.id = g.anio_escolar_id
 WHERE a.anio = 2026;
 
--- Ocho familias con una solicitud pendiente cada una. Las cuentas no tienen contraseña (no inician sesión), pero los
--- apoderados tienen correo para que el aviso de UC-02 llegue a Mailpit.
+-- Ocho familias con una solicitud pendiente cada una. Las cuentas no tienen contraseña (no inician sesión; solo la
+-- familia Torres se activa más abajo), pero los apoderados tienen correo para que el aviso de UC-02 llegue a Mailpit.
 CREATE TEMP TABLE tmp_familia (
     n int, a_nombres text, a_apellidos text, a_dni text, a_codigo text, a_nac date,
     p_nombres text, p_apellidos text, p_dni text, p_correo text, parentesco text,
@@ -114,7 +114,47 @@ FROM matricula.solicitud_matricula sm
 JOIN academico.seccion s ON s.grado_id = sm.grado_id AND s.letra = 'B'
 WHERE sm.codigo_seguimiento = 'MAT-2027-00470';
 
--- Compromisos 2027 de las matrículas ya confirmadas (Lucía García y Mateo Ríos)
+-- La familia Torres puede iniciar sesión (Gesedu2027!) y ya tiene un hijo matriculado: Tomás Torres Gil, 1° A,
+-- con matrícula 2027 confirmada y sus 11 compromisos (se generan en el bloque siguiente). Así se prueban UC-03, UC-04 y
+-- UC-05 sin confirmar nada antes. Valeria (solicitud MAT-2027-00482) sigue pendiente para el flujo de UC-02.
+UPDATE seguridad.usuario
+SET hash_contrasena = (SELECT hash_contrasena FROM seguridad.usuario WHERE correo = 'apoderado@demo.gesedu.pe'),
+    activo = TRUE
+WHERE correo = 'familia.torres@demo.gesedu.pe';
+
+INSERT INTO seguridad.usuario (id, nombres, apellidos, documento_identidad, activo, rol_acceso_id)
+SELECT uuidv7()::text, 'Tomás', 'Torres Gil', '77100009', FALSE, r.id
+FROM seguridad.rol_acceso r WHERE r.codigo = 'ALUMNO';
+
+INSERT INTO seguridad.alumno (id, usuario_id, codigo_alumno, fecha_nacimiento, apoderado_id, parentesco_apoderado)
+SELECT uuidv7()::text, ua.id, '2026-0409', DATE '2014-08-21', ap.id, 'PADRE'
+FROM seguridad.usuario ua
+JOIN seguridad.usuario up ON up.correo = 'familia.torres@demo.gesedu.pe'
+JOIN seguridad.apoderado ap ON ap.usuario_id = up.id
+WHERE ua.documento_identidad = '77100009';
+
+INSERT INTO matricula.solicitud_matricula (id, codigo_seguimiento, anio_escolar_id, alumno_id, apoderado_id, grado_id,
+                                            fecha_solicitud, tipo_estudiante, estado_documentacion, estado_admision,
+                                            estado, costos_aceptados)
+SELECT uuidv7()::text, 'MAT-2027-00471', a.id, al.id, al.apoderado_id, g.id, DATE '2027-01-08', 'NUEVO_INGRESO',
+       'COMPLETA', 'ADMITIDO', 'APROBADA', TRUE
+FROM academico.anio_escolar a
+JOIN academico.grado g ON g.anio_escolar_id = a.id AND g.numero_nivel = 1
+CROSS JOIN seguridad.alumno al
+WHERE a.anio = 2027 AND al.codigo_alumno = '2026-0409';
+
+INSERT INTO matricula.matricula (id, solicitud_id, alumno_id, anio_escolar_id, seccion_id, fecha_matricula, estado)
+SELECT uuidv7()::text, sm.id, sm.alumno_id, sm.anio_escolar_id, s.id, DATE '2027-01-09', 'CONFIRMADA'
+FROM matricula.solicitud_matricula sm
+JOIN academico.seccion s ON s.grado_id = sm.grado_id AND s.letra = 'A'
+WHERE sm.codigo_seguimiento = 'MAT-2027-00471';
+
+-- Su vacante ya está tomada
+UPDATE academico.seccion s SET vacantes_disponibles = vacantes_disponibles - 1
+FROM academico.grado g JOIN academico.anio_escolar a ON a.id = g.anio_escolar_id
+WHERE s.grado_id = g.id AND a.anio = 2027 AND g.numero_nivel = 1 AND s.letra = 'A';
+
+-- Compromisos 2027 de las matrículas ya confirmadas (Lucía García, Mateo Ríos y Tomás Torres)
 INSERT INTO pagos.obligacion_pago (id, matricula_id, anio_escolar_id, alumno_id, apoderado_id, concepto, periodo,
                                     monto_base, fecha_vencimiento)
 SELECT uuidv7()::text, m.id, m.anio_escolar_id, m.alumno_id, al.apoderado_id, c.concepto, c.periodo, c.monto,

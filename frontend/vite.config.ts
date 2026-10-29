@@ -16,6 +16,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Los flujos largos con user-event pueden pasar de 5 s si la máquina está cargada (por ejemplo, junto a las pruebas del backend)
+    testTimeout: 20000,
     restoreMocks: true,
     coverage: {
       provider: 'v8',
