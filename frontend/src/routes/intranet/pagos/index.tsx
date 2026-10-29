@@ -144,7 +144,7 @@ function Obligaciones({ datos, anio }: { datos: ObligacionesAlumno; anio: number
       <h2>
         Obligaciones {anio}{' '}
         <span className="muted">
-          · {resumen.obligaciones} obligaciones · {resumen.pagadas} pagadas
+          · {resumen.obligaciones} {resumen.obligaciones === 1 ? 'obligación' : 'obligaciones'} · {resumen.pagadas} {resumen.pagadas === 1 ? 'pagada' : 'pagadas'}
         </span>
       </h2>
       <div className="tabla-scroll">

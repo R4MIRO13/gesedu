@@ -13,7 +13,7 @@
 |---|---|---|
 | 0 Base | `feat/fase-0` | **terminada** (0.1–0.11) |
 | 1 Demo ampliada | `feat/fase-1` | **terminada** (1.1–1.9) |
-| 2 Matrícula y pagos | `feat/fase-2` | **en curso** (2.1–2.10; falta la prueba en el navegador y el cierre) |
+| 2 Matrícula y pagos | `feat/fase-2` | **terminada** (2.1–2.10, probada en el navegador) |
 | 3 Académico y horarios | `feat/fase-3` | pendiente |
 | 4 Asistencia | `feat/fase-4` | pendiente |
 | 5 Evaluación | `feat/fase-5` | pendiente |
@@ -108,7 +108,8 @@ RF/RNF: RF-01 (sin DELETE de usuarios), RF-48, RF-49, RF-50, RF-52, RNF-01, RNF-
 ### Fase 1 — Demo ampliada (`feat/fase-1`, 28/10/2026)
 Entregado: inicio de sesión real con los 4 roles y bloqueo (1.1), UC-21 backend y frontend (1.2, 1.3), UC-25 con exportación (1.4), semilla P1 y Swagger por módulo (1.5), UC-02 con confirmación atómica, vacantes, obligaciones y correo (1.6), recuperación de contraseña (1.7), usuarios con desbloqueo (1.8) y el guion actualizado (1.9). Backend: `./mvnw -B verify` en verde (81 unitarias + 174 de integración); frontend: lint, typecheck, 86 pruebas y build en verde.
 RF/RNF: RF-04, RF-05, RF-07, RF-12, RF-39 a RF-42, RF-47, RF-49 a RF-52 (RF-43 parcial); RNF-01 (BCrypt), RNF-02, RNF-03, RNF-06 a RNF-10. Suposiciones nuevas: S-39 a S-48.
-Pendiente para el despliegue compartido: cada integrante debe ejecutar `.\scriptseiniciar-bd.ps1` para cargar la semilla `V1002`.
+Pendiente para el despliegue compartido: cada integrante debe ejecutar `.\scripts
+einiciar-bd.ps1` para cargar la semilla `V1002`.
 
 ## Fase 2 — notas y supuestos
 - **Base de la rama:** al empezar la fase 2, `origin/main` terminaba en el PR #1 (demo) y no contenía `feat/fase-1`. Por indicación del usuario, `feat/fase-2` se creó sobre `feat/fase-1` (889661d); al fusionar la fase 1, la 2 queda encima sin conflictos.
@@ -121,6 +122,12 @@ Pendiente para el despliegue compartido: cada integrante debe ejecutar `.\script
 
 - **S-53** UC-05 exige que el importe presentado coincida con el total (paso 4): un importe menor se observa (FA-2) y uno mayor también (400 con el total en el mensaje); no se emiten boletas por un monto distinto del cobrado. La numeración de boletas usa una secuencia de PostgreSQL y puede dejar huecos si una validación se revierte; no se reutilizan números.
 - **S-54** Las claves de objeto de los vouchers son `comprobantes/<apoderado>/<uuid>-<nombre>`; la API deduce el nombre y el tipo del voucher de la clave al generar la URL de descarga (la tabla del esquema no guarda el tipo de contenido).
+
+## Fase 2 — resumen, prueba en navegador y cómo probarla
+**Cubre** UC-01, UC-03, UC-04, UC-05 y UC-06; RF-02, RF-05, RF-06, RF-07, RF-08, RF-09, RF-10, RF-11; RNF-10, RNF-11, RNF-12; el job de vencimientos y penalidades; y las tres actualizaciones de C-43 (2.8–2.10). Un commit por tarea sobre `feat/fase-1`.
+**Pruebas** (todas en verde al cerrar): backend `./mvnw -B verify` 91 unitarias + 274 de integración; frontend lint, typecheck, 150 pruebas y build; los tipos del contrato (`tipos.gen.ts`) se regeneraron contra el backend en marcha y `contrato.test.ts` comprueba los DTO nuevos.
+**Prueba en el navegador** (Edge automatizado con `playwright-core`, backend `local,demo` + Vite, BD reiniciada): 20 de 23 pasos pasaron a la primera —configuración de cobros, solicitud con certificado (FA-1 y FA-2), «Matrícula y pagos», subida de voucher y rechazo del número repetido, validación con boleta `B001-00001` y correo en Mailpit, historial financiero, cambio del cronograma que actualiza el compromiso del apoderado, edición de datos con `If-Match` consecutivos sin 409, DNI duplicado, cambio de sección de Lucía y regreso, y auditoría con las seis acciones nuevas—; de los 3 restantes, dos eran errores del guion (la matrícula de Valeria ya estaba confirmada de una corrida anterior; el primer hijo de María en la lista era el recién solicitado, sin matrícula: el FA-2 correcto) y uno era un defecto real (desborde móvil, abajo). Sin errores de consola ni respuestas 5xx. Hallazgos corregidos: (1) **en móvil la página se desbordaba en horizontal** en las pantallas nuevas (la tabla ensanchaba el layout, el texto «solo lectores» absoluto escapaba de `.tabla-scroll` y la barra inferior ya no cabía con tantas opciones): `min-width: 0` en `.principal`, `position: relative` en `.tabla-scroll`, barra inferior desplazable y `.dos-columnas` con `minmax(0, 1fr)`; (2) plurales («1 pagadas», «1 comprobantes»); (3) un fallo real de React que solo apareció con la prueba: el formulario de datos se remontaba al guardar y borraba el aviso de éxito.
+**Cómo probarla** (PowerShell, desde la raíz): `docker compose up -d --wait postgres mailpit` · `cd backend; .\\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local,demo"` · `cd frontend; npm ci; npm run dev` · http://localhost:5173 (contraseña de todas las cuentas: `Gesedu2027!`). Si la BD ya tenía datos: `.\\scripts\\reiniciar-bd.ps1` (esta fase no cambia migraciones: no hace falta, pero deja la demo limpia). Las cuentas `familia.*` de la semilla no tienen credenciales; para ver «Matrícula y pagos» con 11 obligaciones: (1) entra como `admin@demo.gesedu.pe`, confirma la solicitud `MAT-2027-00482` (Valeria Torres) en **Matrículas**, y (2) activa la cuenta de esa familia: `docker exec gesedu-postgres psql -U postgres -d gesedu -c "update seguridad.usuario set hash_contrasena=(select hash_contrasena from seguridad.usuario where correo='apoderado@demo.gesedu.pe'), activo=true where correo='familia.torres@demo.gesedu.pe'"`. Después: **familia.torres** → Matrícula y pagos → «Subir comprobante» (PDF/JPG/PNG ≤ 5 MB); **admin** → Validar comprobantes → Validar (boleta, correo en http://localhost:8025) / Observar / Rechazar; **admin** → Historial financiero, Configuración de cobros (cambia un monto y mira «Se actualizaron N compromisos»), Datos de estudiantes (editar, DNI duplicado, cambiar sección); **apoderado@demo.gesedu.pe** → Solicitar matrícula y Mis solicitudes. El job de vencimientos corre a las 00:05 y no tiene pantalla: se prueba con `JobVencimientosIT`.
 
 ## Cobertura RF / UC
 (Se completa en la tarea 6.6.)

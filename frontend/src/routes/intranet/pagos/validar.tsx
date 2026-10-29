@@ -77,7 +77,7 @@ function ValidarComprobantes() {
       <div className="dos-columnas">
         {datos && (
           <section aria-label="Comprobantes">
-            <p className="muted">{datos.totalElementos} comprobantes</p>
+            <p className="muted">{datos.totalElementos} {datos.totalElementos === 1 ? 'comprobante' : 'comprobantes'}</p>
             <div className="tabla-scroll">
               <table aria-label="Comprobantes">
                 <thead>

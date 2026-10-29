@@ -33,7 +33,34 @@ import type {
   SolicitudResumen,
   ValidacionMatricula,
 } from '../../modulos/matricula/api'
-import type { EstadoCuenta, PaginaUsuarios, UsuarioFila } from '../../modulos/seguridad/api'
+import type {
+  AlumnoBusqueda,
+  Boleta,
+  ComprobanteBandeja,
+  ComprobanteResumen,
+  ConfiguracionCobros,
+  DetalleComprobante,
+  DeudaVencida,
+  HistorialFinanciero,
+  LineaCobro as LineaCobroPagos,
+  Obligacion,
+  ObligacionesAlumno,
+  PagoRegistrado,
+  ResultadoRevision,
+  ResultadoValidacion,
+  ResumenObligaciones,
+} from '../../modulos/pagos/api'
+import type {
+  DatosApoderado,
+  HijoMatricula,
+  MatriculaGestionable,
+  MatriculaVigente,
+  OpcionesSolicitud,
+  ResultadoCambioSeccion,
+  SolicitudPropia,
+  SolicitudRegistrada,
+} from '../../modulos/matricula/api'
+import type { EstadoCuenta, FichaAlumno, FichaApoderado, PaginaUsuarios, UsuarioFila } from '../../modulos/seguridad/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -117,5 +144,39 @@ describe('contrato de usuarios (UC-24)', () => {
 
   it('los estados de la cuenta son los del backend', () => {
     expectTypeOf<EstadoCuenta>().toEqualTypeOf<NonNullable<Esquemas['UsuarioFila']['estado']>>()
+  })
+
+  it('fase 2: UC-01 y UC-03 (matrícula del apoderado y de sus hijos)', () => {
+    expectTypeOf<keyof OpcionesSolicitud>().toEqualTypeOf<keyof Esquemas['OpcionesSolicitud']>()
+    expectTypeOf<keyof DatosApoderado>().toEqualTypeOf<keyof Esquemas['DatosApoderado']>()
+    expectTypeOf<keyof SolicitudRegistrada>().toEqualTypeOf<keyof Esquemas['SolicitudRegistrada']>()
+    expectTypeOf<keyof SolicitudPropia>().toEqualTypeOf<keyof Esquemas['SolicitudPropia']>()
+    expectTypeOf<keyof HijoMatricula>().toEqualTypeOf<keyof Esquemas['HijoMatricula']>()
+    expectTypeOf<keyof MatriculaVigente>().toEqualTypeOf<keyof Esquemas['MatriculaVigente']>()
+  })
+
+  it('fase 2: cobros, obligaciones y comprobantes (RF-06, UC-03 a UC-06)', () => {
+    expectTypeOf<keyof ConfiguracionCobros>().toEqualTypeOf<keyof Esquemas['ConfiguracionCobros']>()
+    expectTypeOf<keyof LineaCobroPagos>().toEqualTypeOf<keyof Esquemas['LineaCobro']>()
+    expectTypeOf<keyof Obligacion>().toEqualTypeOf<keyof Esquemas['ObligacionDto']>()
+    expectTypeOf<keyof ObligacionesAlumno>().toEqualTypeOf<keyof Esquemas['ObligacionesAlumno']>()
+    expectTypeOf<keyof ResumenObligaciones>().toEqualTypeOf<keyof Esquemas['ResumenObligaciones']>()
+    expectTypeOf<keyof Boleta>().toEqualTypeOf<keyof Esquemas['BoletaDto']>()
+    expectTypeOf<keyof ComprobanteResumen>().toEqualTypeOf<keyof Esquemas['ComprobanteResumen']>()
+    expectTypeOf<keyof ComprobanteBandeja>().toEqualTypeOf<keyof Esquemas['ComprobanteBandeja']>()
+    expectTypeOf<keyof DetalleComprobante>().toEqualTypeOf<keyof Esquemas['DetalleComprobante']>()
+    expectTypeOf<keyof ResultadoValidacion>().toEqualTypeOf<keyof Esquemas['ResultadoValidacion']>()
+    expectTypeOf<keyof ResultadoRevision>().toEqualTypeOf<keyof Esquemas['ResultadoRevision']>()
+    expectTypeOf<keyof HistorialFinanciero>().toEqualTypeOf<keyof Esquemas['HistorialFinanciero']>()
+    expectTypeOf<keyof PagoRegistrado>().toEqualTypeOf<keyof Esquemas['PagoRegistrado']>()
+    expectTypeOf<keyof DeudaVencida>().toEqualTypeOf<keyof Esquemas['DeudaVencida']>()
+    expectTypeOf<keyof AlumnoBusqueda>().toEqualTypeOf<keyof Esquemas['AlumnoBusqueda']>()
+  })
+
+  it('fase 2: RF-02 y RF-05 (datos personales y cambio de sección)', () => {
+    expectTypeOf<keyof FichaAlumno>().toEqualTypeOf<keyof Esquemas['FichaAlumno']>()
+    expectTypeOf<keyof FichaApoderado>().toEqualTypeOf<keyof Esquemas['FichaApoderado']>()
+    expectTypeOf<keyof MatriculaGestionable>().toEqualTypeOf<keyof Esquemas['MatriculaGestionable']>()
+    expectTypeOf<keyof ResultadoCambioSeccion>().toEqualTypeOf<keyof Esquemas['ResultadoCambioSeccion']>()
   })
 })

@@ -251,6 +251,8 @@ a:focus-visible {
 
 /* Tabla */
 .tabla-scroll {
+  /* Contiene a los textos solo-lectores (position: absolute) para que no ensanchen la página */
+  position: relative;
   overflow-x: auto;
   background: var(--color-superficie);
   border: 1px solid var(--color-borde);
@@ -521,6 +523,7 @@ dd {
 
 .dos-columnas {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
 }
