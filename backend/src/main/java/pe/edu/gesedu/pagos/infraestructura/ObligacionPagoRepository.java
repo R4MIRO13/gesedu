@@ -1,6 +1,7 @@
 package pe.edu.gesedu.pagos.infraestructura;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -10,9 +11,11 @@ import jakarta.persistence.LockModeType;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import pe.edu.gesedu.pagos.dominio.ConceptoPago;
 import pe.edu.gesedu.pagos.dominio.EstadoObligacion;
 import pe.edu.gesedu.pagos.dominio.ObligacionPago;
 
@@ -40,6 +43,21 @@ public interface ObligacionPagoRepository extends JpaRepository<ObligacionPago, 
     Optional<ObligacionPago> bloquear(@Param("id") String id);
 
     List<ObligacionPago> findByIdIn(Collection<String> ids);
+
+    /**
+     * Aplica el monto y el vencimiento nuevos del cronograma a las obligaciones PENDIENTES del año con ese concepto y
+     * periodo (RF-07). Las PAGADAS y las VENCIDAS no se tocan. Es un UPDATE condicional: si una validación de pago
+     * tiene bloqueada la obligación, espera a que termine y vuelve a comprobar que siga PENDIENTE. Devuelve cuántas
+     * cambiaron (cero si ya tenían esos valores).
+     */
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE ObligacionPago o SET o.montoBase = :monto, o.fechaVencimiento = :vence, o.version = o.version + 1, "
+            + "o.updatedAt = :ahora WHERE o.anioEscolarId = :anio AND o.concepto = :concepto AND o.periodo = :periodo "
+            + "AND o.estado = :pendiente AND (o.montoBase <> :monto OR o.fechaVencimiento <> :vence)")
+    int actualizarPendientes(@Param("anio") String anioEscolarId, @Param("concepto") ConceptoPago concepto,
+                             @Param("periodo") String periodo, @Param("monto") BigDecimal monto,
+                             @Param("vence") LocalDate fechaVencimiento, @Param("pendiente") EstadoObligacion pendiente,
+                             @Param("ahora") Instant ahora);
 
     /**
      * Ids de las obligaciones por procesar: ya pasó su vencimiento, no están pagadas y todavía son PENDIENTES o no

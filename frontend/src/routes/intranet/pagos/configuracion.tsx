@@ -51,7 +51,7 @@ function ConfiguracionCobrosPagina() {
 
 function Formulario({ configuracion }: { configuracion: ConfiguracionCobros }) {
   const guardar = useGuardarCobros(configuracion.anio)
-  const [guardado, setGuardado] = useState(false)
+  const [guardado, setGuardado] = useState<number | null>(null)
   const form = useForm<DatosCobros>({ resolver: zodResolver(esquemaCobros), defaultValues: valoresDe(configuracion) })
   const lineas = useFieldArray({ control: form.control, name: 'lineas' })
   const errores = form.formState.errors
@@ -63,10 +63,10 @@ function Formulario({ configuracion }: { configuracion: ConfiguracionCobros }) {
   }, [configuracion, form])
 
   function enviar(datos: DatosCobros) {
-    setGuardado(false)
+    setGuardado(null)
     guardar.mutate(
       { porcentajePenalidad: Number(datos.porcentajePenalidad), lineas: datos.lineas.map((l) => ({ ...l, monto: l.monto.trim() })) },
-      { onSuccess: () => setGuardado(true) },
+      { onSuccess: (guardada) => setGuardado(guardada.obligacionesActualizadas) },
     )
   }
 
@@ -85,9 +85,12 @@ function Formulario({ configuracion }: { configuracion: ConfiguracionCobros }) {
         </span>
       </div>
 
-      {guardado && (
+      {guardado !== null && (
         <p className="alerta alerta-ok" role="status">
-          Se guardó la configuración de cobros.
+          Se guardó la configuración de cobros.{' '}
+          {guardado === 0
+            ? 'Ningún compromiso pendiente necesitó actualizarse.'
+            : `Se actualizaron ${guardado} ${guardado === 1 ? 'compromiso pendiente' : 'compromisos pendientes'} con los montos y vencimientos nuevos; los pagados y los vencidos no cambian.`}
         </p>
       )}
       {guardar.error && (

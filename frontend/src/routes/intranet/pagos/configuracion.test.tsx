@@ -10,24 +10,25 @@ import { renderizarRuta } from '../../../test/utilidades'
 
 const SESION_COBROS = sesionDe('ADMINISTRADOR', ['COBRO_CONFIGURAR'], { cargo: 'Tesorería' })
 
-const SIN_CONFIGURAR: ConfiguracionCobros = { anio: 2027, porcentajePenalidad: null, lineas: [], configurado: false }
+const SIN_CONFIGURAR: ConfiguracionCobros = { anio: 2027, porcentajePenalidad: null, lineas: [], configurado: false, obligacionesActualizadas: 0 }
 const CONFIGURADO: ConfiguracionCobros = {
   anio: 2027,
   porcentajePenalidad: 5,
   configurado: true,
+  obligacionesActualizadas: 0,
   lineas: [
     { concepto: 'MATRICULA', periodo: '2027', monto: '350.00', fechaVencimiento: '2027-02-15' },
     { concepto: 'PENSION', periodo: '2027-03', monto: '350.00', fechaVencimiento: '2027-03-31' },
   ],
 }
 
-function simular(inicial: ConfiguracionCobros, cuerpos: unknown[] = []) {
+function simular(inicial: ConfiguracionCobros, cuerpos: unknown[] = [], actualizadas = 0) {
   servidor.use(
     http.get('*/api/v1/anios-escolares/2027/cobros', () => HttpResponse.json(inicial)),
     http.put('*/api/v1/anios-escolares/2027/cobros', async ({ request }) => {
       const cuerpo = (await request.json()) as { porcentajePenalidad: number; lineas: ConfiguracionCobros['lineas'] }
       cuerpos.push(cuerpo)
-      return HttpResponse.json({ anio: 2027, porcentajePenalidad: cuerpo.porcentajePenalidad, lineas: cuerpo.lineas, configurado: true })
+      return HttpResponse.json({ anio: 2027, porcentajePenalidad: cuerpo.porcentajePenalidad, lineas: cuerpo.lineas, configurado: true, obligacionesActualizadas: actualizadas })
     }),
   )
 }
@@ -50,7 +51,7 @@ describe('Configuración de cobros (RF-06)', () => {
 
   it('guarda la penalidad y el cronograma como texto decimal', async () => {
     const cuerpos: unknown[] = []
-    simular(CONFIGURADO, cuerpos)
+    simular(CONFIGURADO, cuerpos, 12)
     await renderizarRuta('/intranet/pagos/configuracion')
 
     const penalidad = await screen.findByLabelText('Penalidad por pago vencido (%)')
@@ -62,7 +63,8 @@ describe('Configuración de cobros (RF-06)', () => {
     await userEvent.type(pension, '360.50')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar configuración' }))
 
-    expect(await screen.findByText('Se guardó la configuración de cobros.')).toBeInTheDocument()
+    expect(await screen.findByText(/Se guardó la configuración de cobros\./)).toBeInTheDocument()
+    expect(screen.getByText(/Se actualizaron 12 compromisos pendientes con los montos y vencimientos nuevos/)).toBeInTheDocument()
     expect(cuerpos).toEqual([
       {
         porcentajePenalidad: 7.5,
@@ -72,6 +74,15 @@ describe('Configuración de cobros (RF-06)', () => {
         ],
       },
     ])
+  })
+
+  it('si ningún compromiso pendiente cambió lo dice', async () => {
+    simular(CONFIGURADO)
+    await renderizarRuta('/intranet/pagos/configuracion')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Guardar configuración' }))
+
+    expect(await screen.findByText(/Ningún compromiso pendiente necesitó actualizarse/)).toBeInTheDocument()
   })
 
   it('permite agregar y quitar la cuota de ingreso', async () => {

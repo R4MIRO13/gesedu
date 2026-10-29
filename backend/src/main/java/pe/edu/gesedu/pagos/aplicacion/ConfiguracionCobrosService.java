@@ -1,6 +1,8 @@
 package pe.edu.gesedu.pagos.aplicacion;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -22,13 +24,16 @@ import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
 import pe.edu.gesedu.pagos.dominio.ConceptoPago;
 import pe.edu.gesedu.pagos.dominio.CronogramaCobro;
+import pe.edu.gesedu.pagos.dominio.EstadoObligacion;
 import pe.edu.gesedu.pagos.dominio.PoliticaCobro;
 import pe.edu.gesedu.pagos.infraestructura.CronogramaCobroRepository;
+import pe.edu.gesedu.pagos.infraestructura.ObligacionPagoRepository;
 import pe.edu.gesedu.pagos.infraestructura.PoliticaCobroRepository;
 
 /**
  * Configuración de costos y política de penalidad del año escolar (RF-06). El cronograma se guarda completo:
- * lo que llega reemplaza lo anterior (las líneas ausentes se eliminan).
+ * lo que llega reemplaza lo anterior (las líneas ausentes se eliminan). Al guardar, las obligaciones PENDIENTES del año
+ * se actualizan en la misma transacción (RF-07).
  */
 @Service
 public class ConfiguracionCobrosService {
@@ -37,19 +42,27 @@ public class ConfiguracionCobrosService {
     public record LineaCobro(ConceptoPago concepto, String periodo, Dinero monto, LocalDate fechaVencimiento) {
     }
 
+    /**
+     * Cronograma y política del año. {@code obligacionesActualizadas} cuenta las obligaciones PENDIENTES que cambiaron
+     * de monto o de vencimiento al guardar (RF-07); en una consulta es siempre cero.
+     */
     public record ConfiguracionCobros(int anio, BigDecimal porcentajePenalidad, List<LineaCobro> lineas,
-                                      boolean configurado) {
+                                      boolean configurado, int obligacionesActualizadas) {
     }
 
     private final CronogramaCobroRepository cronograma;
     private final PoliticaCobroRepository politicas;
+    private final ObligacionPagoRepository obligaciones;
     private final AnioEscolarService anios;
+    private final Clock reloj;
 
     ConfiguracionCobrosService(CronogramaCobroRepository cronograma, PoliticaCobroRepository politicas,
-                               AnioEscolarService anios) {
+                               ObligacionPagoRepository obligaciones, AnioEscolarService anios, Clock reloj) {
         this.cronograma = cronograma;
         this.politicas = politicas;
+        this.obligaciones = obligaciones;
         this.anios = anios;
+        this.reloj = reloj;
     }
 
     @Transactional(readOnly = true)
@@ -59,13 +72,13 @@ public class ConfiguracionCobrosService {
                 .map(ConfiguracionCobrosService::aLinea).toList();
         BigDecimal porcentaje = politicas.findByAnioEscolarId(a.id()).map(PoliticaCobro::getPorcentajePenalidad)
                 .orElse(null);
-        return new ConfiguracionCobros(anio, porcentaje, lineas, !lineas.isEmpty() && porcentaje != null);
+        return new ConfiguracionCobros(anio, porcentaje, lineas, !lineas.isEmpty() && porcentaje != null, 0);
     }
 
     /** Guarda el cronograma y la política del año; el resultado es la configuración vigente. */
     @Transactional
     @Auditable(accion = "CONFIGURAR_COBROS", modulo = "PAGOS", tipoEntidad = "CronogramaCobro", idEntidad = "#anio",
-            descripcion = "Configuración del cronograma y la política de cobros del año")
+            descripcion = "Configuración del cronograma y la política de cobros del año, y actualización de las obligaciones pendientes")
     public ConfiguracionCobros guardar(int anio, BigDecimal porcentajePenalidad, List<LineaCobro> lineas) {
         AnioEscolarResumen a = anios.obtenerPorAnio(anio);
         validar(anio, porcentajePenalidad, lineas);
@@ -107,7 +120,31 @@ public class ConfiguracionCobrosService {
             politica.actualizar(porcentajePenalidad);
         }
         cronograma.flush();
-        return obtener(anio);
+        int actualizadas = actualizarObligaciones(a.id(), lineas);
+        ContextoAuditoria.registrarCambio("obligacionesPendientesActualizadas", null, actualizadas);
+        ConfiguracionCobros vigente = obtener(anio);
+        return new ConfiguracionCobros(vigente.anio(), vigente.porcentajePenalidad(), vigente.lineas(),
+                vigente.configurado(), actualizadas);
+    }
+
+    /**
+     * RF-07: las obligaciones PENDIENTES del año toman el monto y el vencimiento del cronograma. Las PAGADAS y las
+     * VENCIDAS no cambian, las líneas nuevas no generan obligaciones retroactivas para quienes ya se matricularon y las
+     * líneas eliminadas no borran las obligaciones ya generadas (S-28).
+     */
+    private int actualizarObligaciones(String anioEscolarId, List<LineaCobro> lineas) {
+        Instant ahora = reloj.instant();
+        int total = 0;
+        for (LineaCobro l : lineas) {
+            int n = obligaciones.actualizarPendientes(anioEscolarId, l.concepto(), l.periodo(), l.monto().valor(),
+                    l.fechaVencimiento(), EstadoObligacion.PENDIENTE, ahora);
+            if (n > 0) {
+                ContextoAuditoria.registrarCambio("obligaciones " + clave(l.concepto(), l.periodo()), null,
+                        n + " actualizadas a " + descripcion(l.monto(), l.fechaVencimiento()));
+            }
+            total += n;
+        }
+        return total;
     }
 
     private static void validar(int anio, BigDecimal porcentaje, List<LineaCobro> lineas) {

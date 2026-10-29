@@ -61,7 +61,9 @@ class ConfiguracionCobrosController {
         return cobros.obtener(anio);
     }
 
-    @Operation(summary = "Guarda el cronograma completo (reemplaza al anterior) y la penalidad. Queda auditado")
+    @Operation(summary = "Guarda el cronograma completo (reemplaza al anterior) y la penalidad, y actualiza el monto y el "
+            + "vencimiento de las obligaciones PENDIENTES del año (RF-07): las pagadas y las vencidas no cambian y las "
+            + "líneas nuevas no crean obligaciones retroactivas. `obligacionesActualizadas` dice cuántas cambiaron. Queda auditado")
     @PutMapping
     @PreAuthorize("hasAuthority('COBRO_CONFIGURAR')")
     ConfiguracionCobros guardar(@PathVariable int anio, @Valid @RequestBody CobrosRequest solicitud) {

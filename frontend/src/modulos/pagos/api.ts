@@ -23,6 +23,8 @@ export interface ConfiguracionCobros {
   porcentajePenalidad: number | null
   lineas: LineaCobro[]
   configurado: boolean
+  /** Compromisos PENDIENTES que cambiaron de monto o vencimiento al guardar (RF-07); cero al consultar. */
+  obligacionesActualizadas: number
 }
 
 export function useConfiguracionCobros(anio: number) {
