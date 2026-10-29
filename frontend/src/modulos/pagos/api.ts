@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, solicitar } from '../../compartido/api/cliente'
 import { ApiError, SIN_CONEXION } from '../../compartido/api/errores'
 
@@ -175,5 +175,116 @@ export function useRegistrarComprobante(obligacionId: string) {
         },
       }),
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['obligaciones'] }),
+  })
+}
+
+// ---- UC-05: validación del administrador ----
+
+export interface PaginaComprobantes {
+  contenido: ComprobanteBandeja[]
+  pagina: number
+  tamano: number
+  totalElementos: number
+  totalPaginas: number
+}
+
+export interface ComprobanteBandeja {
+  id: string
+  enviado: string
+  estudiante: string
+  codigoAlumno: string
+  concepto: ConceptoPago
+  periodo: string
+  montoPresentado: string
+  numeroOperacion: string
+  estado: EstadoRevision
+}
+
+export interface DetalleComprobante {
+  id: string
+  estado: EstadoRevision
+  enviado: string
+  observacion: string | null
+  obligacion: {
+    id: string
+    alumno: string
+    codigoAlumno: string
+    concepto: ConceptoPago
+    periodo: string
+    estado: EstadoObligacion
+    fechaVencimiento: string
+    montoBase: string
+    montoPenalidad: string
+    total: string
+  }
+  declarado: { apoderado: string; numeroOperacion: string; fechaPago: string; medioPago: string; montoPresentado: string }
+  verificaciones: { montoCubreTotal: boolean; montoCoincide: boolean; numeroOperacionNuevo: boolean; obligacionPorPagar: boolean }
+  puedeRevisar: boolean
+  voucher: { url: string; metodo: string; expiraEn: string }
+}
+
+export interface ResultadoValidacion {
+  comprobanteId: string
+  numeroBoleta: string
+  montoTotal: string
+  fechaRegistro: string
+  estadoObligacion: EstadoObligacion
+}
+
+export interface ResultadoRevision {
+  comprobanteId: string
+  estado: EstadoRevision
+  observacion: string
+  estadoObligacion: EstadoObligacion
+  totalPendiente: string
+}
+
+export const ESTADOS_REVISION: { valor: EstadoRevision; texto: string }[] = [
+  { valor: 'PENDIENTE', texto: 'Pendientes' },
+  { valor: 'OBSERVADO', texto: 'Observados' },
+  { valor: 'RECHAZADO', texto: 'Rechazados' },
+  { valor: 'APROBADO', texto: 'Aprobados' },
+]
+
+export function useBandejaComprobantes(estado: EstadoRevision, pagina: number) {
+  return useQuery({
+    queryKey: ['comprobantes', estado, pagina],
+    queryFn: () => api<PaginaComprobantes>(`/comprobantes?estado=${estado}&page=${pagina}&size=15`),
+    placeholderData: keepPreviousData,
+    staleTime: 0,
+  })
+}
+
+export function useDetalleComprobante(id: string | undefined) {
+  return useQuery({
+    queryKey: ['comprobante', id],
+    queryFn: () => api<DetalleComprobante>(`/comprobantes/${id}`),
+    enabled: !!id,
+    staleTime: 0,
+  })
+}
+
+function invalidarComprobantes(cliente: ReturnType<typeof useQueryClient>) {
+  return Promise.all([
+    cliente.invalidateQueries({ queryKey: ['comprobantes'] }),
+    cliente.invalidateQueries({ queryKey: ['comprobante'] }),
+    cliente.invalidateQueries({ queryKey: ['historial-financiero'] }),
+  ])
+}
+
+export function useValidarComprobante() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api<ResultadoValidacion>(`/comprobantes/${id}/validacion`, { method: 'POST', cuerpo: {} }),
+    onSettled: () => invalidarComprobantes(cliente),
+  })
+}
+
+export function useRevisarComprobante(accion: 'observacion' | 'rechazo') {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, observacion }: { id: string; observacion: string }) =>
+      api<ResultadoRevision>(`/comprobantes/${id}/${accion}`, { method: 'POST', cuerpo: { observacion: observacion.trim() } }),
+    onSettled: () => invalidarComprobantes(cliente),
   })
 }

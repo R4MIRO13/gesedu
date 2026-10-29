@@ -43,3 +43,10 @@ export const esquemaComprobante = z.object({
 })
 
 export type DatosComprobante = z.infer<typeof esquemaComprobante>
+
+/** Texto con que el administrador observa o rechaza un comprobante (UC-05, FA-1 y FA-2). */
+export const esquemaRevision = z.object({
+  observacion: z.string().trim().min(1, 'Escribe el motivo para informar al apoderado.').max(500, 'Admite hasta 500 caracteres.'),
+})
+
+export type DatosRevision = z.infer<typeof esquemaRevision>

@@ -25,6 +25,7 @@ import { Route as IntranetMatriculasCodigoRouteImport } from './routes/intranet/
 import { Route as IntranetPagosIndexRouteImport } from './routes/intranet/pagos/index'
 import { Route as IntranetPagosComprobanteRouteImport } from './routes/intranet/pagos/comprobante'
 import { Route as IntranetPagosConfiguracionRouteImport } from './routes/intranet/pagos/configuracion'
+import { Route as IntranetPagosValidarRouteImport } from './routes/intranet/pagos/validar'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 
 const IndexRoute = IndexRouteImport.update({
@@ -112,6 +113,11 @@ const IntranetPagosConfiguracionRoute =
     path: '/pagos/configuracion',
     getParentRoute: () => IntranetRoute,
   } as any)
+const IntranetPagosValidarRoute = IntranetPagosValidarRouteImport.update({
+  id: '/pagos/validar',
+  path: '/pagos/validar',
+  getParentRoute: () => IntranetRoute,
+} as any)
 const IntranetHorariosAnioElaborarRoute =
   IntranetHorariosAnioElaborarRouteImport.update({
     id: '/horarios/$anio/elaborar',
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
   '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
+  '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
   '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
+  '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
   '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos': typeof IntranetPagosIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
   '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
+  '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/intranet/matriculas/$codigo'
     | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
+    | '/intranet/pagos/validar'
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
     | '/intranet/horarios/$anio/elaborar'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/intranet/matriculas/$codigo'
     | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
+    | '/intranet/pagos/validar'
     | '/intranet/matriculas'
     | '/intranet/pagos'
     | '/intranet/horarios/$anio/elaborar'
@@ -232,6 +243,7 @@ export interface FileRouteTypes {
     | '/intranet/matriculas/$codigo'
     | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
+    | '/intranet/pagos/validar'
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
     | '/intranet/horarios/$anio/elaborar'
@@ -359,6 +371,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetPagosConfiguracionRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/pagos/validar': {
+      id: '/intranet/pagos/validar'
+      path: '/pagos/validar'
+      fullPath: '/intranet/pagos/validar'
+      preLoaderRoute: typeof IntranetPagosValidarRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/$anio/elaborar': {
       id: '/intranet/horarios/$anio/elaborar'
       path: '/horarios/$anio/elaborar'
@@ -379,6 +398,7 @@ interface IntranetRouteChildren {
   IntranetMatriculasCodigoRoute: typeof IntranetMatriculasCodigoRoute
   IntranetPagosComprobanteRoute: typeof IntranetPagosComprobanteRoute
   IntranetPagosConfiguracionRoute: typeof IntranetPagosConfiguracionRoute
+  IntranetPagosValidarRoute: typeof IntranetPagosValidarRoute
   IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
   IntranetPagosIndexRoute: typeof IntranetPagosIndexRoute
   IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
@@ -394,6 +414,7 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetMatriculasCodigoRoute: IntranetMatriculasCodigoRoute,
   IntranetPagosComprobanteRoute: IntranetPagosComprobanteRoute,
   IntranetPagosConfiguracionRoute: IntranetPagosConfiguracionRoute,
+  IntranetPagosValidarRoute: IntranetPagosValidarRoute,
   IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,
   IntranetPagosIndexRoute: IntranetPagosIndexRoute,
   IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,

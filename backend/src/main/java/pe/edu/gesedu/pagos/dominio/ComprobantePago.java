@@ -69,6 +69,32 @@ public class ComprobantePago extends EntidadBase {
         this.referenciaComprobante = referenciaComprobante;
     }
 
+    public boolean estaPendiente() {
+        return estadoRevision == EstadoRevision.PENDIENTE;
+    }
+
+    /** UC-05, pasos 5 a 8: el administrador valida el pago. */
+    public void aprobar(String usuarioId, Instant ahora) {
+        revisar(EstadoRevision.APROBADO, usuarioId, ahora, null);
+    }
+
+    /** UC-05, FA-2: el comprobante tiene un problema corregible (por ejemplo, el importe no alcanza). */
+    public void observar(String usuarioId, Instant ahora, String observacion) {
+        revisar(EstadoRevision.OBSERVADO, usuarioId, ahora, observacion);
+    }
+
+    /** UC-05, FA-1: el comprobante no corresponde al estudiante o a la obligación. */
+    public void rechazar(String usuarioId, Instant ahora, String observacion) {
+        revisar(EstadoRevision.RECHAZADO, usuarioId, ahora, observacion);
+    }
+
+    private void revisar(EstadoRevision nuevoEstado, String usuarioId, Instant ahora, String nota) {
+        this.estadoRevision = nuevoEstado;
+        this.revisadoPor = usuarioId;
+        this.revisadoEn = ahora;
+        this.observacion = nota;
+    }
+
     public String getObligacionId() {
         return obligacionId;
     }

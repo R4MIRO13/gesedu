@@ -45,6 +45,12 @@ export const OPCIONES_MENU = [
     permiso: 'OBLIGACION_CONSULTAR_PROPIA',
   },
   {
+    enlace: linkOptions({ to: '/intranet/pagos/validar' }),
+    titulo: 'Validar comprobantes',
+    descripcion: 'Revisa los comprobantes de pago, valida el importe y registra la boleta.',
+    permiso: 'COMPROBANTE_VALIDAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/pagos/configuracion' }),
     titulo: 'Configuración de cobros',
     descripcion: 'Costos, vencimientos y penalidad del año escolar.',

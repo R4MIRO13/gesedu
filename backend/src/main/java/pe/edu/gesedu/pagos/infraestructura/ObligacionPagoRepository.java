@@ -4,8 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+
+import jakarta.persistence.LockModeType;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,4 +30,14 @@ public interface ObligacionPagoRepository extends JpaRepository<ObligacionPago, 
     List<ObligacionPago> findByAlumnoIdAndAnioEscolarIdIn(String alumnoId, Collection<String> anios);
 
     List<ObligacionPago> findByAlumnoId(String alumnoId);
+
+    /**
+     * La obligación con un bloqueo de escritura ({@code SELECT … FOR UPDATE}): quien valida o revisa un comprobante
+     * espera a que termine la otra operación sobre la misma obligación (RNF-10).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT o FROM ObligacionPago o WHERE o.id = :id")
+    Optional<ObligacionPago> bloquear(@Param("id") String id);
+
+    List<ObligacionPago> findByIdIn(Collection<String> ids);
 }

@@ -7,11 +7,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import pe.edu.gesedu.apoyo.BaseIT;
 import pe.edu.gesedu.apoyo.DatosMatricula;
 import pe.edu.gesedu.pagos.aplicacion.PlanDeCobros;
+import pe.edu.gesedu.pagos.infraestructura.RegistroPagoRepository;
 import pe.edu.gesedu.transversal.notificaciones.Notificador;
 
 /**
- * Base de las pruebas de UC-02: el correo sale por un {@code Notificador} falso y {@code PlanDeCobros} es un espía
- * (para forzar un fallo en la generación de obligaciones). Las subclases comparten el contexto de Spring.
+ * Base de las pruebas de matrícula y pagos: el correo sale por un {@code Notificador} falso y {@code PlanDeCobros}
+ * y el repositorio de boletas son espías (para forzar un fallo a mitad de la transacción). Las subclases comparten el contexto de Spring.
  */
 public abstract class BaseMatriculaIT extends BaseIT {
 
@@ -20,6 +21,10 @@ public abstract class BaseMatriculaIT extends BaseIT {
 
     @MockitoSpyBean
     protected PlanDeCobros planDeCobros;
+
+    /** Espía del repositorio de boletas: permite provocar un fallo justo después de insertar la boleta. */
+    @MockitoSpyBean
+    protected RegistroPagoRepository registrosPago;
 
     protected DatosMatricula datos;
 

@@ -518,3 +518,17 @@ dd {
 .cifra-alerta {
   color: var(--color-error, #b42318);
 }
+
+.dos-columnas {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+@media (min-width: 960px) {
+  .dos-columnas {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  }
+}
+.fila-activa {
+  background: var(--color-hover);
+}

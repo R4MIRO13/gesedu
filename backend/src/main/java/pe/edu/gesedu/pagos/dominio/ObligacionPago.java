@@ -108,6 +108,11 @@ public class ObligacionPago extends EntidadBase {
         return estado;
     }
 
+    /** La obligación queda cancelada al validar el pago (UC-05, paso 8). */
+    public void marcarPagada() {
+        this.estado = EstadoObligacion.PAGADA;
+    }
+
     public BigDecimal getMontoPenalidad() {
         return montoPenalidad;
     }
