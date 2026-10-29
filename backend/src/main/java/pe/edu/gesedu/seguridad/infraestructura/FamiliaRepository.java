@@ -25,6 +25,8 @@ public interface FamiliaRepository extends JpaRepository<Alumno, String> {
         LocalDate getFechaNacimiento();
 
         String getParentesco();
+
+        String getApoderadoId();
     }
 
     interface ApoderadoFila {
@@ -42,7 +44,7 @@ public interface FamiliaRepository extends JpaRepository<Alumno, String> {
     @Query(value = """
             SELECT al.id AS id, al.codigo_alumno AS codigo, u.nombres || ' ' || u.apellidos AS nombreCompleto,
                    u.documento_identidad AS documento, al.fecha_nacimiento AS fechaNacimiento,
-                   al.parentesco_apoderado AS parentesco
+                   al.parentesco_apoderado AS parentesco, al.apoderado_id AS apoderadoId
             FROM seguridad.alumno al JOIN seguridad.usuario u ON u.id = al.usuario_id
             WHERE al.id IN (:ids)
             """, nativeQuery = true)
@@ -64,4 +66,41 @@ public interface FamiliaRepository extends JpaRepository<Alumno, String> {
                OR lower(al.codigo_alumno) LIKE :patron
             """, nativeQuery = true)
     List<String> buscarAlumnoIds(@Param("patron") String patron);
+
+    @Query(value = """
+            SELECT al.id AS id, al.codigo_alumno AS codigo, u.nombres || ' ' || u.apellidos AS nombreCompleto,
+                   u.documento_identidad AS documento, al.fecha_nacimiento AS fechaNacimiento,
+                   al.parentesco_apoderado AS parentesco, al.apoderado_id AS apoderadoId
+            FROM seguridad.alumno al JOIN seguridad.usuario u ON u.id = al.usuario_id
+            WHERE al.apoderado_id = :apoderadoId
+            ORDER BY u.apellidos, u.nombres
+            """, nativeQuery = true)
+    List<AlumnoFila> alumnosDelApoderado(@Param("apoderadoId") String apoderadoId);
+
+    @Query(value = """
+            SELECT al.id AS id, al.codigo_alumno AS codigo, u.nombres || ' ' || u.apellidos AS nombreCompleto,
+                   u.documento_identidad AS documento, al.fecha_nacimiento AS fechaNacimiento,
+                   al.parentesco_apoderado AS parentesco, al.apoderado_id AS apoderadoId
+            FROM seguridad.alumno al JOIN seguridad.usuario u ON u.id = al.usuario_id
+            WHERE u.documento_identidad = :documento
+            """, nativeQuery = true)
+    List<AlumnoFila> alumnosPorDocumento(@Param("documento") String documento);
+
+    @Query(value = """
+            SELECT al.id AS id, al.codigo_alumno AS codigo, u.nombres || ' ' || u.apellidos AS nombreCompleto,
+                   u.documento_identidad AS documento, al.fecha_nacimiento AS fechaNacimiento,
+                   al.parentesco_apoderado AS parentesco, al.apoderado_id AS apoderadoId
+            FROM seguridad.alumno al JOIN seguridad.usuario u ON u.id = al.usuario_id
+            WHERE al.usuario_id = :usuarioId
+            """, nativeQuery = true)
+    List<AlumnoFila> alumnosDelUsuario(@Param("usuarioId") String usuarioId);
+
+    @Query(value = """
+            SELECT ap.id AS id, u.nombres || ' ' || u.apellidos AS nombreCompleto,
+                   u.documento_identidad AS documento, CAST(u.correo AS text) AS correo,
+                   ap.numero_telefono AS telefono
+            FROM seguridad.apoderado ap JOIN seguridad.usuario u ON u.id = ap.usuario_id
+            WHERE ap.usuario_id = :usuarioId
+            """, nativeQuery = true)
+    List<ApoderadoFila> apoderadosDelUsuario(@Param("usuarioId") String usuarioId);
 }

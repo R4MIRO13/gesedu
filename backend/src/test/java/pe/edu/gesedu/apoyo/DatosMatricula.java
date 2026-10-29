@@ -15,7 +15,8 @@ public final class DatosMatricula {
     private static final AtomicInteger SIGUIENTE_ANIO = new AtomicInteger(2400);
     // Años cerrados anteriores a cualquier escenario (2350 a 2399)
     private static final AtomicInteger SIGUIENTE_ANTERIOR = new AtomicInteger(2350);
-    private static final AtomicInteger SIGUIENTE_SOLICITUD = new AtomicInteger(1);
+    // Empieza lejos de la secuencia real (matricula.seq_solicitud), que usa UC-01 en las pruebas
+    private static final AtomicInteger SIGUIENTE_SOLICITUD = new AtomicInteger(50000);
 
     /** {@code seccion3A} arranca con las vacantes pedidas; {@code seccion3B} con 30. */
     public record Escenario(int anio, String anioId, String anioAnteriorId, String grado3, String grado2,

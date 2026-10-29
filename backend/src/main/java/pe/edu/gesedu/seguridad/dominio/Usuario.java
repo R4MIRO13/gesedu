@@ -27,6 +27,9 @@ public class Usuario extends EntidadBase {
     @Column(nullable = false, length = 100)
     private String apellidos;
 
+    @Column(name = "documento_identidad", nullable = false, length = 20)
+    private String documentoIdentidad;
+
     // CITEXT: la comparación ignora mayúsculas; columnDefinition hace que Flyway validate lo acepte
     @Column(columnDefinition = "citext")
     private String correo;
@@ -54,6 +57,17 @@ public class Usuario extends EntidadBase {
     private long version;
 
     protected Usuario() {
+    }
+
+    /** Cuenta sin credenciales ni acceso (el alumno que registra su apoderado): se habilita después (UC-24). */
+    public static Usuario sinAcceso(String nombres, String apellidos, String documentoIdentidad, RolAcceso rolAcceso) {
+        Usuario u = new Usuario();
+        u.nombres = nombres;
+        u.apellidos = apellidos;
+        u.documentoIdentidad = documentoIdentidad;
+        u.rolAcceso = rolAcceso;
+        u.activo = false;
+        return u;
     }
 
     public boolean estaBloqueada(Instant ahora) {
@@ -104,6 +118,10 @@ public class Usuario extends EntidadBase {
 
     public String getApellidos() {
         return apellidos;
+    }
+
+    public String getDocumentoIdentidad() {
+        return documentoIdentidad;
     }
 
     public String getCorreo() {

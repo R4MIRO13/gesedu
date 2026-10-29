@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -19,7 +20,7 @@ import pe.edu.gesedu.seguridad.infraestructura.FamiliaRepository.ApoderadoFila;
 public class DirectorioFamilias {
 
     public record AlumnoResumen(String id, String codigo, String nombreCompleto, String documento,
-                                LocalDate fechaNacimiento, String parentescoApoderado) {
+                                LocalDate fechaNacimiento, String parentescoApoderado, String apoderadoId) {
     }
 
     public record ApoderadoResumen(String id, String nombreCompleto, String documento, String correo,
@@ -59,9 +60,33 @@ public class DirectorioFamilias {
         return familias.buscarAlumnoIds(patron);
     }
 
+    /** El perfil de apoderado de la cuenta, si la cuenta es de un apoderado. */
+    @Transactional(readOnly = true)
+    public Optional<ApoderadoResumen> apoderadoDeUsuario(String usuarioId) {
+        return familias.apoderadosDelUsuario(usuarioId).stream().findFirst().map(DirectorioFamilias::aResumen);
+    }
+
+    /** El perfil de alumno de la cuenta, si la cuenta es de un alumno. */
+    @Transactional(readOnly = true)
+    public Optional<AlumnoResumen> alumnoDeUsuario(String usuarioId) {
+        return familias.alumnosDelUsuario(usuarioId).stream().findFirst().map(DirectorioFamilias::aResumen);
+    }
+
+    /** Los hijos de un apoderado, ordenados por apellidos (alcance «mis hijos»). */
+    @Transactional(readOnly = true)
+    public List<AlumnoResumen> hijosDe(String apoderadoId) {
+        return familias.alumnosDelApoderado(apoderadoId).stream().map(DirectorioFamilias::aResumen).toList();
+    }
+
+    /** El alumno con ese documento de identidad, si existe. */
+    @Transactional(readOnly = true)
+    public Optional<AlumnoResumen> alumnoPorDocumento(String documento) {
+        return familias.alumnosPorDocumento(documento).stream().findFirst().map(DirectorioFamilias::aResumen);
+    }
+
     private static AlumnoResumen aResumen(AlumnoFila f) {
         return new AlumnoResumen(f.getId(), f.getCodigo(), f.getNombreCompleto(), f.getDocumento(),
-                f.getFechaNacimiento(), f.getParentesco());
+                f.getFechaNacimiento(), f.getParentesco(), f.getApoderadoId());
     }
 
     private static ApoderadoResumen aResumen(ApoderadoFila f) {

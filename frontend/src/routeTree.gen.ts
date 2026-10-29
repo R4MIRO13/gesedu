@@ -18,6 +18,8 @@ import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditor
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetUsuariosRouteImport } from './routes/intranet/usuarios'
 import { Route as IntranetHorariosBloquesRouteImport } from './routes/intranet/horarios/bloques'
+import { Route as IntranetMatriculaSolicitudRouteImport } from './routes/intranet/matricula/solicitud'
+import { Route as IntranetMatriculaSolicitudesRouteImport } from './routes/intranet/matricula/solicitudes'
 import { Route as IntranetMatriculasIndexRouteImport } from './routes/intranet/matriculas/index'
 import { Route as IntranetMatriculasCodigoRouteImport } from './routes/intranet/matriculas/$codigo'
 import { Route as IntranetPagosConfiguracionRouteImport } from './routes/intranet/pagos/configuracion'
@@ -68,6 +70,18 @@ const IntranetHorariosBloquesRoute = IntranetHorariosBloquesRouteImport.update({
   path: '/horarios/bloques',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetMatriculaSolicitudRoute =
+  IntranetMatriculaSolicitudRouteImport.update({
+    id: '/matricula/solicitud',
+    path: '/matricula/solicitud',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetMatriculaSolicitudesRoute =
+  IntranetMatriculaSolicitudesRouteImport.update({
+    id: '/matricula/solicitudes',
+    path: '/matricula/solicitudes',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetMatriculasIndexRoute = IntranetMatriculasIndexRouteImport.update({
   id: '/matriculas/',
   path: '/matriculas/',
@@ -102,6 +116,8 @@ export interface FileRoutesByFullPath {
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
+  '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
@@ -117,6 +133,8 @@ export interface FileRoutesByTo {
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
+  '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
@@ -133,6 +151,8 @@ export interface FileRoutesById {
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
+  '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
@@ -150,6 +170,8 @@ export interface FileRouteTypes {
     | '/intranet/inicio'
     | '/intranet/usuarios'
     | '/intranet/horarios/bloques'
+    | '/intranet/matricula/solicitud'
+    | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
     | '/intranet/pagos/configuracion'
     | '/intranet/matriculas/'
@@ -165,6 +187,8 @@ export interface FileRouteTypes {
     | '/intranet/inicio'
     | '/intranet/usuarios'
     | '/intranet/horarios/bloques'
+    | '/intranet/matricula/solicitud'
+    | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
     | '/intranet/pagos/configuracion'
     | '/intranet/matriculas'
@@ -180,6 +204,8 @@ export interface FileRouteTypes {
     | '/intranet/inicio'
     | '/intranet/usuarios'
     | '/intranet/horarios/bloques'
+    | '/intranet/matricula/solicitud'
+    | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
     | '/intranet/pagos/configuracion'
     | '/intranet/matriculas/'
@@ -259,6 +285,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetHorariosBloquesRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/matricula/solicitud': {
+      id: '/intranet/matricula/solicitud'
+      path: '/matricula/solicitud'
+      fullPath: '/intranet/matricula/solicitud'
+      preLoaderRoute: typeof IntranetMatriculaSolicitudRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/matricula/solicitudes': {
+      id: '/intranet/matricula/solicitudes'
+      path: '/matricula/solicitudes'
+      fullPath: '/intranet/matricula/solicitudes'
+      preLoaderRoute: typeof IntranetMatriculaSolicitudesRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/matriculas/': {
       id: '/intranet/matriculas/'
       path: '/matriculas'
@@ -295,6 +335,8 @@ interface IntranetRouteChildren {
   IntranetInicioRoute: typeof IntranetInicioRoute
   IntranetUsuariosRoute: typeof IntranetUsuariosRoute
   IntranetHorariosBloquesRoute: typeof IntranetHorariosBloquesRoute
+  IntranetMatriculaSolicitudRoute: typeof IntranetMatriculaSolicitudRoute
+  IntranetMatriculaSolicitudesRoute: typeof IntranetMatriculaSolicitudesRoute
   IntranetMatriculasCodigoRoute: typeof IntranetMatriculasCodigoRoute
   IntranetPagosConfiguracionRoute: typeof IntranetPagosConfiguracionRoute
   IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
@@ -306,6 +348,8 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetInicioRoute: IntranetInicioRoute,
   IntranetUsuariosRoute: IntranetUsuariosRoute,
   IntranetHorariosBloquesRoute: IntranetHorariosBloquesRoute,
+  IntranetMatriculaSolicitudRoute: IntranetMatriculaSolicitudRoute,
+  IntranetMatriculaSolicitudesRoute: IntranetMatriculaSolicitudesRoute,
   IntranetMatriculasCodigoRoute: IntranetMatriculasCodigoRoute,
   IntranetPagosConfiguracionRoute: IntranetPagosConfiguracionRoute,
   IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,

@@ -21,4 +21,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String>, JpaSp
 
     @EntityGraph(attributePaths = {"rolAcceso", "rolAcceso.permisos"})
     Optional<Usuario> findConPermisosById(String id);
+
+    boolean existsByDocumentoIdentidad(String documentoIdentidad);
 }

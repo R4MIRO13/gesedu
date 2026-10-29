@@ -65,4 +65,15 @@ public final class ReglasMatricula {
     public static boolean todasAprobadas(List<Validacion> validaciones) {
         return validaciones.stream().allMatch(Validacion::aprobada);
     }
+
+    /** Documentos obligatorios de la solicitud según el tipo de estudiante (UC-01, paso 2). */
+    public static List<String> documentosRequeridos(TipoEstudiante tipo) {
+        return tipo == TipoEstudiante.NUEVO_INGRESO ? List.of("CERTIFICADO_ESTUDIOS")
+                : List.of("FICHA_MATRICULA_ANTERIOR");
+    }
+
+    /** Tipos de documento que admite la solicitud: los obligatorios y «otro». */
+    public static boolean esTipoDeDocumento(String tipo) {
+        return "CERTIFICADO_ESTUDIOS".equals(tipo) || "FICHA_MATRICULA_ANTERIOR".equals(tipo) || "OTRO".equals(tipo);
+    }
 }

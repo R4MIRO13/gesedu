@@ -27,6 +27,18 @@ export const OPCIONES_MENU = [
     permiso: 'MATRICULA_EVALUAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/matricula/solicitud' }),
+    titulo: 'Solicitar matrícula',
+    descripcion: 'Presenta la solicitud de matrícula de un estudiante con sus documentos.',
+    permiso: 'MATRICULA_SOLICITAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/matricula/solicitudes' }),
+    titulo: 'Mis solicitudes',
+    descripcion: 'Sigue el estado de las solicitudes de matrícula que presentaste.',
+    permiso: 'MATRICULA_SOLICITAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/pagos/configuracion' }),
     titulo: 'Configuración de cobros',
     descripcion: 'Costos, vencimientos y penalidad del año escolar.',

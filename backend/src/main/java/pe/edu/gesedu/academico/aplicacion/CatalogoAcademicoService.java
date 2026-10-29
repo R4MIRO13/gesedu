@@ -78,6 +78,15 @@ public class CatalogoAcademicoService {
         return new GradoResumen(grado.getId(), grado.getAnioEscolarId(), grado.getNumeroNivel());
     }
 
+    /** Grados del año ordenados por nivel (las solicitudes de matrícula eligen uno). */
+    @Transactional(readOnly = true)
+    public List<GradoResumen> gradosDelAnio(String anioEscolarId) {
+        return grados.findByAnioEscolarId(anioEscolarId).stream()
+                .map(g -> new GradoResumen(g.getId(), g.getAnioEscolarId(), g.getNumeroNivel()))
+                .sorted(Comparator.comparingInt(GradoResumen::numeroNivel))
+                .toList();
+    }
+
     /** Secciones del grado con sus vacantes, ordenadas por letra. */
     @Transactional(readOnly = true)
     public List<SeccionConVacantes> seccionesDelGrado(String gradoId) {

@@ -31,6 +31,15 @@ public class Alumno extends EntidadBase {
     protected Alumno() {
     }
 
+    public Alumno(String usuarioId, String codigoAlumno, LocalDate fechaNacimiento, String apoderadoId,
+                  String parentescoApoderado) {
+        this.usuarioId = usuarioId;
+        this.codigoAlumno = codigoAlumno;
+        this.fechaNacimiento = fechaNacimiento;
+        this.apoderadoId = apoderadoId;
+        this.parentescoApoderado = parentescoApoderado;
+    }
+
     public String getUsuarioId() {
         return usuarioId;
     }

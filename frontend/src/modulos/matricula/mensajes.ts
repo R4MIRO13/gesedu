@@ -27,3 +27,17 @@ export function mensajeDeMatricula(error: unknown): string {
 export function esConflictoDeVersion(error: unknown): boolean {
   return error instanceof ApiError && error.codigo === 'CONFLICTO_CONCURRENCIA'
 }
+
+/** Campo del formulario de la solicitud al que corresponde el `campo` que devuelve la API (`alumno.documento`…). */
+export function campoDeSolicitud(campo: string): string {
+  const mapa: Record<string, string> = {
+    'alumno.nombres': 'nombres',
+    'alumno.apellidos': 'apellidos',
+    'alumno.documento': 'documento',
+    'alumno.fechaNacimiento': 'fechaNacimiento',
+    'alumno.parentesco': 'parentesco',
+    telefonoApoderado: 'telefono',
+    gradoId: 'gradoId',
+  }
+  return mapa[campo] ?? campo
+}
