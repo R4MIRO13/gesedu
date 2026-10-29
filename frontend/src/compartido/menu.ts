@@ -27,6 +27,12 @@ export const OPCIONES_MENU = [
     permiso: 'MATRICULA_EVALUAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/usuarios' }),
+    titulo: 'Usuarios',
+    descripcion: 'Cuentas del sistema: estado, bloqueos y desbloqueo.',
+    permiso: 'USUARIO_CONSULTAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/auditoria' }),
     titulo: 'Auditoría',
     descripcion: 'Registro inmutable de las operaciones críticas.',

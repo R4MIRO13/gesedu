@@ -210,6 +210,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/usuarios/{id}/desbloqueo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Levanta el bloqueo temporal de una cuenta (queda auditado). 400 si la cuenta no está bloqueada */
+        patch: operations["desbloquear"];
+        trace?: never;
+    };
+    "/api/v1/usuarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista las cuentas, paginada, filtrable por texto (nombre o correo), rol y estado */
+        get: operations["listar_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/solicitudes-matricula": {
         parameters: {
             query?: never;
@@ -218,7 +252,7 @@ export interface paths {
             cookie?: never;
         };
         /** Bandeja de solicitudes (paso 1), paginada y filtrable por estado y texto */
-        get: operations["listar_1"];
+        get: operations["listar_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -323,7 +357,7 @@ export interface paths {
             cookie?: never;
         };
         /** Consulta los registros de auditoría (más recientes primero). desde y hasta son fechas yyyy-MM-dd, inclusive; sort: fechaHora, accion o modulo, con ,asc o ,desc */
-        get: operations["listar_2"];
+        get: operations["listar_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -616,6 +650,30 @@ export interface components {
             horaInicio?: string;
             /** Format: time-local */
             horaFin?: string;
+        };
+        UsuarioFila: {
+            id?: string;
+            nombre?: string;
+            correo?: string;
+            rol?: string;
+            activo?: boolean;
+            /** @enum {string} */
+            estado?: "ACTIVO" | "INACTIVO" | "BLOQUEADO";
+            /** Format: date-time */
+            bloqueadoHasta?: string;
+            /** Format: date-time */
+            ultimoAcceso?: string;
+        };
+        PaginaUsuarioFila: {
+            contenido?: components["schemas"]["UsuarioFila"][];
+            /** Format: int32 */
+            pagina?: number;
+            /** Format: int32 */
+            tamano?: number;
+            /** Format: int64 */
+            totalElementos?: number;
+            /** Format: int32 */
+            totalPaginas?: number;
         };
         PaginaSolicitudResumen: {
             contenido?: components["schemas"]["SolicitudResumen"][];
@@ -1106,7 +1164,56 @@ export interface operations {
             };
         };
     };
+    desbloquear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UsuarioFila"];
+                };
+            };
+        };
+    };
     listar_1: {
+        parameters: {
+            query?: {
+                q?: string;
+                rol?: string;
+                estado?: "ACTIVO" | "INACTIVO" | "BLOQUEADO";
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PaginaUsuarioFila"];
+                };
+            };
+        };
+    };
+    listar_2: {
         parameters: {
             query?: {
                 estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
@@ -1251,7 +1358,7 @@ export interface operations {
             };
         };
     };
-    listar_2: {
+    listar_3: {
         parameters: {
             query?: {
                 usuarioId?: string;

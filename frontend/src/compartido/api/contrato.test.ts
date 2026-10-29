@@ -33,6 +33,7 @@ import type {
   SolicitudResumen,
   ValidacionMatricula,
 } from '../../modulos/matricula/api'
+import type { EstadoCuenta, PaginaUsuarios, UsuarioFila } from '../../modulos/seguridad/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -105,5 +106,16 @@ describe('contrato de la matrícula (UC-02)', () => {
   it('los motivos y reglas son los del backend', () => {
     expectTypeOf<MotivoRechazo>().toEqualTypeOf<NonNullable<Esquemas['RechazoRequest']['motivo']>>()
     expectTypeOf<ReglaMatricula>().toEqualTypeOf<NonNullable<Esquemas['ValidacionMatriculaDto']['regla']>>()
+  })
+})
+
+describe('contrato de usuarios (UC-24)', () => {
+  it('la fila de usuario tiene las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof UsuarioFila>().toEqualTypeOf<keyof Esquemas['UsuarioFila']>()
+    expectTypeOf<keyof PaginaUsuarios>().toEqualTypeOf<keyof Esquemas['PaginaUsuarioFila']>()
+  })
+
+  it('los estados de la cuenta son los del backend', () => {
+    expectTypeOf<EstadoCuenta>().toEqualTypeOf<NonNullable<Esquemas['UsuarioFila']['estado']>>()
   })
 })

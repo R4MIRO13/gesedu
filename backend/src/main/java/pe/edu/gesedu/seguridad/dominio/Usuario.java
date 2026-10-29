@@ -85,6 +85,12 @@ public class Usuario extends EntidadBase {
         this.intentosFallidos = 0;
     }
 
+    /** Levanta el bloqueo temporal y reinicia el contador de intentos (UC-24: el administrador desbloquea la cuenta). */
+    public void desbloquear() {
+        this.intentosFallidos = 0;
+        this.bloqueadoHasta = null;
+    }
+
     /** Un inicio de sesión correcto reinicia el contador y levanta cualquier bloqueo vencido. */
     public void registrarAccesoExitoso(Instant ahora) {
         intentosFallidos = 0;
@@ -114,6 +120,10 @@ public class Usuario extends EntidadBase {
 
     public int getIntentosFallidos() {
         return intentosFallidos;
+    }
+
+    public Instant getUltimoAcceso() {
+        return ultimoAcceso;
     }
 
     public Instant getBloqueadoHasta() {
