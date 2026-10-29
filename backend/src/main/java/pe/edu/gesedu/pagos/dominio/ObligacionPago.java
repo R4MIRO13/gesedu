@@ -108,6 +108,19 @@ public class ObligacionPago extends EntidadBase {
         return estado;
     }
 
+    /**
+     * El día siguiente al vencimiento la obligación pasa a VENCIDA (RF-09) y recibe su penalidad una sola vez (S-10):
+     * si ya se aplicó, la penalidad no cambia. {@code penalidad} es nula si el año aún no tiene política de cobro; en
+     * ese caso no se marca como aplicada y una ejecución posterior puede aplicarla.
+     */
+    public void vencer(BigDecimal penalidad, Instant ahora) {
+        this.estado = EstadoObligacion.VENCIDA;
+        if (penalidadAplicadaEn == null && penalidad != null) {
+            this.montoPenalidad = penalidad;
+            this.penalidadAplicadaEn = ahora;
+        }
+    }
+
     /** La obligación queda cancelada al validar el pago (UC-05, paso 8). */
     public void marcarPagada() {
         this.estado = EstadoObligacion.PAGADA;

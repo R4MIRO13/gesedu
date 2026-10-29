@@ -40,4 +40,13 @@ public interface ObligacionPagoRepository extends JpaRepository<ObligacionPago, 
     Optional<ObligacionPago> bloquear(@Param("id") String id);
 
     List<ObligacionPago> findByIdIn(Collection<String> ids);
+
+    /**
+     * Ids de las obligaciones por procesar: ya pasó su vencimiento, no están pagadas y todavía son PENDIENTES o no
+     * recibieron su penalidad (RF-09, RF-10).
+     */
+    @Query("SELECT o.id FROM ObligacionPago o WHERE o.estado <> :pagada AND o.fechaVencimiento < :hoy "
+            + "AND (o.estado = :pendiente OR o.penalidadAplicadaEn IS NULL) ORDER BY o.fechaVencimiento, o.id")
+    List<String> porVencer(@Param("hoy") LocalDate hoy, @Param("pagada") EstadoObligacion pagada,
+                           @Param("pendiente") EstadoObligacion pendiente);
 }
