@@ -78,6 +78,12 @@ public class DirectorioFamilias {
         return familias.alumnosDelApoderado(apoderadoId).stream().map(DirectorioFamilias::aResumen).toList();
     }
 
+    /** El alumno con ese código (por ejemplo, {@code 2026-0315}), si existe. */
+    @Transactional(readOnly = true)
+    public Optional<AlumnoResumen> alumnoPorCodigo(String codigo) {
+        return familias.alumnosPorCodigo(codigo).stream().findFirst().map(DirectorioFamilias::aResumen);
+    }
+
     /** El alumno con ese documento de identidad, si existe. */
     @Transactional(readOnly = true)
     public Optional<AlumnoResumen> alumnoPorDocumento(String documento) {

@@ -51,6 +51,12 @@ export const OPCIONES_MENU = [
     permiso: 'COMPROBANTE_VALIDAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/pagos/historial' }),
+    titulo: 'Historial financiero',
+    descripcion: 'Consulta las obligaciones, boletas, deudas y penalidades de un estudiante.',
+    permiso: 'PAGO_HISTORIAL_CONSULTAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/pagos/configuracion' }),
     titulo: 'Configuración de cobros',
     descripcion: 'Costos, vencimientos y penalidad del año escolar.',

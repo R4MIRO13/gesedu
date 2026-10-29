@@ -90,4 +90,42 @@ public final class PagosDtos {
     public record ResultadoRevision(String comprobanteId, EstadoRevision estado, String observacion,
                                     EstadoObligacion estadoObligacion, Dinero totalPendiente) {
     }
+
+    // ---- UC-06: historial financiero del administrador ----
+
+    public record EstudianteHistorial(String id, String codigo, String nombre, String documento, String apoderado) {
+    }
+
+    /** Matrícula del estudiante para la cabecera del historial; nula si no tiene ninguna confirmada. */
+    public record MatriculaHistorial(int anio, String grado, String seccion, String estado) {
+    }
+
+    public record ResumenHistorial(Dinero totalPagado, Dinero totalPendiente, Dinero deudaVencida,
+                                   Dinero penalidadesAplicadas, int obligaciones, int pagadas, int pendientes,
+                                   int vencidas) {
+    }
+
+    /** Pago registrado: la boleta con el comprobante que la originó (paso 4). */
+    public record PagoRegistrado(String numeroBoleta, OffsetDateTime fechaRegistro, ConceptoPago concepto,
+                                 String periodo, Dinero monto, String numeroOperacion, LocalDate fechaPago,
+                                 String medioPago) {
+    }
+
+    /** Obligación vencida con su penalidad (paso 5). */
+    public record DeudaVencida(String obligacionId, ConceptoPago concepto, String periodo, LocalDate fechaVencimiento,
+                               Dinero montoBase, Dinero montoPenalidad, Dinero total, OffsetDateTime penalidadAplicadaEn) {
+    }
+
+    /**
+     * Historial completo (todos los años): {@code sinHistorial} es FA-1 (ni obligaciones ni pagos) y
+     * {@code sinPagos} es FA-2 (hay obligaciones, pero ningún pago registrado).
+     */
+    public record HistorialFinanciero(EstudianteHistorial estudiante, MatriculaHistorial matricula,
+                                      ResumenHistorial resumen, List<ObligacionDto> obligaciones,
+                                      List<PagoRegistrado> pagos, List<DeudaVencida> deudas, boolean sinHistorial,
+                                      boolean sinPagos) {
+    }
+
+    public record AlumnoBusqueda(String codigo, String nombre, String documento) {
+    }
 }

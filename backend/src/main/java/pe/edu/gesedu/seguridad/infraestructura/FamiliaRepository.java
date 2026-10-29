@@ -103,4 +103,13 @@ public interface FamiliaRepository extends JpaRepository<Alumno, String> {
             WHERE ap.usuario_id = :usuarioId
             """, nativeQuery = true)
     List<ApoderadoFila> apoderadosDelUsuario(@Param("usuarioId") String usuarioId);
+
+    @Query(value = """
+            SELECT al.id AS id, al.codigo_alumno AS codigo, u.nombres || ' ' || u.apellidos AS nombreCompleto,
+                   u.documento_identidad AS documento, al.fecha_nacimiento AS fechaNacimiento,
+                   al.parentesco_apoderado AS parentesco, al.apoderado_id AS apoderadoId
+            FROM seguridad.alumno al JOIN seguridad.usuario u ON u.id = al.usuario_id
+            WHERE al.codigo_alumno = :codigo
+            """, nativeQuery = true)
+    List<AlumnoFila> alumnosPorCodigo(@Param("codigo") String codigo);
 }

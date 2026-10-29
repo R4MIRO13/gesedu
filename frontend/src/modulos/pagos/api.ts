@@ -288,3 +288,70 @@ export function useRevisarComprobante(accion: 'observacion' | 'rechazo') {
     onSettled: () => invalidarComprobantes(cliente),
   })
 }
+
+// ---- UC-06: historial financiero ----
+
+export interface AlumnoBusqueda {
+  codigo: string
+  nombre: string
+  documento: string
+}
+
+export interface PagoRegistrado {
+  numeroBoleta: string
+  fechaRegistro: string
+  concepto: ConceptoPago
+  periodo: string
+  monto: string
+  numeroOperacion: string | null
+  fechaPago: string | null
+  medioPago: string | null
+}
+
+export interface DeudaVencida {
+  obligacionId: string
+  concepto: ConceptoPago
+  periodo: string
+  fechaVencimiento: string
+  montoBase: string
+  montoPenalidad: string
+  total: string
+  penalidadAplicadaEn: string | null
+}
+
+export interface HistorialFinanciero {
+  estudiante: { id: string; codigo: string; nombre: string; documento: string; apoderado: string | null }
+  matricula: { anio: number; grado: string; seccion: string; estado: string } | null
+  resumen: {
+    totalPagado: string
+    totalPendiente: string
+    deudaVencida: string
+    penalidadesAplicadas: string
+    obligaciones: number
+    pagadas: number
+    pendientes: number
+    vencidas: number
+  }
+  obligaciones: Obligacion[]
+  pagos: PagoRegistrado[]
+  deudas: DeudaVencida[]
+  sinHistorial: boolean
+  sinPagos: boolean
+}
+
+export function useBuscarAlumnos(texto: string) {
+  return useQuery({
+    queryKey: ['alumnos-busqueda', texto],
+    queryFn: () => api<AlumnoBusqueda[]>(`/alumnos/busqueda?q=${encodeURIComponent(texto)}`),
+    enabled: texto.trim().length > 0,
+    staleTime: 0,
+  })
+}
+
+export function useHistorialFinanciero(codigo: string) {
+  return useQuery({
+    queryKey: ['historial-financiero', codigo],
+    queryFn: () => api<HistorialFinanciero>(`/alumnos/${encodeURIComponent(codigo)}/historial-financiero`),
+    staleTime: 0,
+  })
+}
