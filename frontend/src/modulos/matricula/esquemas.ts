@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { hoyLima } from '../../compartido/formato'
 
 /** Confirmación de UC-02 (paso 9): la sección elegida y la aceptación de los costos por el apoderado. */
 export const esquemaConfirmacion = z.object({
@@ -32,7 +33,7 @@ export const esquemaSolicitud = z.object({
   fechaNacimiento: z
     .string()
     .min(1, 'Indica la fecha de nacimiento.')
-    .refine((v) => v < new Date().toISOString().slice(0, 10), 'La fecha de nacimiento debe ser pasada.'),
+    .refine((v) => v < hoyLima(), 'La fecha de nacimiento debe ser pasada.'),
   parentesco: z.string().min(1, 'Elige el parentesco.'),
   telefono: z.string().trim().regex(/^\d[\d ]{6,18}\d$/, 'Ingresa un celular válido, por ejemplo 987 654 321.'),
   tipoEstudiante: z.enum(['NUEVO_INGRESO', 'RECURRENTE']),

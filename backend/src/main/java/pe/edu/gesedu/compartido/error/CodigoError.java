@@ -38,6 +38,7 @@ public enum CodigoError {
     CORREO_DUPLICADO(HttpStatus.CONFLICT, "Ya existe una cuenta registrada con ese correo"),
     CONFLICTO_HORARIO(HttpStatus.CONFLICT, "El horario entra en conflicto con otro existente"),
     NUMERO_OPERACION_DUPLICADO(HttpStatus.CONFLICT, "El número de operación ya fue presentado"),
+    COMPROBANTE_PENDIENTE(HttpStatus.CONFLICT, "La obligación ya tiene un comprobante pendiente de revisión"),
     ASISTENCIA_YA_REGISTRADA(HttpStatus.CONFLICT, "La asistencia ya fue registrada"),
 
     // 422

@@ -14,3 +14,8 @@ export function soles(monto: string): string {
   const [entero = '0', decimales] = monto.split('.')
   return `S/ ${entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${decimales === undefined ? '' : `.${decimales}`}`
 }
+
+/** Fecha de hoy en la zona institucional (America/Lima) como «AAAA-MM-DD». */
+export function hoyLima(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
+}

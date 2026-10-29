@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../compartido/api/cliente'
+import { api, solicitar } from '../../compartido/api/cliente'
+import { ApiError, SIN_CONEXION } from '../../compartido/api/errores'
 
 export type ConceptoPago = 'MATRICULA' | 'PENSION' | 'CUOTA_INGRESO'
 
@@ -111,5 +112,68 @@ export function useObligaciones(alumnoId: string | undefined) {
     queryFn: () => api<ObligacionesAlumno>(`/alumnos/${alumnoId}/obligaciones`),
     enabled: !!alumnoId,
     staleTime: 0,
+  })
+}
+
+// ---- UC-04: presentar comprobante ----
+
+export const TIPOS_VOUCHER_PERMITIDOS = ['application/pdf', 'image/jpeg', 'image/png']
+export const TAMANO_MAXIMO_VOUCHER = 5 * 1024 * 1024
+
+/** Voucher ya subido al Gestor de Archivos, listo para declararse en el comprobante. */
+export interface VoucherSubido {
+  claveObjeto: string
+  nombreArchivo: string
+  contentType: string
+  tamanoBytes: number
+}
+
+export interface ComprobanteNuevo {
+  numeroOperacion: string
+  fechaPago: string
+  montoPagado: string
+  medioPago: string
+  voucher: VoucherSubido
+}
+
+/**
+ * Sube el voucher como lo hace el navegador (DA-07): pide la URL prefirmada y envía el archivo directo al Gestor de
+ * Archivos con la cabecera que esa URL exige.
+ */
+export async function subirVoucher(obligacionId: string, archivo: File): Promise<VoucherSubido> {
+  const { datos } = await solicitar<{
+    claveObjeto: string
+    subida: { url: string; metodo: string; cabeceras: Record<string, string> }
+  }>(`/obligaciones/${obligacionId}/comprobantes/archivo`, {
+    method: 'POST',
+    cuerpo: { nombreArchivo: archivo.name, contentType: archivo.type, tamanoBytes: archivo.size },
+  })
+  let respuesta: Response
+  try {
+    respuesta = await fetch(datos.subida.url, { method: datos.subida.metodo, headers: datos.subida.cabeceras, body: archivo })
+  } catch {
+    throw new ApiError(0, 'No se pudo subir el archivo. Revisa tu conexión.', SIN_CONEXION)
+  }
+  if (!respuesta.ok) throw new ApiError(respuesta.status, 'No se pudo subir el archivo. Inténtalo de nuevo.', 'ARCHIVO_INVALIDO')
+  return { claveObjeto: datos.claveObjeto, nombreArchivo: archivo.name, contentType: archivo.type, tamanoBytes: archivo.size }
+}
+
+export function useRegistrarComprobante(obligacionId: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (c: ComprobanteNuevo) =>
+      api<ComprobanteResumen>(`/obligaciones/${obligacionId}/comprobantes`, {
+        method: 'POST',
+        cuerpo: {
+          numeroOperacion: c.numeroOperacion,
+          fechaPago: c.fechaPago,
+          montoPagado: c.montoPagado,
+          medioPago: c.medioPago,
+          claveObjeto: c.voucher.claveObjeto,
+          contentType: c.voucher.contentType,
+          tamanoBytes: c.voucher.tamanoBytes,
+        },
+      }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['obligaciones'] }),
   })
 }

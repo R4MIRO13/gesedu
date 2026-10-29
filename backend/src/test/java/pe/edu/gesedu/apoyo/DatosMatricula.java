@@ -13,13 +13,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public final class DatosMatricula {
 
     private static final AtomicInteger SIGUIENTE_ANIO = new AtomicInteger(2400);
-    // Años cerrados anteriores a cualquier escenario (2350 a 2399)
-    private static final AtomicInteger SIGUIENTE_ANTERIOR = new AtomicInteger(2350);
+    // Años cerrados anteriores a cualquier escenario (2300 a 2399)
+    private static final AtomicInteger SIGUIENTE_ANTERIOR = new AtomicInteger(2300);
     // Empieza lejos de la secuencia real (matricula.seq_solicitud), que usa UC-01 en las pruebas
     private static final AtomicInteger SIGUIENTE_SOLICITUD = new AtomicInteger(50000);
 
     /** {@code seccion3A} arranca con las vacantes pedidas; {@code seccion3B} con 30. */
-    public record Escenario(int anio, String anioId, String anioAnteriorId, String grado3, String grado2,
+    public record Escenario(int anio, String anioId, String grado3, String grado2,
                             String seccion3A, String seccion3B, String seccion2A) {
     }
 
@@ -49,7 +49,6 @@ public final class DatosMatricula {
     public Escenario crearEscenario(int vacantes3A) {
         int anio = SIGUIENTE_ANIO.getAndIncrement();
         String anioId = anio(anio, "PLANIFICADO");
-        String anioAnteriorId = anio(SIGUIENTE_ANTERIOR.getAndIncrement(), "CERRADO");
         String grado3 = grado(anioId, 3);
         String grado2 = grado(anioId, 2);
         String seccion3A = seccion(anioId, grado3, "A", vacantes3A);
@@ -66,7 +65,7 @@ public final class DatosMatricula {
         }
         jdbc.update("INSERT INTO pagos.politica_cobro (id, anio_escolar_id, porcentaje_penalidad) VALUES (?, ?, 5.00)",
                 id(), anioId);
-        return new Escenario(anio, anioId, anioAnteriorId, grado3, grado2, seccion3A, seccion3B, seccion2A);
+        return new Escenario(anio, anioId, grado3, grado2, seccion3A, seccion3B, seccion2A);
     }
 
     /** Solicitud pendiente de 3° con documentación completa. {@code nuevo}: nuevo ingreso admitido; si no, recurrente. */
@@ -115,20 +114,22 @@ public final class DatosMatricula {
      * vencimiento hace tiempo. Devuelve el monto.
      */
     public String deudaDelAnioAnterior(Escenario e, Solicitud s) {
-        String grado = grado(e.anioAnteriorId(), 3);
-        String seccion = seccion(e.anioAnteriorId(), grado, "A", 29);
+        // El año anterior se crea solo cuando una prueba lo necesita: así no agota los años disponibles
+        String anioAnteriorId = anio(SIGUIENTE_ANTERIOR.getAndIncrement(), "CERRADO");
+        String grado = grado(anioAnteriorId, 3);
+        String seccion = seccion(anioAnteriorId, grado, "A", 29);
         String previa = id();
         jdbc.update("INSERT INTO matricula.solicitud_matricula (id, codigo_seguimiento, anio_escolar_id, alumno_id, "
                 + "apoderado_id, grado_id, fecha_solicitud, tipo_estudiante, estado, costos_aceptados) "
                 + "VALUES (?, ?, ?, ?, ?, ?, DATE '2026-01-05', 'RECURRENTE', 'APROBADA', TRUE)", previa,
-                "P-" + previa.substring(0, 12), e.anioAnteriorId(), s.alumnoId(), s.apoderadoId(), grado);
+                "P-" + previa.substring(0, 12), anioAnteriorId, s.alumnoId(), s.apoderadoId(), grado);
         String matricula = id();
         jdbc.update("INSERT INTO matricula.matricula (id, solicitud_id, alumno_id, anio_escolar_id, seccion_id, "
                 + "fecha_matricula) VALUES (?, ?, ?, ?, ?, DATE '2026-01-06')", matricula, previa, s.alumnoId(),
-                e.anioAnteriorId(), seccion);
+                anioAnteriorId, seccion);
         jdbc.update("INSERT INTO pagos.obligacion_pago (id, matricula_id, anio_escolar_id, alumno_id, apoderado_id, "
                 + "concepto, periodo, monto_base, fecha_vencimiento, estado) VALUES (?, ?, ?, ?, ?, 'PENSION', "
-                + "'2026-03', 350.00, DATE '2026-03-05', 'VENCIDA')", id(), matricula, e.anioAnteriorId(),
+                + "'2026-03', 350.00, DATE '2026-03-05', 'VENCIDA')", id(), matricula, anioAnteriorId,
                 s.alumnoId(), s.apoderadoId());
         return "350.00";
     }

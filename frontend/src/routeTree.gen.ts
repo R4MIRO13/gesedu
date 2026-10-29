@@ -23,6 +23,7 @@ import { Route as IntranetMatriculaSolicitudesRouteImport } from './routes/intra
 import { Route as IntranetMatriculasIndexRouteImport } from './routes/intranet/matriculas/index'
 import { Route as IntranetMatriculasCodigoRouteImport } from './routes/intranet/matriculas/$codigo'
 import { Route as IntranetPagosIndexRouteImport } from './routes/intranet/pagos/index'
+import { Route as IntranetPagosComprobanteRouteImport } from './routes/intranet/pagos/comprobante'
 import { Route as IntranetPagosConfiguracionRouteImport } from './routes/intranet/pagos/configuracion'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 
@@ -99,6 +100,12 @@ const IntranetPagosIndexRoute = IntranetPagosIndexRouteImport.update({
   path: '/pagos/',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetPagosComprobanteRoute =
+  IntranetPagosComprobanteRouteImport.update({
+    id: '/pagos/comprobante',
+    path: '/pagos/comprobante',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetPagosConfiguracionRoute =
   IntranetPagosConfiguracionRouteImport.update({
     id: '/pagos/configuracion',
@@ -125,6 +132,7 @@ export interface FileRoutesByFullPath {
   '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
   '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
@@ -143,6 +151,7 @@ export interface FileRoutesByTo {
   '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
   '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos': typeof IntranetPagosIndexRoute
@@ -162,6 +171,7 @@ export interface FileRoutesById {
   '/intranet/matricula/solicitud': typeof IntranetMatriculaSolicitudRoute
   '/intranet/matricula/solicitudes': typeof IntranetMatriculaSolicitudesRoute
   '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/intranet/matricula/solicitud'
     | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
+    | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/intranet/matricula/solicitud'
     | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
+    | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
     | '/intranet/matriculas'
     | '/intranet/pagos'
@@ -218,6 +230,7 @@ export interface FileRouteTypes {
     | '/intranet/matricula/solicitud'
     | '/intranet/matricula/solicitudes'
     | '/intranet/matriculas/$codigo'
+    | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetPagosIndexRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/pagos/comprobante': {
+      id: '/intranet/pagos/comprobante'
+      path: '/pagos/comprobante'
+      fullPath: '/intranet/pagos/comprobante'
+      preLoaderRoute: typeof IntranetPagosComprobanteRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/pagos/configuracion': {
       id: '/intranet/pagos/configuracion'
       path: '/pagos/configuracion'
@@ -357,6 +377,7 @@ interface IntranetRouteChildren {
   IntranetMatriculaSolicitudRoute: typeof IntranetMatriculaSolicitudRoute
   IntranetMatriculaSolicitudesRoute: typeof IntranetMatriculaSolicitudesRoute
   IntranetMatriculasCodigoRoute: typeof IntranetMatriculasCodigoRoute
+  IntranetPagosComprobanteRoute: typeof IntranetPagosComprobanteRoute
   IntranetPagosConfiguracionRoute: typeof IntranetPagosConfiguracionRoute
   IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
   IntranetPagosIndexRoute: typeof IntranetPagosIndexRoute
@@ -371,6 +392,7 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetMatriculaSolicitudRoute: IntranetMatriculaSolicitudRoute,
   IntranetMatriculaSolicitudesRoute: IntranetMatriculaSolicitudesRoute,
   IntranetMatriculasCodigoRoute: IntranetMatriculasCodigoRoute,
+  IntranetPagosComprobanteRoute: IntranetPagosComprobanteRoute,
   IntranetPagosConfiguracionRoute: IntranetPagosConfiguracionRoute,
   IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,
   IntranetPagosIndexRoute: IntranetPagosIndexRoute,

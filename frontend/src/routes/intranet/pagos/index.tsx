@@ -163,7 +163,7 @@ function Obligaciones({ datos, anio }: { datos: ObligacionesAlumno; anio: number
           </thead>
           <tbody>
             {datos.obligaciones.map((o) => (
-              <Fila key={o.id} o={o} />
+              <Fila key={o.id} o={o} alumnoId={datos.alumnoId} />
             ))}
           </tbody>
         </table>
@@ -174,7 +174,7 @@ function Obligaciones({ datos, anio }: { datos: ObligacionesAlumno; anio: number
 
 const ETIQUETA_ESTADO = { PENDIENTE: 'Pendiente', PAGADA: 'Pagada', VENCIDA: 'Vencida' } as const
 
-function Fila({ o }: { o: Obligacion }) {
+function Fila({ o, alumnoId }: { o: Obligacion; alumnoId: string }) {
   const conPenalidad = Number(o.montoPenalidad) > 0
   return (
     <tr>
@@ -190,6 +190,16 @@ function Fila({ o }: { o: Obligacion }) {
         </span>
       </td>
       <td>
+        {o.puedePresentarComprobante && (
+          <Link
+            to="/intranet/pagos/comprobante"
+            search={{ obligacion: o.id, alumno: alumnoId }}
+            className="btn"
+            aria-label={`Subir comprobante de ${nombreObligacion(o.concepto, o.periodo)}`}
+          >
+            Subir comprobante
+          </Link>
+        )}
       </td>
     </tr>
   )
