@@ -13,7 +13,7 @@ import pe.edu.gesedu.transversal.notificaciones.Notificador;
  * Base de las pruebas de UC-02: el correo sale por un {@code Notificador} falso y {@code PlanDeCobros} es un espía
  * (para forzar un fallo en la generación de obligaciones). Las subclases comparten el contexto de Spring.
  */
-abstract class BaseMatriculaIT extends BaseIT {
+public abstract class BaseMatriculaIT extends BaseIT {
 
     @MockitoBean
     protected Notificador notificador;

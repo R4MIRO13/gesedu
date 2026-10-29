@@ -27,6 +27,12 @@ export const OPCIONES_MENU = [
     permiso: 'MATRICULA_EVALUAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/pagos/configuracion' }),
+    titulo: 'Configuración de cobros',
+    descripcion: 'Costos, vencimientos y penalidad del año escolar.',
+    permiso: 'COBRO_CONFIGURAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/usuarios' }),
     titulo: 'Usuarios',
     descripcion: 'Cuentas del sistema: estado, bloqueos y desbloqueo.',

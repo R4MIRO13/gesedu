@@ -13,7 +13,7 @@
 |---|---|---|
 | 0 Base | `feat/fase-0` | **terminada** (0.1–0.11) |
 | 1 Demo ampliada | `feat/fase-1` | **terminada** (1.1–1.9) |
-| 2 Matrícula y pagos | `feat/fase-2` | pendiente |
+| 2 Matrícula y pagos | `feat/fase-2` | **en curso** (2.1) |
 | 3 Académico y horarios | `feat/fase-3` | pendiente |
 | 4 Asistencia | `feat/fase-4` | pendiente |
 | 5 Evaluación | `feat/fase-5` | pendiente |
@@ -45,7 +45,8 @@ einiciar-bd.ps1` para cargar V1002 sin la matrícula de prueba** | hecha | ver `
 | 1.7 | **Recuperación de contraseña** (UC-24 FA-5, RF-52, S-01): `POST /auth/recuperacion` (202 siempre con el mismo cuerpo) y `/auth/recuperacion/confirmacion`; token de 32 bytes (solo hash SHA-256), 30 min, un solo uso, pedir otro anula el anterior, política de contraseña (8–72, letra y número), revoca los refresh tokens, no desbloquea una cuenta bloqueada, `@Auditable` (la contraseña nunca se registra), correo `recuperacion-contrasena.html` por `Notificaciones` (después del commit). Frontend: `/recuperar-contrasena`, `/restablecer-contrasena?token=` y el enlace «¿Olvidaste tu contraseña?». Pruebas: `RecuperacionContrasenaIT` (9), `recuperacion.test.tsx` (8) | hecha | ver `git log` |
 | 1.8 | **Usuarios, lista parcial con desbloqueo** (UC-24, RF-01; `docs/PLAN.md` § 7.1, tarea 7). Backend: `GET /usuarios` (`USUARIO_CONSULTAR`; filtros `q` por nombre o correo, `rol`, `estado` ACTIVO / INACTIVO / BLOQUEADO; paginado; sin hash de contraseña) y `PATCH /usuarios/{id}/desbloqueo` (`USUARIO_GESTIONAR`, 400 si la cuenta no está bloqueada, `@Auditable` `DESBLOQUEAR_CUENTA` con el bloqueo levantado, invalida la caché de cuentas); fechas en `-05:00`. Frontend: `/intranet/usuarios` con filtros, estado «Bloqueado · 5 intentos», botón Desbloquear (solo con `USUARIO_GESTIONAR`) y opción de menú; tipos regenerados. Pruebas: `UsuariosIT` (5), `usuarios.test.tsx` (6), `contrato.test.ts`. Probado con curl: 5 fallos → BLOQUEADO → desbloqueo → login 200 | hecha | ver `git log` |
 | 1.9 | **Guion de la demo ampliada** (`docs/demo/guion.md`): 10 pasos de ≈ 15 min (corte mínimo P1 ≈ 10 min: contenedores, Swagger por módulo, 4 roles + 403, bloqueo, UC-21, UC-25 con exportación y DELETE bloqueado, ArchUnit; P2: recuperación + desbloqueo, UC-02 con sus alternativas FA-1 a FA-5 y la última vacante de 2° B). Incluye las comprobaciones previas (8 solicitudes, vacantes, Mailpit), el reinicio entre ensayos (UC-02 gasta vacantes) y la tabla de fallos. Los textos de pantalla se contrastaron con la SPA y los comandos `psql`/curl con el backend real | hecha | ver `git log` |
-| 2.1–2.10 | Ver plan aprobado (fase 2, incluye RF-02/RF-05/RF-07 «actualizar») | pendiente | |
+| 2.1 | **Configuración de cobros** (RF-06): `GET/PUT /anios-escolares/{anio}/cobros` (`COBRO_CONFIGURAR`): cronograma completo (lo que llega reemplaza lo anterior) y porcentaje de penalidad 0–100; periodo AAAA (matrícula, cuota de ingreso) o AAAA-MM (pensión) del mismo año, sin líneas repetidas ni montos negativos; montos como texto decimal; `@Auditable` `CONFIGURAR_COBROS` con el cambio de cada línea. Frontend: `/intranet/pagos/configuracion` (react-hook-form + zod, cronograma inicial de matrícula + 10 pensiones, cuota de ingreso opcional) y opción de menú; grupo Swagger «Pagos». Pruebas: `ConfiguracionCobrosIT` (6), `configuracion.test.tsx` (5). Se fijó LF para `*.html` en `.gitattributes` (la plantilla de prueba llegaba con CRLF y `NotificacionesIT` fallaba) | hecha | ver `git log` |
+| 2.2–2.10 | UC-01, UC-03 a UC-06, job de vencimientos, RF-02 editar datos, RF-05 cambiar sección, RF-07 actualizar obligaciones (plan aprobado, fase 2) | pendiente | |
 | 3.1–3.7 | Fase 3 | pendiente | |
 | 4.1–4.6 | Fase 4 | pendiente | |
 | 5.1–5.6 | Fase 5 | pendiente | |
@@ -100,6 +101,10 @@ RF/RNF: RF-01 (sin DELETE de usuarios), RF-48, RF-49, RF-50, RF-52, RNF-01, RNF-
 Entregado: inicio de sesión real con los 4 roles y bloqueo (1.1), UC-21 backend y frontend (1.2, 1.3), UC-25 con exportación (1.4), semilla P1 y Swagger por módulo (1.5), UC-02 con confirmación atómica, vacantes, obligaciones y correo (1.6), recuperación de contraseña (1.7), usuarios con desbloqueo (1.8) y el guion actualizado (1.9). Backend: `./mvnw -B verify` en verde (81 unitarias + 174 de integración); frontend: lint, typecheck, 86 pruebas y build en verde.
 RF/RNF: RF-04, RF-05, RF-07, RF-12, RF-39 a RF-42, RF-47, RF-49 a RF-52 (RF-43 parcial); RNF-01 (BCrypt), RNF-02, RNF-03, RNF-06 a RNF-10. Suposiciones nuevas: S-39 a S-48.
 Pendiente para el despliegue compartido: cada integrante debe ejecutar `.\scriptseiniciar-bd.ps1` para cargar la semilla `V1002`.
+
+## Fase 2 — notas y supuestos
+- **Base de la rama:** al empezar la fase 2, `origin/main` terminaba en el PR #1 (demo) y no contenía `feat/fase-1`. Por indicación del usuario, `feat/fase-2` se creó sobre `feat/fase-1` (889661d); al fusionar la fase 1, la 2 queda encima sin conflictos.
+- **S-49** El cronograma de cobros no lleva `version`: se guarda completo y gana la última escritura (lo edita una sola función administrativa). El resultado de cada guardado queda auditado línea a línea.
 
 ## Cobertura RF / UC
 (Se completa en la tarea 6.6.)

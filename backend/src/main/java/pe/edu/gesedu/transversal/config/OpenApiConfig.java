@@ -53,4 +53,13 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder().group("4-matricula").displayName("Matrícula")
                 .pathsToMatch("/api/v1/solicitudes-matricula/**").build();
     }
+
+    @Bean
+    GroupedOpenApi grupoPagos() {
+        return GroupedOpenApi.builder().group("5-pagos").displayName("Pagos")
+                .pathsToMatch("/api/v1/anios-escolares/*/cobros", "/api/v1/obligaciones/**",
+                        "/api/v1/comprobantes/**", "/api/v1/alumnos/*/obligaciones",
+                        "/api/v1/alumnos/*/historial-financiero")
+                .build();
+    }
 }

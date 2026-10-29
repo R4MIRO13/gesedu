@@ -36,6 +36,15 @@ public final class DatosMatricula {
         return UUID.randomUUID().toString();
     }
 
+    /** Año planificado propio, sin grados ni cobros. */
+    public record AnioNuevo(int anio, String id) {
+    }
+
+    public AnioNuevo crearAnioSinCobros() {
+        int anio = SIGUIENTE_ANIO.getAndIncrement();
+        return new AnioNuevo(anio, anio(anio, "PLANIFICADO"));
+    }
+
     public Escenario crearEscenario(int vacantes3A) {
         int anio = SIGUIENTE_ANIO.getAndIncrement();
         String anioId = anio(anio, "PLANIFICADO");
