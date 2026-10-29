@@ -292,6 +292,7 @@ export function useRevisarComprobante(accion: 'observacion' | 'rechazo') {
 // ---- UC-06: historial financiero ----
 
 export interface AlumnoBusqueda {
+  id: string
   codigo: string
   nombre: string
   documento: string

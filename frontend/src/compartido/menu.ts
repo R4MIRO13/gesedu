@@ -63,6 +63,12 @@ export const OPCIONES_MENU = [
     permiso: 'COBRO_CONFIGURAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/estudiantes' }),
+    titulo: 'Datos de estudiantes',
+    descripcion: 'Corrige los datos personales de los estudiantes y de sus apoderados.',
+    permiso: 'USUARIO_GESTIONAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/usuarios' }),
     titulo: 'Usuarios',
     descripcion: 'Cuentas del sistema: estado, bloqueos y desbloqueo.',

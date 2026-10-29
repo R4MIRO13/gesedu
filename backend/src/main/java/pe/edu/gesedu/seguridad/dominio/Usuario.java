@@ -148,7 +148,21 @@ public class Usuario extends EntidadBase {
         return bloqueadoHasta;
     }
 
+    public long getVersion() {
+        return version;
+    }
+
     public RolAcceso getRolAcceso() {
         return rolAcceso;
+    }
+
+    /** El administrador corrige los datos personales de la cuenta (RF-02). */
+    public void actualizarDatosPersonales(String nombres, String apellidos, String documentoIdentidad, String correo,
+                                          Instant ahora) {
+        tocar(ahora);
+        this.nombres = nombres;
+        this.apellidos = apellidos;
+        this.documentoIdentidad = documentoIdentidad;
+        this.correo = correo;
     }
 }

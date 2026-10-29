@@ -23,4 +23,13 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String>, JpaSp
     Optional<Usuario> findConPermisosById(String id);
 
     boolean existsByDocumentoIdentidad(String documentoIdentidad);
+
+    boolean existsByDocumentoIdentidadAndIdNot(String documentoIdentidad, String id);
+
+    /** El correo es CITEXT: el CAST conserva la comparación sin distinguir mayúsculas. */
+    @Query(value = "SELECT count(*) > 0 FROM seguridad.usuario WHERE correo = CAST(:correo AS citext) AND id <> :id",
+            nativeQuery = true)
+    boolean existeCorreoDeOtro(@Param("correo") String correo, @Param("id") String id);
+
+
 }

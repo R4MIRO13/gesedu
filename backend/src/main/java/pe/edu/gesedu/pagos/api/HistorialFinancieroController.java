@@ -28,9 +28,10 @@ class HistorialFinancieroController {
         this.historial = historial;
     }
 
-    @Operation(summary = "Busca estudiantes por nombre, DNI o código (hasta 15) para elegir el historial que se consulta")
+    @Operation(summary = "Busca estudiantes por nombre, DNI o código (hasta 15): para elegir el historial que se consulta "
+            + "o el estudiante cuyos datos se editan")
     @GetMapping("/busqueda")
-    @PreAuthorize("hasAuthority('PAGO_HISTORIAL_CONSULTAR')")
+    @PreAuthorize("hasAnyAuthority('PAGO_HISTORIAL_CONSULTAR', 'USUARIO_GESTIONAR')")
     List<AlumnoBusqueda> buscar(@RequestParam String q) {
         return historial.buscar(q);
     }

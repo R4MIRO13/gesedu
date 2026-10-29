@@ -126,6 +126,6 @@ public final class PagosDtos {
                                       boolean sinPagos) {
     }
 
-    public record AlumnoBusqueda(String codigo, String nombre, String documento) {
+    public record AlumnoBusqueda(String id, String codigo, String nombre, String documento) {
     }
 }

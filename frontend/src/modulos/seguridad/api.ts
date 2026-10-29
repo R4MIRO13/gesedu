@@ -76,3 +76,81 @@ export function useDesbloquearUsuario() {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['usuarios'] }),
   })
 }
+
+// ---- RF-02: datos personales de estudiantes y apoderados ----
+
+export interface FichaAlumno {
+  id: string
+  codigo: string
+  nombres: string
+  apellidos: string
+  documento: string
+  correo: string | null
+  fechaNacimiento: string
+  parentesco: string
+  apoderadoId: string
+  apoderado: string | null
+  cuentaActiva: boolean
+  version: number
+}
+
+export interface FichaApoderado {
+  id: string
+  nombres: string
+  apellidos: string
+  documento: string
+  correo: string | null
+  telefono: string | null
+  cuentaActiva: boolean
+  version: number
+}
+
+export interface CambiosAlumno {
+  nombres: string
+  apellidos: string
+  documento: string
+  correo: string | null
+  fechaNacimiento: string
+  parentesco: string
+}
+
+export interface CambiosApoderado {
+  nombres: string
+  apellidos: string
+  documento: string
+  correo: string | null
+  telefono: string | null
+}
+
+const etag = (version: number) => `"${version}"`
+
+export function useFichaAlumno(id: string) {
+  return useQuery({ queryKey: ['ficha-alumno', id], queryFn: () => api<FichaAlumno>(`/alumnos/${id}`), staleTime: 0 })
+}
+
+export function useFichaApoderado(id: string | undefined) {
+  return useQuery({
+    queryKey: ['ficha-apoderado', id],
+    queryFn: () => api<FichaApoderado>(`/apoderados/${id}`),
+    enabled: !!id,
+    staleTime: 0,
+  })
+}
+
+export function useActualizarAlumno(id: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ cambios, version }: { cambios: CambiosAlumno; version: number }) =>
+      api<FichaAlumno>(`/alumnos/${id}`, { method: 'PUT', cuerpo: cambios, cabeceras: { 'If-Match': etag(version) } }),
+    onSuccess: (ficha) => cliente.setQueryData(['ficha-alumno', id], ficha),
+  })
+}
+
+export function useActualizarApoderado(id: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ cambios, version }: { cambios: CambiosApoderado; version: number }) =>
+      api<FichaApoderado>(`/apoderados/${id}`, { method: 'PUT', cuerpo: cambios, cabeceras: { 'If-Match': etag(version) } }),
+    onSuccess: (ficha) => cliente.setQueryData(['ficha-apoderado', id], ficha),
+  })
+}

@@ -33,7 +33,8 @@ public class OpenApiConfig {
     @Bean
     GroupedOpenApi grupoSeguridad() {
         return GroupedOpenApi.builder().group("1-seguridad").displayName("Seguridad")
-                .pathsToMatch("/api/v1/auth/**").build();
+                .pathsToMatch("/api/v1/auth/**", "/api/v1/usuarios/**", "/api/v1/alumnos/*", "/api/v1/apoderados/*")
+                .pathsToExclude("/api/v1/alumnos/busqueda").build();
     }
 
     @Bean
@@ -51,7 +52,7 @@ public class OpenApiConfig {
     @Bean
     GroupedOpenApi grupoMatricula() {
         return GroupedOpenApi.builder().group("4-matricula").displayName("Matrícula")
-                .pathsToMatch("/api/v1/solicitudes-matricula/**").build();
+                .pathsToMatch("/api/v1/solicitudes-matricula/**", "/api/v1/matriculas/**").build();
     }
 
     @Bean

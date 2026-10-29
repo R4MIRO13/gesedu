@@ -74,7 +74,7 @@ public class HistorialFinancieroService {
         List<String> ids = familias.buscarAlumnoIds(texto).stream().limit(MAXIMO_RESULTADOS_BUSQUEDA).toList();
         return familias.alumnos(ids).values().stream()
                 .sorted(Comparator.comparing(AlumnoResumen::nombreCompleto))
-                .map(a -> new AlumnoBusqueda(a.codigo(), a.nombreCompleto(), a.documento()))
+                .map(a -> new AlumnoBusqueda(a.id(), a.codigo(), a.nombreCompleto(), a.documento()))
                 .toList();
     }
 
