@@ -17,6 +17,8 @@ import { Route as RestablecerContrasenaRouteImport } from './routes/restablecer-
 import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditoria'
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetHorariosBloquesRouteImport } from './routes/intranet/horarios/bloques'
+import { Route as IntranetMatriculasIndexRouteImport } from './routes/intranet/matriculas/index'
+import { Route as IntranetMatriculasCodigoRouteImport } from './routes/intranet/matriculas/$codigo'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +61,17 @@ const IntranetHorariosBloquesRoute = IntranetHorariosBloquesRouteImport.update({
   path: '/horarios/bloques',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetMatriculasIndexRoute = IntranetMatriculasIndexRouteImport.update({
+  id: '/matriculas/',
+  path: '/matriculas/',
+  getParentRoute: () => IntranetRoute,
+} as any)
+const IntranetMatriculasCodigoRoute =
+  IntranetMatriculasCodigoRouteImport.update({
+    id: '/matriculas/$codigo',
+    path: '/matriculas/$codigo',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetHorariosAnioElaborarRoute =
   IntranetHorariosAnioElaborarRouteImport.update({
     id: '/horarios/$anio/elaborar',
@@ -75,6 +88,8 @@ export interface FileRoutesByFullPath {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRoutesByTo {
@@ -86,6 +101,8 @@ export interface FileRoutesByTo {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRoutesById {
@@ -98,6 +115,8 @@ export interface FileRoutesById {
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRouteTypes {
@@ -111,6 +130,8 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
+    | '/intranet/matriculas/$codigo'
+    | '/intranet/matriculas/'
     | '/intranet/horarios/$anio/elaborar'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -122,6 +143,8 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
+    | '/intranet/matriculas/$codigo'
+    | '/intranet/matriculas'
     | '/intranet/horarios/$anio/elaborar'
   id:
     | '__root__'
@@ -133,6 +156,8 @@ export interface FileRouteTypes {
     | '/intranet/auditoria'
     | '/intranet/inicio'
     | '/intranet/horarios/bloques'
+    | '/intranet/matriculas/$codigo'
+    | '/intranet/matriculas/'
     | '/intranet/horarios/$anio/elaborar'
   fileRoutesById: FileRoutesById
 }
@@ -202,6 +227,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetHorariosBloquesRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/matriculas/': {
+      id: '/intranet/matriculas/'
+      path: '/matriculas'
+      fullPath: '/intranet/matriculas/'
+      preLoaderRoute: typeof IntranetMatriculasIndexRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/matriculas/$codigo': {
+      id: '/intranet/matriculas/$codigo'
+      path: '/matriculas/$codigo'
+      fullPath: '/intranet/matriculas/$codigo'
+      preLoaderRoute: typeof IntranetMatriculasCodigoRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/$anio/elaborar': {
       id: '/intranet/horarios/$anio/elaborar'
       path: '/horarios/$anio/elaborar'
@@ -216,6 +255,8 @@ interface IntranetRouteChildren {
   IntranetAuditoriaRoute: typeof IntranetAuditoriaRoute
   IntranetInicioRoute: typeof IntranetInicioRoute
   IntranetHorariosBloquesRoute: typeof IntranetHorariosBloquesRoute
+  IntranetMatriculasCodigoRoute: typeof IntranetMatriculasCodigoRoute
+  IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
   IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
 }
 
@@ -223,6 +264,8 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetAuditoriaRoute: IntranetAuditoriaRoute,
   IntranetInicioRoute: IntranetInicioRoute,
   IntranetHorariosBloquesRoute: IntranetHorariosBloquesRoute,
+  IntranetMatriculasCodigoRoute: IntranetMatriculasCodigoRoute,
+  IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,
   IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,
 }
 

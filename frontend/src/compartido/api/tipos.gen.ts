@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/solicitudes-matricula/{codigo}/evaluacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Registra el tipo de estudiante y el resultado de la admisión (C-37). Exige If-Match; devuelve el detalle actualizado */
+        put: operations["registrarEvaluacion"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/horarios/{anio}/borrador/asignaciones/{id}": {
         parameters: {
             query?: never;
@@ -17,6 +34,40 @@ export interface paths {
         post?: never;
         /** Elimina una clase del borrador (FA-2). Exige If-Match */
         delete: operations["eliminar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/solicitudes-matricula/{codigo}/rechazo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rechaza la solicitud (FA-1 a FA-5). El motivo debe coincidir con las validaciones, salvo VOLUNTAD_APODERADO. Exige If-Match; avisa al apoderado por correo */
+        post: operations["rechazar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/solicitudes-matricula/{codigo}/confirmacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirma la matrícula en una sola transacción: vacante, matrícula, compromisos de pago y correo al apoderado. Exige If-Match. 422 si una validación falla; 409 SIN_VACANTE o CONFLICTO_CONCURRENCIA */
+        post: operations["confirmar"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -73,6 +124,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/recuperacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pide el enlace de recuperación. Responde 202 con el mismo cuerpo exista o no la cuenta */
+        post: operations["solicitar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/recuperacion/confirmacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Define la contraseña nueva con el enlace (un solo uso, 30 min). Revoca las sesiones abiertas. 400 TOKEN_RECUPERACION_INVALIDO si el enlace no sirve */
+        post: operations["confirmar_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/inicio-sesion": {
         parameters: {
             query?: never;
@@ -119,6 +204,57 @@ export interface paths {
         put?: never;
         /** Crea un bloque horario (solo Administrador). 409 si se superpone con otro del mismo día */
         post: operations["crear_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/solicitudes-matricula": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bandeja de solicitudes (paso 1), paginada y filtrable por estado y texto */
+        get: operations["listar_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/solicitudes-matricula/{codigo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalle para evaluar: datos, validaciones, vacantes por sección y resumen de costos. Devuelve ETag con la versión */
+        get: operations["detalle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/solicitudes-matricula/{codigo}/documentos/{documentoId}/url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** URL prefirmada de 5 minutos para ver un documento de la solicitud */
+        get: operations["urlDocumento"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -187,7 +323,7 @@ export interface paths {
             cookie?: never;
         };
         /** Consulta los registros de auditoría (más recientes primero). desde y hasta son fechas yyyy-MM-dd, inclusive; sort: fechaHora, accion o modulo, con ,asc o ,desc */
-        get: operations["listar_1"];
+        get: operations["listar_2"];
         put?: never;
         post?: never;
         delete?: never;
@@ -204,7 +340,7 @@ export interface paths {
             cookie?: never;
         };
         /** Un registro con los campos que cambiaron (valor anterior y nuevo) */
-        get: operations["detalle"];
+        get: operations["detalle_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -251,12 +387,120 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        EvaluacionRequest: {
+            /**
+             * @example NUEVO_INGRESO
+             * @enum {string}
+             */
+            tipoEstudiante: "NUEVO_INGRESO" | "RECURRENTE";
+            /**
+             * @example ADMITIDO
+             * @enum {string}
+             */
+            estadoAdmision: "ADMITIDO" | "NO_ADMITIDO" | "NO_APLICA";
+        };
+        AlumnoSolicitudDto: {
+            codigo?: string;
+            nombre?: string;
+            documento?: string;
+            /** Format: date */
+            fechaNacimiento?: string;
+        };
+        ApoderadoSolicitudDto: {
+            nombre?: string;
+            documento?: string;
+            correo?: string;
+            telefono?: string;
+            parentesco?: string;
+        };
+        DetalleSolicitud: {
+            codigo?: string;
+            anioEscolar?: string;
+            grado?: string;
+            /** Format: date */
+            fechaSolicitud?: string;
+            /** @enum {string} */
+            tipoEstudiante?: "NUEVO_INGRESO" | "RECURRENTE";
+            /** @enum {string} */
+            estadoAdmision?: "ADMITIDO" | "NO_ADMITIDO" | "NO_APLICA";
+            /** @enum {string} */
+            estadoDocumentacion?: "COMPLETA" | "INCOMPLETA";
+            /** @enum {string} */
+            estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
+            /** @enum {string} */
+            motivoRechazo?: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
+            estadoVisible?: string;
+            observacion?: string;
+            alumno?: components["schemas"]["AlumnoSolicitudDto"];
+            apoderado?: components["schemas"]["ApoderadoSolicitudDto"];
+            documentos?: components["schemas"]["DocumentoSolicitudDto"][];
+            validaciones?: components["schemas"]["ValidacionMatriculaDto"][];
+            puedeConfirmar?: boolean;
+            secciones?: components["schemas"]["SeccionConVacantes"][];
+            costos?: components["schemas"]["ResumenCostos"];
+            /** Format: int64 */
+            version?: number;
+        };
+        DocumentoSolicitudDto: {
+            id?: string;
+            tipo?: string;
+            nombreArchivo?: string;
+            contentType?: string;
+            /** Format: int64 */
+            tamanoBytes?: number;
+        };
+        LineaCosto: {
+            concepto?: string;
+            periodo?: string;
+            monto?: string;
+            /** Format: date */
+            fechaVencimiento?: string;
+        };
+        ResumenCostos: {
+            lineas?: components["schemas"]["LineaCosto"][];
+            total?: string;
+            porcentajePenalidad?: number;
+        };
+        SeccionConVacantes: {
+            id?: string;
+            gradoId?: string;
+            nombre?: string;
+            /** Format: int32 */
+            capacidad?: number;
+            /** Format: int32 */
+            vacantes?: number;
+        };
+        ValidacionMatriculaDto: {
+            /** @enum {string} */
+            regla?: "DOCUMENTACION" | "ADMISION" | "MATRICULA_ACTIVA" | "DEUDAS";
+            aprobada?: boolean;
+            mensaje?: string;
+            /** @enum {string} */
+            motivoSugerido?: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
+        };
         AsignacionRequest: {
+            /**
+             * @description Bloque horario (martes de 9:15 a 10:00 en la demo)
+             * @example 0192f1c2-7b1e-7c5a-9d3e-4a6f8b2c1d00
+             */
             bloqueId: string;
+            /**
+             * @description Sección (3° A)
+             * @example 0192f1c2-7b1e-7c5a-9d3e-4a6f8b2c1d01
+             */
             seccionId: string;
+            /**
+             * @description Curso (Matemática)
+             * @example 0192f1c2-7b1e-7c5a-9d3e-4a6f8b2c1d02
+             */
             cursoId: string;
+            /**
+             * @description Docente asociado al curso y disponible en el bloque
+             * @example 0192f1c2-7b1e-7c5a-9d3e-4a6f8b2c1d03
+             */
             docenteId: string;
-            asignacionId?: string;
+            /** @description Solo al validar una edición: la clase que se está editando */
+            asignacionId?: string | null;
         };
         AsignacionDto: {
             id?: string;
@@ -267,6 +511,42 @@ export interface components {
             curso?: string;
             docenteId?: string;
             docente?: string;
+        };
+        RechazoRequest: {
+            /**
+             * @example VOLUNTAD_APODERADO
+             * @enum {string}
+             */
+            motivo: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
+            /** @example El apoderado desiste de la matrícula */
+            observacion?: string;
+        };
+        ResultadoRechazo: {
+            solicitudId?: string;
+            codigoSolicitud?: string;
+            /** @enum {string} */
+            motivo?: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
+            estadoVisible?: string;
+        };
+        ConfirmacionRequest: {
+            /** @description Sección elegida, del mismo grado que la solicitud */
+            seccionId: string;
+            /**
+             * @description El apoderado aceptó el resumen de costos (debe ser true)
+             * @example true
+             */
+            costosAceptados: boolean;
+        };
+        ResultadoConfirmacion: {
+            matriculaId?: string;
+            codigoSolicitud?: string;
+            seccionId?: string;
+            seccion?: string;
+            /** Format: int32 */
+            vacantesRestantes?: number;
+            /** Format: int32 */
+            compromisosGenerados?: number;
+            total?: string;
         };
         ConflictoDto: {
             tipo?: string;
@@ -291,8 +571,33 @@ export interface components {
             expiraEn?: string;
             usuario?: components["schemas"]["DatosUsuario"];
         };
-        InicioSesionRequest: {
+        SolicitudRecuperacion: {
+            /** @example apoderado@demo.gesedu.pe */
             correo: string;
+        };
+        RespuestaSolicitud: {
+            mensaje?: string;
+        };
+        ConfirmacionRecuperacion: {
+            /** @description El token que viene en el enlace del correo */
+            token: string;
+            /**
+             * Format: password
+             * @description Mínimo 8 caracteres, con una letra y un número
+             */
+            nuevaContrasena: string;
+        };
+        InicioSesionRequest: {
+            /**
+             * @description Correo de la cuenta (el inicio de sesión es solo con correo, C-02)
+             * @example admin@demo.gesedu.pe
+             */
+            correo: string;
+            /**
+             * Format: password
+             * @description Contraseña de la cuenta
+             * @example Gesedu2027!
+             */
             contrasena: string;
         };
         CrearBloqueRequest: {
@@ -311,6 +616,42 @@ export interface components {
             horaInicio?: string;
             /** Format: time-local */
             horaFin?: string;
+        };
+        PaginaSolicitudResumen: {
+            contenido?: components["schemas"]["SolicitudResumen"][];
+            /** Format: int32 */
+            pagina?: number;
+            /** Format: int32 */
+            tamano?: number;
+            /** Format: int64 */
+            totalElementos?: number;
+            /** Format: int32 */
+            totalPaginas?: number;
+        };
+        SolicitudResumen: {
+            codigo?: string;
+            alumno?: string;
+            grado?: string;
+            /** Format: date */
+            fechaSolicitud?: string;
+            /** @enum {string} */
+            tipoEstudiante?: "NUEVO_INGRESO" | "RECURRENTE";
+            /** @enum {string} */
+            estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
+            /** @enum {string} */
+            estadoDocumentacion?: "COMPLETA" | "INCOMPLETA";
+            /** @enum {string} */
+            motivoRechazo?: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
+            estadoVisible?: string;
+        };
+        UrlPrefirmada: {
+            url?: string;
+            metodo?: string;
+            /** Format: date-time */
+            expiraEn?: string;
+            cabeceras?: {
+                [key: string]: string;
+            };
         };
         BorradorDto: {
             id?: string;
@@ -415,6 +756,34 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    registrarEvaluacion: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvaluacionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleSolicitud"];
+                };
+            };
+        };
+    };
     modificar: {
         parameters: {
             query?: never;
@@ -464,6 +833,62 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    rechazar: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RechazoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResultadoRechazo"];
+                };
+            };
+        };
+    };
+    confirmar: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmacionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResultadoConfirmacion"];
+                };
             };
         };
     };
@@ -540,6 +965,52 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["SesionIniciada"];
                 };
+            };
+        };
+    };
+    solicitar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudRecuperacion"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RespuestaSolicitud"];
+                };
+            };
+        };
+    };
+    confirmar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmacionRecuperacion"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -635,6 +1106,77 @@ export interface operations {
             };
         };
     };
+    listar_1: {
+        parameters: {
+            query?: {
+                estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
+                q?: string;
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PaginaSolicitudResumen"];
+                };
+            };
+        };
+    };
+    detalle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleSolicitud"];
+                };
+            };
+        };
+    };
+    urlDocumento: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                codigo: string;
+                documentoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UrlPrefirmada"];
+                };
+            };
+        };
+    };
     obtener: {
         parameters: {
             query?: {
@@ -709,7 +1251,7 @@ export interface operations {
             };
         };
     };
-    listar_1: {
+    listar_2: {
         parameters: {
             query?: {
                 usuarioId?: string;
@@ -738,7 +1280,7 @@ export interface operations {
             };
         };
     };
-    detalle: {
+    detalle_1: {
         parameters: {
             query?: never;
             header?: never;

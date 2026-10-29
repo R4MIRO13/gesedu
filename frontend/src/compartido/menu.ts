@@ -21,6 +21,12 @@ export const OPCIONES_MENU = [
     permiso: 'HORARIO_GESTIONAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/matriculas' }),
+    titulo: 'Matrículas',
+    descripcion: 'Evalúa las solicitudes: valida, confirma la sección y genera los compromisos de pago.',
+    permiso: 'MATRICULA_EVALUAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/auditoria' }),
     titulo: 'Auditoría',
     descripcion: 'Registro inmutable de las operaciones críticas.',

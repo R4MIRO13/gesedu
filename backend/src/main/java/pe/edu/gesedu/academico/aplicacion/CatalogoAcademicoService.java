@@ -13,6 +13,8 @@ import pe.edu.gesedu.academico.dominio.Curso;
 import pe.edu.gesedu.academico.dominio.Grado;
 import pe.edu.gesedu.academico.dominio.Seccion;
 import pe.edu.gesedu.academico.infraestructura.CursoRepository;
+import pe.edu.gesedu.compartido.error.CodigoError;
+import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
 import pe.edu.gesedu.academico.infraestructura.GradoRepository;
 import pe.edu.gesedu.academico.infraestructura.SeccionRepository;
 
@@ -30,6 +32,14 @@ public class CatalogoAcademicoService {
 
     /** Curso con sus horas lectivas semanales de referencia (RF-23, C-10). */
     public record CursoResumen(String id, String nombre, int horasLectivas) {
+    }
+
+    /** Sección con su cupo, para elegirla al matricular (RF-04). */
+    public record SeccionConVacantes(String id, String gradoId, String nombre, int capacidad, int vacantes) {
+    }
+
+    /** Grado de un año escolar. */
+    public record GradoResumen(String id, String anioEscolarId, int numeroNivel) {
     }
 
     private final SeccionRepository secciones;
@@ -59,6 +69,44 @@ public class CatalogoAcademicoService {
         return cursos.findByAnioEscolarIdOrderByNombre(anioEscolarId).stream()
                 .map(CatalogoAcademicoService::aResumen)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public GradoResumen grado(String gradoId) {
+        Grado grado = grados.findById(gradoId).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el grado"));
+        return new GradoResumen(grado.getId(), grado.getAnioEscolarId(), grado.getNumeroNivel());
+    }
+
+    /** Secciones del grado con sus vacantes, ordenadas por letra. */
+    @Transactional(readOnly = true)
+    public List<SeccionConVacantes> seccionesDelGrado(String gradoId) {
+        Grado grado = grados.findById(gradoId).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el grado"));
+        return secciones.findByGradoIdOrderByLetra(gradoId).stream()
+                .map(s -> new SeccionConVacantes(s.getId(), s.getGradoId(),
+                        grado.getNumeroNivel() + "° " + s.getLetra(), s.getCapacidad(), s.getVacantesDisponibles()))
+                .toList();
+    }
+
+    /**
+     * Descuenta una vacante de la sección con un UPDATE condicional (RNF-09). Corre en la transacción del llamador:
+     * si la matrícula se revierte, la vacante vuelve.
+     *
+     * @throws ExcepcionNegocio SIN_VACANTE si ya no quedaban
+     */
+    @Transactional
+    public void reservarVacante(String seccionId) {
+        if (secciones.reservarVacante(seccionId) == 0) {
+            throw new ExcepcionNegocio(CodigoError.SIN_VACANTE);
+        }
+    }
+
+    /** Vacantes actuales de la sección, tras la última escritura. */
+    @Transactional(readOnly = true)
+    public int vacantes(String seccionId) {
+        return secciones.vacantesDe(seccionId).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe la sección"));
     }
 
     private static SeccionResumen aResumen(Seccion seccion, Grado grado) {

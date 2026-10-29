@@ -58,6 +58,8 @@ class DatosDemoIT extends BaseIT {
                 + "academico.seccion s JOIN academico.grado g ON g.id = s.grado_id WHERE g.numero_nivel = 3 AND s.letra = 'A')");
     }
 
+    private static final String ANIO_2027 = "(SELECT id FROM academico.anio_escolar WHERE anio = 2027)";
+
     private String admin() throws Exception {
         return tokenDe("admin@demo.gesedu.pe");
     }
@@ -101,8 +103,8 @@ class DatosDemoIT extends BaseIT {
     @Test
     void elAnio2027TieneCuatroBimestresDiezSeccionesSeisCursosYSusBloques() {
         assertThat(contar("academico.bimestre")).isEqualTo(4);
-        assertThat(contar("academico.grado")).isEqualTo(5);
-        assertThat(contar("academico.seccion")).isEqualTo(10);
+        assertThat(contar("academico.grado WHERE anio_escolar_id = " + ANIO_2027)).isEqualTo(5);
+        assertThat(contar("academico.seccion WHERE anio_escolar_id = " + ANIO_2027)).isEqualTo(10);
         assertThat(contar("academico.curso")).isEqualTo(6);
         assertThat(jdbc.queryForObject("SELECT sum(horas_lectivas) FROM academico.curso", Long.class)).isEqualTo(22);
         assertThat(contar("horarios.bloque_horario")).isEqualTo(45);
@@ -117,12 +119,12 @@ class DatosDemoIT extends BaseIT {
         Map<String, Object> tercerA = jdbc.queryForMap("SELECT s.vacantes_disponibles, s.capacidad, "
                 + "u.nombres FROM academico.seccion s JOIN academico.grado g ON g.id = s.grado_id "
                 + "JOIN seguridad.docente d ON d.id = s.tutor_docente_id JOIN seguridad.usuario u ON u.id = d.usuario_id "
-                + "WHERE g.numero_nivel = 3 AND s.letra = 'A'");
+                + "WHERE g.numero_nivel = 3 AND s.letra = 'A' AND g.anio_escolar_id = " + ANIO_2027);
         assertThat(tercerA.get("vacantes_disponibles")).isEqualTo(4);
         assertThat(tercerA.get("capacidad")).isEqualTo(30);
         assertThat(tercerA.get("nombres")).as("tutora de 3° A").isEqualTo("Rosa");
         assertThat(jdbc.queryForObject("SELECT s.vacantes_disponibles FROM academico.seccion s JOIN academico.grado g "
-                + "ON g.id = s.grado_id WHERE g.numero_nivel = 2 AND s.letra = 'B'", Integer.class)).isEqualTo(1);
+                + "ON g.id = s.grado_id WHERE g.numero_nivel = 2 AND s.letra = 'B' AND g.anio_escolar_id = " + ANIO_2027, Integer.class)).isEqualTo(1);
     }
 
     @Test
@@ -130,10 +132,61 @@ class DatosDemoIT extends BaseIT {
         Map<String, Object> matricula = jdbc.queryForMap("SELECT m.estado, sm.codigo_seguimiento, g.numero_nivel, s.letra, "
                 + "a.codigo_alumno FROM matricula.matricula m JOIN matricula.solicitud_matricula sm ON sm.id = m.solicitud_id "
                 + "JOIN academico.seccion s ON s.id = m.seccion_id JOIN academico.grado g ON g.id = s.grado_id "
-                + "JOIN seguridad.alumno a ON a.id = m.alumno_id");
+                + "JOIN seguridad.alumno a ON a.id = m.alumno_id WHERE a.codigo_alumno = '2026-0315'");
         assertThat(matricula).containsEntry("estado", "CONFIRMADA").containsEntry("numero_nivel", 3)
                 .containsEntry("letra", "A").containsEntry("codigo_alumno", "2026-0315")
                 .containsEntry("codigo_seguimiento", "MAT-2027-00478");
+    }
+
+    // --- Semilla P2: UC-02 (docs/PLAN.md § 11, paso 7) ---
+
+    @Test
+    void laBandejaTieneLasOchoSolicitudesPendientesDeLaDemo() throws Exception {
+        JsonNode bandeja = get("/api/v1/solicitudes-matricula?estado=PENDIENTE_REVISION&size=50", admin()).cuerpo();
+
+        assertThat(bandeja.get("contenido").valueStream().map(f -> f.get("codigo").asString()).toList())
+                .containsExactly("MAT-2027-00479", "MAT-2027-00480", "MAT-2027-00481", "MAT-2027-00482",
+                        "MAT-2027-00483", "MAT-2027-00484", "MAT-2027-00485", "MAT-2027-00486");
+    }
+
+    @Test
+    void valeriaTorresPuedeConfirmarse3AConUnCostoDe3850() throws Exception {
+        Respuesta r = get("/api/v1/solicitudes-matricula/MAT-2027-00482", admin());
+
+        JsonNode detalle = r.cuerpo();
+        assertThat(detalle.get("alumno").get("nombre").asString()).isEqualTo("Valeria Torres Gil");
+        assertThat(detalle.get("puedeConfirmar").asBoolean()).isTrue();
+        assertThat(detalle.get("costos").get("lineas")).hasSize(11);
+        assertThat(detalle.get("costos").get("total").asString()).isEqualTo("3850.00");
+        assertThat(detalle.get("secciones").valueStream().map(sec -> sec.get("nombre").asString() + ":" + sec.get("vacantes").asInt())
+                .toList()).contains("3° A:4", "3° B:30");
+    }
+
+    @Test
+    void cadaAlternativaDelGuionTieneSuSolicitudBloqueada() throws Exception {
+        String admin = admin();
+        // FA-3: Diego Paredes debe S/ 700.00 del 2026
+        JsonNode deuda = get("/api/v1/solicitudes-matricula/MAT-2027-00479", admin).cuerpo();
+        assertThat(deuda.get("puedeConfirmar").asBoolean()).isFalse();
+        assertThat(deuda.get("validaciones").toString()).contains("S/ 700.00");
+        // FA-1: Camila Soto no fue admitida
+        assertThat(get("/api/v1/solicitudes-matricula/MAT-2027-00480", admin).cuerpo().get("validaciones").toString())
+                .contains("NO_ADMITIDO");
+        // FA-2: Mateo Ríos ya está matriculado en 2027
+        assertThat(get("/api/v1/solicitudes-matricula/MAT-2027-00481", admin).cuerpo().get("validaciones").toString())
+                .contains("DUPLICIDAD");
+        // Joaquín Méndez tiene la documentación incompleta
+        assertThat(get("/api/v1/solicitudes-matricula/MAT-2027-00485", admin).cuerpo().get("estadoDocumentacion").asString())
+                .isEqualTo("INCOMPLETA");
+    }
+
+    @Test
+    void lasSolicitudesQueCompitenPor2BVenLaUltimaVacante() throws Exception {
+        for (String codigo : new String[] {"MAT-2027-00483", "MAT-2027-00484"}) {
+            JsonNode secciones = get("/api/v1/solicitudes-matricula/" + codigo, admin()).cuerpo().get("secciones");
+            assertThat(secciones.valueStream().map(sec -> sec.get("nombre").asString() + ":" + sec.get("vacantes").asInt()).toList())
+                    .contains("2° B:1");
+        }
     }
 
     // --- Guion de UC-21 sobre la semilla (docs/PLAN.md § 11, paso 4) ---
@@ -145,7 +198,7 @@ class DatosDemoIT extends BaseIT {
     @Test
     void elBorradorDeLaDemoTiene3ADe22HorasConDiecinueveAsignadas() throws Exception {
         String seccion3A = id("SELECT s.id FROM academico.seccion s JOIN academico.grado g ON g.id = s.grado_id "
-                + "WHERE g.numero_nivel = 3 AND s.letra = 'A'");
+                + "WHERE g.numero_nivel = 3 AND s.letra = 'A' AND g.anio_escolar_id = " + ANIO_2027);
 
         JsonNode borrador = get("/api/v1/horarios/2027/borrador?perspectiva=SECCION&seccionId=" + seccion3A, admin()).cuerpo();
 
@@ -160,7 +213,7 @@ class DatosDemoIT extends BaseIT {
     void elGuionDeLaDemoMuestraElCruceDeRosaLaNoDisponibilidadDeCarlosYGuardaConFernando() throws Exception {
         String admin = admin();
         String seccion3A = id("SELECT s.id FROM academico.seccion s JOIN academico.grado g ON g.id = s.grado_id "
-                + "WHERE g.numero_nivel = 3 AND s.letra = 'A'");
+                + "WHERE g.numero_nivel = 3 AND s.letra = 'A' AND g.anio_escolar_id = " + ANIO_2027);
         String martes915 = id("SELECT id FROM horarios.bloque_horario WHERE dia_semana = 'MARTES' AND hora_inicio = TIME '09:15'");
         String matematica = id("SELECT id FROM academico.curso WHERE slug = 'matematica'");
         String rosa = id("SELECT id FROM seguridad.docente WHERE codigo_docente = 'DOC-001'");

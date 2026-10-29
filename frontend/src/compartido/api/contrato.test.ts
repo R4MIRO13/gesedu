@@ -18,6 +18,21 @@ import type {
   Pagina,
   RegistroAuditoria,
 } from '../../modulos/auditoria/api'
+import type {
+  AlumnoSolicitud,
+  ApoderadoSolicitud,
+  DetalleSolicitud,
+  DocumentoSolicitud,
+  LineaCosto,
+  MotivoRechazo,
+  ReglaMatricula,
+  ResultadoConfirmacion,
+  ResultadoRechazo,
+  ResumenCostos,
+  SeccionConVacantes,
+  SolicitudResumen,
+  ValidacionMatricula,
+} from '../../modulos/matricula/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -66,5 +81,29 @@ describe('contrato de la auditoría (UC-25)', () => {
     expectTypeOf<keyof DetalleRegistroAuditoria>().toEqualTypeOf<keyof Esquemas['DetalleRegistroAuditoriaDto']>()
     expectTypeOf<keyof CatalogosAuditoria>().toEqualTypeOf<keyof Esquemas['CatalogosAuditoriaDto']>()
     expectTypeOf<keyof Pagina<RegistroAuditoria>>().toEqualTypeOf<keyof Esquemas['PaginaRegistroAuditoriaDto']>()
+  })
+})
+
+describe('contrato de la matrícula (UC-02)', () => {
+  it('los tipos de la bandeja y del detalle tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof SolicitudResumen>().toEqualTypeOf<keyof Esquemas['SolicitudResumen']>()
+    expectTypeOf<keyof DetalleSolicitud>().toEqualTypeOf<keyof Esquemas['DetalleSolicitud']>()
+    expectTypeOf<keyof AlumnoSolicitud>().toEqualTypeOf<keyof Esquemas['AlumnoSolicitudDto']>()
+    expectTypeOf<keyof ApoderadoSolicitud>().toEqualTypeOf<keyof Esquemas['ApoderadoSolicitudDto']>()
+    expectTypeOf<keyof DocumentoSolicitud>().toEqualTypeOf<keyof Esquemas['DocumentoSolicitudDto']>()
+    expectTypeOf<keyof ValidacionMatricula>().toEqualTypeOf<keyof Esquemas['ValidacionMatriculaDto']>()
+    expectTypeOf<keyof SeccionConVacantes>().toEqualTypeOf<keyof Esquemas['SeccionConVacantes']>()
+    expectTypeOf<keyof ResumenCostos>().toEqualTypeOf<keyof Esquemas['ResumenCostos']>()
+    expectTypeOf<keyof LineaCosto>().toEqualTypeOf<keyof Esquemas['LineaCosto']>()
+  })
+
+  it('los resultados de confirmar y rechazar coinciden con el backend', () => {
+    expectTypeOf<keyof ResultadoConfirmacion>().toEqualTypeOf<keyof Esquemas['ResultadoConfirmacion']>()
+    expectTypeOf<keyof ResultadoRechazo>().toEqualTypeOf<keyof Esquemas['ResultadoRechazo']>()
+  })
+
+  it('los motivos y reglas son los del backend', () => {
+    expectTypeOf<MotivoRechazo>().toEqualTypeOf<NonNullable<Esquemas['RechazoRequest']['motivo']>>()
+    expectTypeOf<ReglaMatricula>().toEqualTypeOf<NonNullable<Esquemas['ValidacionMatriculaDto']['regla']>>()
   })
 })

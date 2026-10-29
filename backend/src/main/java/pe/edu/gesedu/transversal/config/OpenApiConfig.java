@@ -47,4 +47,10 @@ public class OpenApiConfig {
         return GroupedOpenApi.builder().group("3-auditoria").displayName("Auditoría")
                 .pathsToMatch("/api/v1/auditoria/**").build();
     }
+
+    @Bean
+    GroupedOpenApi grupoMatricula() {
+        return GroupedOpenApi.builder().group("4-matricula").displayName("Matrícula")
+                .pathsToMatch("/api/v1/solicitudes-matricula/**").build();
+    }
 }
