@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { OPCIONES_MENU } from '../../compartido/menu'
-import { obtenerSesion, ROLES, tienePermiso } from '../../compartido/sesion'
+import { obtenerSesion, ROLES, tienePermiso } from '../../compartido/auth/sesion'
 
 export const Route = createFileRoute('/intranet/inicio')({
   component: Inicio,
@@ -23,7 +23,7 @@ function Inicio() {
       <h2>Tus opciones</h2>
       <div className="rejilla">
         {opciones.map((o) => (
-          <Link key={o.to} to={o.to} className="tarjeta opcion">
+          <Link key={o.titulo} {...o.enlace} className="tarjeta opcion">
             <h3>{o.titulo}</h3>
             <p className="muted">{o.descripcion}</p>
           </Link>

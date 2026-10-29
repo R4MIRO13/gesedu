@@ -1,5 +1,7 @@
 package pe.edu.gesedu.academico.aplicacion;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,5 +29,19 @@ public class AnioEscolarService {
                 .map(a -> new AnioEscolarResumen(a.getId(), a.getAnio(), a.getEstado()))
                 .orElseThrow(() -> new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO,
                         "No existe el año escolar " + anio));
+    }
+
+    @Transactional(readOnly = true)
+    public AnioEscolarResumen obtenerPorId(String id) {
+        return anios.findById(id)
+                .map(a -> new AnioEscolarResumen(a.getId(), a.getAnio(), a.getEstado()))
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO,
+                        "No existe el año escolar"));
+    }
+
+    /** Ids de los años escolares anteriores al indicado (para las deudas de años pasados, UC-02 FA-3). */
+    @Transactional(readOnly = true)
+    public List<String> idsAnterioresA(int anio) {
+        return anios.findByAnioLessThan(anio).stream().map(a -> a.getId()).toList();
     }
 }

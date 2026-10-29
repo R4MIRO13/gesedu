@@ -1,21 +1,4 @@
-:root {
-  --color-fondo: #f4f6fb;
-  --color-superficie: #ffffff;
-  --color-texto: #1c2434;
-  --color-suave: #5d6a85;
-  --color-borde: #dfe3ee;
-  --color-primario: #2748b5;
-  --color-primario-oscuro: #1c378d;
-  --color-error-fondo: #fdecec;
-  --color-error: #a61b1b;
-  --color-ok-fondo: #e6f6ec;
-  --color-ok: #17692f;
-  --radio: 10px;
-  --sombra: 0 1px 3px rgb(20 30 60 / 8%);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--color-texto);
-  line-height: 1.5;
-}
+/* Los tokens de diseño están en compartido/estilos/tokens.css y el layout en responsive.css */
 
 * {
   box-sizing: border-box;
@@ -61,21 +44,6 @@ code {
 }
 
 /* Estructura */
-.app {
-  min-height: 100vh;
-}
-.barra {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1.5rem;
-  padding: 0.75rem 1.25rem;
-  background: var(--color-superficie);
-  border-bottom: 1px solid var(--color-borde);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
 .marca {
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -84,37 +52,6 @@ code {
 .marca-grande {
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
-}
-.menu {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  flex: 1;
-}
-.menu a {
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
-  color: var(--color-texto);
-  text-decoration: none;
-}
-.menu a:hover {
-  background: #eef1f8;
-}
-.menu a.activo {
-  background: var(--color-primario);
-  color: #fff;
-}
-.usuario {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.usuario-datos {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
-  line-height: 1.2;
-  font-size: 0.9rem;
 }
 .contenido {
   max-width: 1100px;
@@ -217,7 +154,8 @@ a.opcion p {
   min-width: 140px;
 }
 .campo input,
-.campo select {
+.campo select,
+.campo textarea {
   font: inherit;
   font-weight: 400;
   padding: 0.5rem 0.65rem;
@@ -228,6 +166,7 @@ a.opcion p {
 }
 .campo input:focus,
 .campo select:focus,
+.campo textarea:focus,
 .btn:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--color-primario);
@@ -353,20 +292,219 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 640px) {
-  .barra {
-    padding: 0.6rem 0.9rem;
-  }
-  .usuario {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .usuario-datos {
-    text-align: left;
-  }
   .contenido {
     padding: 1rem 0.9rem 2rem;
   }
   .campo-corto {
     width: 100%;
+  }
+}
+
+.error-campo {
+  color: var(--color-error);
+  font-size: 0.85rem;
+}
+.campo input[aria-invalid="true"] {
+  border-color: var(--color-error);
+}
+
+/* Matriz de horario (UC-21 / UC-23) */
+.matriz-movil {
+  display: none;
+}
+.celda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  color: inherit;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+}
+button.celda {
+  cursor: pointer;
+}
+button.celda:hover {
+  background: var(--color-hover);
+}
+.celda-activa {
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 2px rgb(39 72 181 / 25%);
+}
+.hora-franja {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.pestanas {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+.pestana {
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.pestana-activa {
+  background: var(--color-primario);
+  border-color: var(--color-primario);
+  color: #fff;
+}
+.lista-dia {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.elaborar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 1rem;
+  align-items: start;
+}
+.lateral-elaborar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.grupo-opciones {
+  border: 0;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+.grupo-opciones legend {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+.opcion-radio {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+.opcion-radio .muted,
+.opcion-radio .etiqueta {
+  margin-left: auto;
+}
+.etiqueta-si {
+  background: var(--color-ok-fondo);
+  color: var(--color-ok);
+}
+.etiqueta-no {
+  background: var(--color-error-fondo);
+  color: var(--color-error);
+}
+.carga {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.carga li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+}
+.carga-completa span:first-child {
+  color: var(--color-ok);
+  font-weight: 600;
+}
+@media (max-width: 900px) {
+  .elaborar {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 767px) {
+  .matriz-escritorio {
+    display: none;
+  }
+  .matriz-movil {
+    display: block;
+  }
+}
+
+/* Menú «Exportar ▾» de la auditoría */
+.menu-exportar {
+  position: relative;
+}
+.menu-exportar summary {
+  list-style: none;
+  cursor: pointer;
+}
+.menu-exportar summary::-webkit-details-marker {
+  display: none;
+}
+.menu-exportar-opciones {
+  position: absolute;
+  right: 0;
+  z-index: 4;
+  min-width: 11rem;
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+.menu-exportar-opciones button {
+  padding: 0.5rem 0.9rem;
+  text-align: left;
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.menu-exportar-opciones button:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+.cambios {
+  width: 100%;
+  background: #f8f9fd;
+}
+.solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.validaciones {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0 0 0.75rem;
+}
+dt {
+  color: var(--color-suave);
+}
+dd {
+  margin: 0;
+}
+@media (max-width: 640px) {
+  dl {
+    grid-template-columns: 1fr;
   }
 }

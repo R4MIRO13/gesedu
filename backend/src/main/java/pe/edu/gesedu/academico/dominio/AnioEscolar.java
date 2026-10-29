@@ -4,17 +4,14 @@ import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
+import pe.edu.gesedu.compartido.dominio.EntidadBase;
 
 /** Año escolar. En la demo solo se lee (lo siembra db/demo); su configuración llega con UC-13. */
 @Entity
 @Table(name = "anio_escolar", schema = "academico")
-public class AnioEscolar {
-
-    @Id
-    @Column(length = 36)
-    private String id;
+public class AnioEscolar extends EntidadBase {
 
     @Column(nullable = false, unique = true)
     private int anio;
@@ -29,10 +26,6 @@ public class AnioEscolar {
     private String estado;
 
     protected AnioEscolar() {
-    }
-
-    public String getId() {
-        return id;
     }
 
     public int getAnio() {

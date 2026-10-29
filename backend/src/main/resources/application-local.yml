@@ -12,6 +12,8 @@ spring:
 gesedu:
   seguridad:
     jwt-secreto: ${GESEDU_JWT_SECRET:cambia-esta-clave-solo-para-desarrollo-local-0123456789}
+  archivos:
+    secreto-url: ${GESEDU_ARCHIVOS_SECRETO:cambia-esta-clave-solo-para-desarrollo-local-archivos-0123456789}
 
 logging:
   level:

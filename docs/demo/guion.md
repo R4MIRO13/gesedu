@@ -1,13 +1,13 @@
-# Guion de la demo del 23/10/2026
+# Guion de la demo ampliada (fase 1)
 
-Duración: **8 a 10 minutos**. Hilo conductor: el **diagrama de contenedores** (`docs/arquitectura.pdf`, Figura 3, § 7). Tenerlo abierto en una pestaña y volver a él en cada bloque.
+Duración: **15 minutos** (el corte mínimo, pasos 0 a 6, dura unos **10**). Hilo conductor: el **diagrama de contenedores** (`docs/arquitectura.pdf`, Figura 3, § 7). Tenerlo abierto en una pestaña y volver a él en cada bloque.
 
 ```
 Usuario ──HTTPS──▶ SPA (React, :5173) ──JSON/REST + JWT──▶ API Backend (Spring Boot, :8080) ──JDBC──▶ PostgreSQL 18 (Docker, :5432)
-                                                                                                     └─ esquemas: seguridad, academico, horarios, auditoria…
+                                                                                    └─ SMTP ──▶ Mailpit (:8025, en AWS: SES)
 ```
 
-Fuera de la demo (en el diagrama, pero no se muestran): almacén de documentos (S3) y correo (SES).
+Fuera de la demo (en el diagrama, pero no se muestran): almacén de documentos (S3). Los documentos de las solicitudes de matrícula figuran por nombre, pero sus archivos no están sembrados: no abrir «Ver».
 
 Credenciales: todas las cuentas usan la contraseña `Gesedu2027!`.
 
@@ -15,12 +15,28 @@ Credenciales: todas las cuentas usan la contraseña `Gesedu2027!`.
 |---|---|
 | `admin@demo.gesedu.pe` | Administrador (Carmen, Secretaría académica) |
 | `directivo@demo.gesedu.pe` | Administrador (Ricardo, Coordinación académica) |
-| `docente@demo.gesedu.pe`, `alumno@demo.gesedu.pe`, `apoderado@demo.gesedu.pe` | Docente, Alumno, Apoderado |
-| `bloqueo@demo.gesedu.pe` | Docente, reservada para mostrar el bloqueo |
+| `docente@demo.gesedu.pe`, `alumno@demo.gesedu.pe`, `apoderado@demo.gesedu.pe` | Docente (Rosa Quispe), Alumno (Lucía García), Apoderado (María Rojas) |
+| `bloqueo@demo.gesedu.pe` | Docente (Hugo), reservada para mostrar el bloqueo |
+
+Qué cubre cada paso:
+
+| Paso | Contenido | Prioridad | Requisitos |
+|---|---|---|---|
+| 1 a 2 | Contenedores y Swagger | P1 | RNF-04 |
+| 3 | Inicio de sesión por rol y 403 | P1 | RF-52, RNF-07 |
+| 4 | Bloqueo tras 5 intentos | P1 | UC-24 FA-3, RNF-06 |
+| 5 | Elaborar horario | P1 | UC-21, RF-39 a RF-42, RF-47 |
+| 6 | Auditoría y exportación | P1 | UC-25, RF-49, RF-51, RNF-08 |
+| 7 | Recuperación de contraseña y desbloqueo | P2 | UC-24 FA-5, RF-52 |
+| 8 | Registrar matrícula | P2 | UC-02, RF-04, RF-05, RF-07, RF-12, RNF-10 |
+| 9 | Última vacante en vivo | P2 | RNF-09 |
+| 10 | ArchUnit | P1 | DA-02 |
+
+Si P2 no llega a tiempo, se omiten los pasos 7 a 9 y la demo sigue siendo válida.
 
 ---
 
-## Antes de presentar (15 minutos antes)
+## Antes de presentar (20 minutos antes)
 
 Todos los comandos son de PowerShell, desde la raíz del repositorio (`gesedu/`).
 
@@ -40,7 +56,7 @@ Get-Service *postgres*                      # ver el nombre exacto
 Stop-Service -Name <nombre-del-servicio>    # y volver a ejecutar la comprobación
 ```
 
-Comprobar también que 8080 y 5173 estén libres (deben salir vacíos antes de arrancar, o ser los procesos que se van a usar):
+Comprobar también que 8080, 5173, 8025 y 1025 estén libres (deben salir vacíos antes de arrancar, salvo los de Mailpit si ya está levantado):
 
 ```powershell
 Get-NetTCPConnection -LocalPort 8080,5173 -State Listen -ErrorAction SilentlyContinue
@@ -52,7 +68,10 @@ Detener el backend si estuviera corriendo (Ctrl+C o parar en IntelliJ) y luego:
 
 ```powershell
 .\scripts\reiniciar-bd.ps1     # borra el volumen y recrea postgres:18 (roles gesedu_migrador y gesedu_app incluidos)
+docker compose up -d postgres mailpit
 ```
+
+**Hay que reiniciar la base antes de cada ensayo completo**: UC-02 gasta vacantes y la semilla (`V1000` a `V1002`) vuelve al estado de la demo.
 
 ### 3. Backend con datos de demo (terminal 1)
 
@@ -93,17 +112,19 @@ function Enviar($ruta, $objeto, $token) {
 ### 6. Lista de comprobación final
 
 ```powershell
-docker ps --format "table {{.Names}}`t{{.Image}}`t{{.Ports}}`t{{.Status}}"   # gesedu-postgres  postgres:18  ...  (healthy)
+docker ps --format "table {{.Names}}`t{{.Image}}`t{{.Ports}}`t{{.Status}}"   # gesedu-postgres  postgres:18 y gesedu-mailpit, ambos (healthy)
 curl.exe -s http://localhost:8080/actuator/health                            # {"groups":["liveness","readiness"],"status":"UP"}
 curl.exe -s -o NUL -w "SPA: %{http_code}`n" http://localhost:5173/login      # SPA: 200
 psql-app -c "SELECT count(*) FROM horarios.bloque_horario;"                  # 45 (9 bloques x 5 días)
+psql-app -c "SELECT codigo_seguimiento, estado FROM matricula.solicitud_matricula WHERE estado = 'PENDIENTE_REVISION' ORDER BY 1;"   # 8 filas, MAT-2027-00479 a 00486
+psql-app -c "SELECT s.letra, s.vacantes_disponibles FROM academico.seccion s JOIN academico.grado g ON g.id = s.grado_id JOIN academico.anio_escolar a ON a.id = g.anio_escolar_id WHERE a.anio = 2027 AND ((g.numero_nivel = 3 AND s.letra = 'A') OR (g.numero_nivel = 2 AND s.letra = 'B'));"   # 3° A = 4 vacantes; 2° B = 1
 ```
 
-- [ ] Pestañas del navegador listas: (1) `arquitectura.pdf` en el diagrama de contenedores, (2) `http://localhost:5173/login`, (3) `http://localhost:8080/swagger-ui.html`.
+- [ ] Pestañas del navegador listas: (1) `arquitectura.pdf` en el diagrama de contenedores, (2) `http://localhost:5173/login`, (3) `http://localhost:8080/swagger-ui.html`, (4) Mailpit `http://localhost:8025` (vacío: sin correos).
 - [ ] Nadie ha iniciado sesión en la SPA (cerrar sesión o ventana nueva). Usar una ventana de incógnito evita sesiones viejas.
-- [ ] F12 se abre en la pestaña de la SPA solo durante el paso 3.
+- [ ] F12 se abre en la pestaña de la SPA solo durante el paso 5.
 - [ ] Zoom del navegador y de las terminales subido para que se lea desde atrás.
-- [ ] El token dura **15 minutos** y la SPA no lo renueva: si la demo se alarga, volver a iniciar sesión.
+- [ ] El token dura **15 minutos** y la SPA lo renueva sola con la cookie de refresh; en Swagger, el token pegado sí vence: volver a iniciar sesión si la demo se alarga.
 - [ ] La cuenta `bloqueo@` no debe estar ya bloqueada (si se ensayó, ver «Reiniciar entre ensayos»).
 
 ---
@@ -111,12 +132,13 @@ psql-app -c "SELECT count(*) FROM horarios.bloque_horario;"                  # 4
 ## Recorrido
 
 ### 0. El diagrama (30 s)
-Mostrar la Figura 3. «Hoy vamos a recorrer estos tres contenedores con una operación real, de la pantalla a la base de datos, y a comprobar que las reglas de seguridad y de arquitectura se cumplen.»
+Mostrar la Figura 3. «Hoy recorremos estos contenedores con tres casos de uso reales, de la pantalla a la base de datos, y comprobamos que las reglas de seguridad, de concurrencia y de arquitectura se cumplen.»
 
 ### 1. Cada contenedor está corriendo (1 min)
 | Contenedor del diagrama | Dónde corre | Comando | Resultado |
 |---|---|---|---|
 | Base de datos | Docker, `postgres:18` | `docker ps --format "table {{.Names}}`t{{.Image}}`t{{.Ports}}`t{{.Status}}"` | `gesedu-postgres` … `(healthy)` |
+| Correo (SES en AWS) | Docker, Mailpit | misma tabla; abrir `http://localhost:8025` | `gesedu-mailpit` … `(healthy)` |
 | API Backend | JVM, perfiles `local,demo` | `curl.exe -s http://localhost:8080/actuator/health` | `"status":"UP"` |
 | SPA | Vite | abrir `http://localhost:5173` | pantalla de login |
 
@@ -125,75 +147,74 @@ Mostrar los esquemas por módulo en la base:
 ```powershell
 psql-app -c "\dn"
 ```
-Aparecen `seguridad`, `academico`, `horarios`, `auditoria`, etc. (los módulos de la arquitectura, un esquema por cada uno).
+Aparecen `seguridad`, `academico`, `matricula`, `pagos`, `horarios`, `auditoria`, etc. (los módulos de la arquitectura, un esquema por cada uno).
 
 ### 2. Swagger: el contrato de la API (1 min)
-Pestaña `http://localhost:8080/swagger-ui.html`.
-1. En **Seguridad** → `POST /api/v1/auth/inicio-sesion` → *Try it out* con `{"correo":"admin@demo.gesedu.pe","contrasena":"Gesedu2027!"}` → *Execute*. Mostrar `tokenAcceso`, `expiraEn` (15 min) y la lista de `permisos`.
+Pestaña `http://localhost:8080/swagger-ui.html`. El selector de arriba tiene un grupo por módulo: **Seguridad**, **Horarios**, **Auditoría** y **Matrícula**.
+1. En **Seguridad** → `POST /api/v1/auth/inicio-sesion` → *Try it out* (el cuerpo ya trae un ejemplo) con `{"correo":"admin@demo.gesedu.pe","contrasena":"Gesedu2027!"}` → *Execute*. Mostrar `tokenAcceso`, `expiraEn` (15 min) y la lista de `permisos`.
 2. Copiar el `tokenAcceso`, botón **Authorize** (candado), pegarlo → *Authorize*.
-3. `GET /api/v1/anios-escolares/{anio}/bloques` con `anio = 2027` → 200 con los bloques.
+3. Cambiar al grupo **Horarios** → `GET /api/v1/anios-escolares/{anio}/bloques` con `anio = 2027` → 200 con los 45 bloques. Mostrar de paso los endpoints del borrador (`If-Match`, 409) y, en **Matrícula**, `POST …/confirmacion`.
 
-«Este es el contrato que usan frontend y backend. La SPA solo habla con este API, nunca con la base.»
+«Este es el contrato que usan frontend y backend; los tipos de la SPA se generan de aquí. La SPA solo habla con este API, nunca con la base.»
 
-### 3. Recorrido de punta a punta: login → crear un bloque → F12 → psql (3 min)
+### 3. Inicio de sesión por rol y 403 (1,5 min) — RF-52, RNF-07
+En la SPA (`http://localhost:5173`) iniciar sesión con cada cuenta y mostrar el menú lateral:
 
-**3.1 Login en la SPA.** `http://localhost:5173` → `admin@demo.gesedu.pe` / `Gesedu2027!`. Se llega a `/intranet/inicio`: el menú se arma con los permisos de la cuenta (Inicio, Bloques horarios, Auditoría).
+| Cuenta | Opciones del menú |
+|---|---|
+| `admin@demo.gesedu.pe` | Inicio, Bloques horarios, Elaborar horario, Matrículas, Usuarios, Auditoría |
+| `directivo@demo.gesedu.pe` | las mismas (es un Administrador con otro cargo: «Coordinación académica») |
+| `docente@demo.gesedu.pe` | Inicio, Bloques horarios |
+| `alumno@demo.gesedu.pe` | Inicio, Bloques horarios |
+| `apoderado@demo.gesedu.pe` | Inicio, Bloques horarios |
 
-**3.2 Crear un bloque.** Menú **Bloques horarios** (año 2027 muestra lunes a viernes). Con **F12 → Network → Fetch/XHR** abierto y *Preserve log* activado:
-- Formulario «Nuevo bloque para 2027»: **Sábado**, **08:00** a **08:45** → *Crear bloque*. Aparece «Bloque creado» y el sábado en la lista.
-
-**3.3 Qué mostrar en F12.** Seleccionar la petición `bloques` (POST):
-- **Headers**: `POST http://localhost:5173/api/v1/anios-escolares/2027/bloques`, estado **201**. La SPA llama a su propio origen y Vite reenvía `/api` al :8080 (el arco SPA → API del diagrama). `Authorization: Bearer eyJ…` es el JWT.
-- **Payload**: `{"diaSemana":"SABADO","horaInicio":"08:00","horaFin":"08:45"}`.
-- **Response**: el bloque creado, con su `id` (UUIDv7).
-
-**3.4 psql: el dato está en el último contenedor** (arco API → BD):
-```powershell
-psql-app -c "SELECT id, dia_semana, hora_inicio, hora_fin FROM horarios.bloque_horario WHERE dia_semana = 'SABADO';"
-```
-El `id` coincide con el de la respuesta de F12. Esta consulta ya corre como `gesedu_app`, el mismo rol que usa la API.
-
-> Si se repite la demo sin reiniciar la base, ese bloque ya existe y la API responde **409** (se superpone). Es otra regla que se puede mostrar, o se reinicia la base (ver «Reiniciar entre ensayos»).
-
-### 4. El alumno no puede crear: 403 con problem+json (1 min)
-En la terminal 3:
+Con el **alumno**, en la terminal 3, el backend es quien decide:
 ```powershell
 $tokenAlumno = ((Enviar '/auth/inicio-sesion' @{ correo = 'alumno@demo.gesedu.pe'; contrasena = 'Gesedu2027!' }) |
   Select-Object -Last 1 | ConvertFrom-Json).tokenAcceso
 
-Enviar '/anios-escolares/2027/bloques' @{ diaSemana = 'SABADO'; horaInicio = '09:00'; horaFin = '09:45' } $tokenAlumno
+curl.exe -s -i "$api/auditoria/registros" -H "Authorization: Bearer $tokenAlumno"
 ```
-Resultado:
 ```
 HTTP/1.1 403
 Content-Type: application/problem+json;charset=UTF-8
 
-{"type":"https://gesedu.pe/problemas/ACCESO_DENEGADO","title":"No tienes permiso para realizar esta acción","status":403,"detail":"No tienes permiso para realizar esta acción","instance":"/api/v1/anios-escolares/2027/bloques","codigo":"ACCESO_DENEGADO"}
+{"type":"https://gesedu.pe/problemas/ACCESO_DENEGADO","title":"No tienes permiso para realizar esta acción","status":403,…,"codigo":"ACCESO_DENEGADO"}
 ```
-Señalar: `Content-Type: application/problem+json` (RFC 9457) y la propiedad `codigo`. «El alumno sí puede **listar** los bloques (permiso `HORARIO_CONSULTAR`); crear exige `HORARIO_CONFIGURAR`. La SPA oculta el formulario, pero quien decide es el backend.» En la SPA, con `alumno@demo.gesedu.pe`, la pantalla de bloques no muestra el formulario ni la opción Auditoría.
+Señalar `application/problem+json` (RFC 9457) y la propiedad `codigo`; la respuesta llega en menos de un segundo. «La SPA solo oculta opciones; la autorización real es del backend.»
 
-### 5. Bloqueo tras 5 intentos fallidos (1 min)
-```powershell
-1..5 | ForEach-Object {
-  "--- Intento $_"
-  Enviar '/auth/inicio-sesion' @{ correo = 'bloqueo@demo.gesedu.pe'; contrasena = 'incorrecta' } | Select-Object -Last 1
-}
-```
-Los intentos 1 a 4 responden `CREDENCIALES_INVALIDAS` (401). El **quinto** ya responde `CUENTA_BLOQUEADA` (401) con `bloqueadoHasta` (15 minutos después). Probar luego con la contraseña **correcta**:
-```powershell
-Enviar '/auth/inicio-sesion' @{ correo = 'bloqueo@demo.gesedu.pe'; contrasena = 'Gesedu2027!' } | Select-Object -Last 1
-```
-Sigue respondiendo `CUENTA_BLOQUEADA`: el bloqueo vale aunque la clave sea la correcta (RNF-06). El mismo mensaje se ve en la pantalla de login de la SPA.
+### 4. Bloqueo tras 5 intentos fallidos (1 min) — UC-24 FA-3, RNF-06
+En la SPA, cerrar sesión y en `/login` escribir 5 veces una contraseña incorrecta con `bloqueo@demo.gesedu.pe`. Los intentos 1 a 4 muestran «Correo o contraseña incorrectos.»; el quinto muestra el mensaje del wireframe («Tu cuenta se bloqueó temporalmente por 5 intentos fallidos…») con la hora hasta la que dura. Probar luego con la contraseña **correcta** `Gesedu2027!`: sigue bloqueada (el bloqueo vale aunque la clave sea la correcta).
 
-### 6. Auditoría (1 min)
+Mismo resultado desde la API (opcional):
+```powershell
+Enviar '/auth/inicio-sesion' @{ correo = 'bloqueo@demo.gesedu.pe'; contrasena = 'incorrecta' } | Select-Object -Last 1
+```
+El quinto intento responde `CUENTA_BLOQUEADA` (401) con `bloqueadoHasta` (15 minutos después, en `-05:00`).
+
+### 5. Elaborar horario (3 min) — UC-21, RF-39 a RF-42, RF-47
+Con `admin@demo.gesedu.pe`: menú **Elaborar horario** (año 2027, perspectiva *Sección*). Abrir F12 → Network → Fetch/XHR con *Preserve log*.
+
+1. Elegir **3° A**. La matriz muestra el borrador y, a la derecha, «Carga horaria · 3° A»: **19 de 22 horas asignadas**, con las horas de cada curso.
+2. Tocar el bloque **martes 9:15 – 10:00** (libre) y elegir **Matemática**. El panel de docentes solo ofrece a los asociados al curso (RF-47) y valida en vivo:
+   - **Rosa Quispe** → «Tiene clase en 4° B».
+   - **Carlos Ríos** → «No disponible».
+   - **Fernando Medina** → disponible.
+3. Elegir a Rosa: el aviso en vivo dice «Prof. R. Quispe ya tiene clase en 4° B el martes de 9:15 a 10:00» (en F12, `POST …/borrador/validaciones`). El botón **Guardar** no se bloquea por los avisos: al pulsarlo es el **servidor** quien rechaza, con **409 `CONFLICTO_HORARIO`**, y la causa aparece en rojo. Repetir con Carlos: **422 `DOCENTE_NO_DISPONIBLE`**.
+4. Elegir a **Fernando Medina** («Sin conflictos: se puede guardar.») y **Guardar**: F12 muestra `POST …/borrador/asignaciones` con la cabecera `If-Match: "n"` y estado **201**. La carga de 3° A pasa a **20 de 22**.
+5. Cambiar a la perspectiva **Docente** y elegir a Fernando: es el **mismo borrador**, con la clase nueva.
+6. **Versión (`@Version`)**: abrir una segunda pestaña en la misma pantalla, guardar una clase en la primera y luego intentar otra en la segunda sin recargar → **409 `CONFLICTO_CONCURRENCIA`** y el aviso «Recargar matriz».
+
+«Dos personas no pueden pisarse: la versión del borrador viaja en `If-Match`, y los índices únicos de la base cierran la carrera aunque las dos validaciones pasen.» El alumno no ve esta opción ni puede llamar al borrador (RF-44).
+
+### 6. Auditoría y exportación (2 min) — UC-25, RF-49, RF-51, RNF-08
 En la SPA, con `admin@demo.gesedu.pe`: menú **Auditoría** (los demás roles no la ven). Aparecen, más recientes primero:
-- `BLOQUEAR_CUENTA` (módulo `SEGURIDAD`), del paso 5.
-- `CREAR_BLOQUE_HORARIO` (módulo `HORARIOS`, entidad `BloqueHorario`), del paso 3, con el nombre de Carmen Salas Paredes.
+- `CREAR_ASIGNACION_HORARIO` (módulo `HORARIOS`), del paso 5, con el nombre de Carmen Salas Paredes. **Ver cambios** muestra el curso y el docente (valor anterior vacío, valor nuevo).
+- `BLOQUEAR_CUENTA` (módulo `SEGURIDAD`, usuario *Sistema*), del paso 4.
 
-Probar el filtro por módulo `HORARIOS`. «Cada operación crítica se anota con `@Auditable` en la **misma transacción**: si la operación se revierte, el registro también.»
+Filtrar por módulo `HORARIOS` (las acciones del segundo filtro dependen del módulo) y por fechas. **Exportar ▾ → Excel (.xlsx)** descarga el archivo con los mismos filtros; mostrarlo abierto.
 
-### 7. La auditoría no se puede borrar: el DELETE falla en psql (1 min)
-Primero como la aplicación (`gesedu_app`):
+**La auditoría no se puede borrar.** Primero como la aplicación (`gesedu_app`):
 ```powershell
 psql-app -c "DELETE FROM auditoria.registro_auditoria;"
 ```
@@ -207,27 +228,73 @@ psql-duenio -c "DELETE FROM auditoria.registro_auditoria;"
 ```
 ERROR:  Las tablas de auditoría son de solo inserción: DELETE no está permitido en auditoria.registro_auditoria
 ```
-«Dos defensas: la aplicación solo tiene `INSERT` y `SELECT`, y un trigger rechaza `UPDATE`, `DELETE` y `TRUNCATE` incluso al dueño (RNF-08).» Confirmar que sigue todo:
-```powershell
-psql-app -c "SELECT count(*) FROM auditoria.registro_auditoria;"
-```
+«Dos defensas: la aplicación solo tiene `INSERT` y `SELECT`, y un trigger rechaza `UPDATE`, `DELETE` y `TRUNCATE` incluso al dueño. Cada operación crítica se anota con `@Auditable` en la **misma transacción**: si la operación se revierte, el registro también.»
 
-### 8. ArchUnit en verde (1 min)
+### 7. Recuperación de contraseña y desbloqueo (2 min) — UC-24 FA-5 *(P2)*
+1. En `/login`, **¿Olvidaste tu contraseña?** → escribir `bloqueo@demo.gesedu.pe` → *Enviar enlace*. El mensaje es el mismo si se escribe un correo que no existe (probarlo con `nadie@demo.gesedu.pe`: no llega nada a Mailpit).
+2. Abrir Mailpit (`http://localhost:8025`): llegó «Restablece tu contraseña de GESEDU» con el enlace de un solo uso (30 minutos).
+3. Abrir el enlace, definir una contraseña nueva (8 a 72 caracteres, con una letra y un número, por ejemplo `NuevaClave2027`) → vuelve al login. Volver a abrir el **mismo enlace** y definir otra contraseña: «El enlace no es válido o ya venció», con el botón *Pedir otro enlace*.
+4. La cuenta seguirá **bloqueada** (la recuperación no levanta un bloqueo vigente). Con el administrador: menú **Usuarios** → filtrar por estado *Bloqueados* → Hugo Gonzales aparece como «Bloqueado · 5 intentos» → **Desbloquear**. Ahora `bloqueo@demo.gesedu.pe` entra con la contraseña nueva.
+5. En **Auditoría** aparecen `RESTABLECER_CONTRASENA` y `DESBLOQUEAR_CUENTA`.
+
+### 8. Registrar matrícula (4 min) — UC-02 *(P2)*
+Con `admin@demo.gesedu.pe`: menú **Matrículas**. La bandeja muestra 8 solicitudes pendientes (`MAT-2027-00479` a `00486`).
+
+**Flujo básico — `MAT-2027-00482`, Valeria Torres Gil (3°).**
+1. *Evaluar*. Las cuatro validaciones dicen «Cumple» (documentación, admisión, matrícula activa y deudas). Las secciones muestran **3° A: 4 de 30 vacantes** y 3° B: 30.
+2. El **resumen de costos** lista 11 compromisos (matrícula y 10 pensiones de S/ 350.00): **S/ 3850.00**. La SPA no calcula nada: viene del backend.
+3. Elegir **3° A**, marcar «El apoderado aceptó los costos» → **Confirmar matrícula**. Aparece: «3° A pasa a 3 vacantes y se generan 11 compromisos de pago por S/ 3850.00».
+4. En Mailpit llegó «Matrícula confirmada 2027 — Valeria Torres Gil» a `familia.torres@demo.gesedu.pe`, con el cronograma. Sale **después del commit**: si la transacción falla, no sale.
+5. Comprobar en la base que todo ocurrió junto:
+```powershell
+psql-app -c "SELECT count(*), sum(monto_base) FROM pagos.obligacion_pago o JOIN seguridad.alumno a ON a.id = o.alumno_id WHERE a.codigo_alumno = '2026-0404';"   # 11 | 3850.00
+```
+y en **Auditoría**, `CONFIRMAR_MATRICULA` con los cambios (estado, sección, vacantes 4 → 3, compromisos generados).
+
+**Alternativas (se muestran con otras solicitudes; cada una bloquea la confirmación y se rechaza con su motivo):**
+
+| Solicitud | Alternativa | Qué se ve | Rechazo |
+|---|---|---|---|
+| `00479` Diego Paredes | FA-3, deuda | «Tiene deudas vencidas de años anteriores por S/ 700.00»; *Confirmar* deshabilitado | Motivo **Deudas** → «Rechazada por Deudas»; el correo a `familia.paredes@` incluye el importe |
+| `00480` Camila Soto | FA-1, no admitida | Admisión «No admitido» (se puede cambiar en «Resultado de admisión» si el colegio la admitió) | **No Admitido** |
+| `00481` Mateo Ríos | FA-2, matrícula activa | «Ya tiene una matrícula activa en el año» (está en 3° B) | **Duplicidad** |
+| `00485` Joaquín Méndez | Documentación incompleta | «Documentos incompletos» en la bandeja; no se puede confirmar | (se espera a que complete la documentación) |
+| `00486` Renata Castillo | FA-5, desistimiento | Todo en verde | **Voluntad del apoderado**, sin tocar vacantes ni deudas |
+
+Tras rechazar, la solicitud queda «Rechazada por …» y **no queda matrícula** (`SELECT count(*) FROM matricula.matricula …`). Si se elige un motivo que las validaciones no respaldan, el backend responde 400 `SOLICITUD_INVALIDA`.
+
+### 9. La última vacante, en vivo (1,5 min) — RNF-09 *(P2)*
+`MAT-2027-00483` (Andrés Quispe) y `00484` (Sofía Vargas) son admitidos y compiten por **2° B, que tiene 1 vacante**.
+1. Abrir las dos solicitudes en dos pestañas, elegir **2° B** en ambas y marcar los costos.
+2. Confirmar la primera: «2° B pasa a 0 vacantes y se generan 11 compromisos de pago».
+3. Confirmar la segunda (su pantalla todavía muestra «1 de 30 vacantes»): el servidor responde **409 `SIN_VACANTE`** y la SPA avisa que la sección ya no tiene vacantes y sugiere elegir otra o rechazar la solicitud por falta de vacante.
+4. Rechazar la segunda con motivo **Sin vacante** → «Rechazada sin Vacante».
+
+La prueba con 20 hilos simultáneos sobre una sola vacante (una gana, 19 reciben `SIN_VACANTE`, las vacantes nunca bajan de 0) se ejecuta con:
+```powershell
+cd backend
+.\mvnw.cmd -B verify "-Dtest=NoExiste" "-Dit.test=VacantesConcurrentesIT" "-Dsurefire.failIfNoSpecifiedTests=false" "-Dfailsafe.failIfNoSpecifiedTests=false"
+```
+Necesita Docker y tarda cerca de un minuto: mejor mostrar el último resultado verde en IntelliJ (`Todas las pruebas`) que correrla en vivo.
+
+«La vacante se descuenta con un `UPDATE` condicional (`vacantes > 0`): la base serializa a quienes compiten y el `CHECK` impide que baje de cero.»
+
+### 10. ArchUnit en verde (1 min)
 ```powershell
 cd backend
 .\mvnw.cmd -B test "-Dtest=ArquitecturaTest"
 ```
-Resultado esperado (unos 10 s, no necesita Docker):
+Resultado esperado (unos 15 s, no necesita Docker):
 ```
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
 BUILD SUCCESS
 ```
-«Las reglas del documento de arquitectura se verifican en cada build: el dominio no depende de otras capas, la API no usa la infraestructura, un módulo solo usa a otro por su capa de aplicación y no hay ciclos entre módulos.»
+«Las reglas del documento de arquitectura se verifican en cada build: el dominio no depende de otras capas, la API no usa la infraestructura, un módulo solo usa a otro por su capa de aplicación y no hay ciclos entre módulos. Matrícula usa a Pagos por su capa de aplicación, no por sus tablas.»
 
 > La verificación completa del backend (pruebas de integración con Testcontainers incluidas) es `.\mvnw.cmd -B verify` y tarda varios minutos: **no ejecutarla en vivo**.
 
 ### Cierre (30 s)
-Volver a la Figura 3. «Lo que vimos es el esqueleto vertical: SPA → API → base de datos, con seguridad por permisos, auditoría inmutable y reglas de arquitectura automatizadas. El resto de módulos se construye sobre esto.»
+Volver a la Figura 3. «Vimos tres casos de uso completos sobre el esqueleto: seguridad por permisos, horarios sin cruces ni pisadas, matrícula atómica con correo, y una auditoría que nadie puede borrar. El resto de módulos se construye sobre esto.»
 
 ---
 
@@ -239,20 +306,25 @@ Volver a la Figura 3. «Lo que vimos es el esqueleto vertical: SPA → API → b
 | Flyway: `Validate failed` / checksum distinto | La base tiene migraciones de otra versión | `.\scripts\reiniciar-bd.ps1` y arrancar el backend de nuevo |
 | El login de la SPA no responde o dice «No se pudo conectar con el servidor» | El backend no está arriba o el proxy no llega al :8080 | `curl.exe -s http://localhost:8080/actuator/health`; reiniciar el backend. Usar Swagger como plan B |
 | Login: `CREDENCIALES_INVALIDAS` con la clave correcta | Base sin datos de demo (backend arrancado sin el perfil `demo`) | Detener el backend, `.\scripts\reiniciar-bd.ps1` y arrancar con `local,demo` |
-| De pronto todo da 401 / la SPA vuelve a `/login` | El token venció (15 min) | Iniciar sesión de nuevo |
-| Crear bloque devuelve **409** | El sábado 08:00–08:45 ya existe o se superpone | Es la regla de no superposición; crear otro horario libre (por ejemplo, Sábado 10:00–10:45) o reiniciar la base |
-| `bloqueo@` ya está bloqueada antes de la demo | Se ensayó el paso 5 | Ver «Reiniciar entre ensayos» |
+| De pronto todo da 401 / la SPA vuelve a `/login` | El token o la cookie de refresh vencieron, o se inició sesión en otra pestaña con otra cuenta | Iniciar sesión de nuevo |
+| Elaborar horario: no aparece el conflicto de Rosa o de Carlos | Se ensayó y quedó una clase de Fernando (u otra) en el martes 9:15 de 3° A | Eliminar esa clase en la matriz (*Eliminar clase*) o reiniciar la base |
+| Elaborar horario devuelve 409 al guardar | Otra pestaña cambió el borrador | Es la regla de versión: *Recargar matriz* y repetir |
+| Mailpit no muestra el correo | El backend se arrancó sin el perfil `local` (usa otro SMTP) o Mailpit no está levantado | `docker compose up -d mailpit`; el correo se reintenta 3 veces y no revierte la operación |
+| Matrículas: la bandeja está vacía o faltan solicitudes | Base sin la semilla `V1002` (datos de una versión anterior) | `.\scripts\reiniciar-bd.ps1` y arrancar con `local,demo` |
+| Matrículas: «Confirmar matrícula» está deshabilitado | Una validación no se cumple (es el comportamiento esperado en las alternativas) o la solicitud ya se evaluó | Leer la validación fallida; rechazar con su motivo o elegir otra solicitud |
+| Matrículas: «Ver» un documento da 404 | Los archivos de la semilla no existen (solo su registro) | No abrir los documentos en la demo |
+| Usuarios: no aparece «Bloqueado» | La cuenta no llegó a 5 intentos fallidos consecutivos o ya se desbloqueó | Repetir el paso 4 |
 | `Enviar` o `psql-app` «no se reconoce» | Se abrió otra terminal | Pegar de nuevo el bloque del paso 5 de «Antes de presentar» |
 | `curl.exe` falla con comillas | Se usó `curl` (alias de `Invoke-WebRequest`) | Usar `curl.exe` o la función `Enviar` |
-| F12 no muestra la petición | Se abrió F12 después de enviar | Activar *Preserve log* y crear otro bloque (cambiar la hora) |
+| F12 no muestra la petición | Se abrió F12 después de enviar | Activar *Preserve log* y guardar otra clase |
 | `mvnw` falla por falta de disco o de JDK | Disco C: lleno o `JAVA_HOME` incorrecto | Liberar espacio; `java -version` debe indicar 25. Plan B: mostrar el último resultado verde de `ArquitecturaTest` en IntelliJ (`Pruebas backend`) |
 | La SPA muestra pantalla en blanco | Falló la compilación de Vite | Mirar la terminal 2; `npm ci` y `npm run dev` |
 
-**Plan B general:** si la SPA falla, todo el recorrido se puede hacer desde Swagger (paso 2) y las terminales (pasos 4 a 8).
+**Plan B general:** si la SPA falla, el recorrido se puede hacer desde Swagger (paso 2: horarios, auditoría y matrícula tienen sus grupos) y las terminales (pasos 3, 6 y 10).
 
 ### Reiniciar entre ensayos
-Sin tocar el resto de los datos, solo desbloquear la cuenta de `bloqueo@` (como dueño del esquema):
+Solo desbloquear la cuenta de `bloqueo@` (desde **Usuarios → Desbloquear**, o como dueño del esquema):
 ```powershell
 psql-duenio -c "UPDATE seguridad.usuario SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE correo = 'bloqueo@demo.gesedu.pe';"
 ```
-Para volver al estado inicial por completo (sin el bloque del sábado ni los registros de auditoría): detener el backend, ejecutar `.\scripts\reiniciar-bd.ps1` y arrancar el backend con `local,demo`.
+Esto **no** deshace las matrículas confirmadas, las clases guardadas ni los registros de auditoría. Para volver al estado inicial por completo (8 solicitudes pendientes, 3° A con 4 vacantes, 2° B con 1, contraseñas de la semilla): detener el backend, ejecutar `.\scripts\reiniciar-bd.ps1`, y arrancar el backend con `local,demo`. Mailpit conserva sus correos hasta que se borre desde su pantalla (*Delete all*) o se reinicie con `docker compose restart mailpit`.

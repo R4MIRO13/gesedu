@@ -6,11 +6,12 @@ import java.time.Instant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+
+import pe.edu.gesedu.compartido.dominio.EntidadBase;
 
 /**
  * Cuenta de usuario. Contiene las reglas del bloqueo temporal por intentos fallidos (RNF-06, S-03).
@@ -18,11 +19,7 @@ import jakarta.persistence.Version;
  */
 @Entity
 @Table(name = "usuario", schema = "seguridad")
-public class Usuario {
-
-    @Id
-    @Column(length = 36)
-    private String id;
+public class Usuario extends EntidadBase {
 
     @Column(nullable = false, length = 100)
     private String nombres;
@@ -56,9 +53,6 @@ public class Usuario {
     @Version
     private long version;
 
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
     protected Usuario() {
     }
 
@@ -74,7 +68,6 @@ public class Usuario {
      */
     public boolean registrarIntentoFallido(Instant ahora, int maxIntentos, Duration duracion) {
         intentosFallidos++;
-        updatedAt = ahora;
         if (intentosFallidos >= maxIntentos) {
             bloqueadoHasta = ahora.plus(duracion);
             intentosFallidos = 0;
@@ -83,16 +76,26 @@ public class Usuario {
         return false;
     }
 
+    /**
+     * Define una contraseña nueva (recuperación, RF-52). Reinicia el contador de intentos fallidos; un bloqueo
+     * temporal vigente no se levanta: lo levanta el paso del tiempo o el administrador.
+     */
+    public void cambiarContrasena(String nuevoHash) {
+        this.hashContrasena = nuevoHash;
+        this.intentosFallidos = 0;
+    }
+
+    /** Levanta el bloqueo temporal y reinicia el contador de intentos (UC-24: el administrador desbloquea la cuenta). */
+    public void desbloquear() {
+        this.intentosFallidos = 0;
+        this.bloqueadoHasta = null;
+    }
+
     /** Un inicio de sesión correcto reinicia el contador y levanta cualquier bloqueo vencido. */
     public void registrarAccesoExitoso(Instant ahora) {
         intentosFallidos = 0;
         bloqueadoHasta = null;
         ultimoAcceso = ahora;
-        updatedAt = ahora;
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getNombres() {
@@ -117,6 +120,10 @@ public class Usuario {
 
     public int getIntentosFallidos() {
         return intentosFallidos;
+    }
+
+    public Instant getUltimoAcceso() {
+        return ultimoAcceso;
     }
 
     public Instant getBloqueadoHasta() {

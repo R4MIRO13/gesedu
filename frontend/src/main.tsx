@@ -2,7 +2,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { SesionProvider } from './compartido/auth/SesionProvider'
+import './compartido/estilos/tokens.css'
 import './index.css'
+import './compartido/estilos/responsive.css'
 import { routeTree } from './routeTree.gen'
 
 const queryClient = new QueryClient({
@@ -17,10 +20,15 @@ declare module '@tanstack/react-router' {
   }
 }
 
-createRoot(document.getElementById('root')!).render(
+const raiz = document.getElementById('root')
+if (!raiz) throw new Error('Falta el elemento #root')
+
+createRoot(raiz).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <SesionProvider>
+        <RouterProvider router={router} />
+      </SesionProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

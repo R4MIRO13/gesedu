@@ -6,10 +6,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.UuidGenerator;
+import pe.edu.gesedu.compartido.dominio.EntidadBase;
 
 /**
  * Bloque horario de un año escolar (RF-46). Dos bloques del mismo día no pueden superponerse; la base de
@@ -17,12 +16,7 @@ import org.hibernate.annotations.UuidGenerator;
  */
 @Entity
 @Table(name = "bloque_horario", schema = "horarios")
-public class BloqueHorario {
-
-    @Id
-    @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
-    @Column(length = 36)
-    private String id;
+public class BloqueHorario extends EntidadBase {
 
     // Relación entre módulos: solo el id, sin asociación JPA
     @Column(name = "anio_escolar_id", nullable = false, length = 36)
@@ -54,10 +48,6 @@ public class BloqueHorario {
     /** Dos bloques se superponen si comparten día y sus intervalos se cruzan (tocarse en el borde no cruza). */
     public boolean seSuperponeCon(BloqueHorario otro) {
         return diaSemana == otro.diaSemana && horaInicio.isBefore(otro.horaFin) && otro.horaInicio.isBefore(horaFin);
-    }
-
-    public String getId() {
-        return id;
     }
 
     public String getAnioEscolarId() {

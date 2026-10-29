@@ -23,7 +23,25 @@
         <!-- springdoc 3.x es la línea compatible con Spring Boot 4 (la 2.x es para Spring Boot 3) -->
         <springdoc.version>3.1.1</springdoc.version>
         <archunit.version>1.5.1</archunit.version>
+        <!-- Versiones fijadas contra Maven Central (28/10/2026); las demás las administra Spring Boot -->
+        <shedlock.version>7.10.1</shedlock.version>
+        <awssdk.version>2.57.5</awssdk.version>
+        <poi.version>5.5.1</poi.version>
+        <!-- OpenPDF 3.x cambió el paquete a org.openpdf -->
+        <openpdf.version>3.0.5</openpdf.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${awssdk.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Web, validación y persistencia. Spring Boot 4 usa starters modulares: webmvc (antes web) -->
@@ -78,6 +96,54 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Correo (SMTP hacia Mailpit en local), caché (permisos, RNF-07) y Caffeine -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- Jobs: ShedLock 7 (línea para Spring Framework 7) con proveedor JDBC -->
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-spring</artifactId>
+            <version>${shedlock.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.javacrumbs.shedlock</groupId>
+            <artifactId>shedlock-provider-jdbc-template</artifactId>
+            <version>${shedlock.version}</version>
+        </dependency>
+
+        <!-- Archivos y correo en AWS (perfil aws): S3 con URL prefirmadas y SES -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sesv2</artifactId>
+        </dependency>
+
+        <!-- Reportes: Excel (asistencia, auditoría) y PDF (libretas) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>${openpdf.version}</version>
         </dependency>
 
         <!-- Pruebas -->
@@ -139,7 +205,7 @@
                     <!-- Zona distinta de UTC: así las pruebas detectan errores de zona horaria en LocalTime/Instant -->
                     <argLine>-Duser.timezone=America/Lima</argLine>
                 </configuration>
-    <executions>
+                <executions>
                     <execution>
                         <goals>
                             <goal>integration-test</goal>

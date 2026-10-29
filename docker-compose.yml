@@ -1,6 +1,5 @@
 # Servicios de desarrollo local de GESEDU.
-#   docker compose up -d --wait postgres        # base de datos
-#   docker compose --profile correo up -d       # además Mailpit (solo se usa desde la recuperación de contraseña y UC-02)
+#   docker compose up -d postgres mailpit       # base de datos y correo de desarrollo (Mailpit)
 name: gesedu
 
 services:
@@ -28,7 +27,6 @@ services:
   mailpit:
     image: axllent/mailpit:v1.27
     container_name: gesedu-mailpit
-    profiles: ["correo"]
     ports:
       - "1025:1025"   # SMTP
       - "8025:8025"   # interfaz web

@@ -12,9 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as IntranetRouteImport } from './routes/intranet'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as RecuperarContrasenaRouteImport } from './routes/recuperar-contrasena'
+import { Route as RestablecerContrasenaRouteImport } from './routes/restablecer-contrasena'
 import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditoria'
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
+import { Route as IntranetUsuariosRouteImport } from './routes/intranet/usuarios'
 import { Route as IntranetHorariosBloquesRouteImport } from './routes/intranet/horarios/bloques'
+import { Route as IntranetMatriculasIndexRouteImport } from './routes/intranet/matriculas/index'
+import { Route as IntranetMatriculasCodigoRouteImport } from './routes/intranet/matriculas/$codigo'
+import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -31,6 +37,16 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecuperarContrasenaRoute = RecuperarContrasenaRouteImport.update({
+  id: '/recuperar-contrasena',
+  path: '/recuperar-contrasena',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RestablecerContrasenaRoute = RestablecerContrasenaRouteImport.update({
+  id: '/restablecer-contrasena',
+  path: '/restablecer-contrasena',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IntranetAuditoriaRoute = IntranetAuditoriaRouteImport.update({
   id: '/auditoria',
   path: '/auditoria',
@@ -41,36 +57,76 @@ const IntranetInicioRoute = IntranetInicioRouteImport.update({
   path: '/inicio',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetUsuariosRoute = IntranetUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => IntranetRoute,
+} as any)
 const IntranetHorariosBloquesRoute = IntranetHorariosBloquesRouteImport.update({
   id: '/horarios/bloques',
   path: '/horarios/bloques',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetMatriculasIndexRoute = IntranetMatriculasIndexRouteImport.update({
+  id: '/matriculas/',
+  path: '/matriculas/',
+  getParentRoute: () => IntranetRoute,
+} as any)
+const IntranetMatriculasCodigoRoute =
+  IntranetMatriculasCodigoRouteImport.update({
+    id: '/matriculas/$codigo',
+    path: '/matriculas/$codigo',
+    getParentRoute: () => IntranetRoute,
+  } as any)
+const IntranetHorariosAnioElaborarRoute =
+  IntranetHorariosAnioElaborarRouteImport.update({
+    id: '/horarios/$anio/elaborar',
+    path: '/horarios/$anio/elaborar',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
+  '/recuperar-contrasena': typeof RecuperarContrasenaRoute
+  '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
+  '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
+  '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
+  '/recuperar-contrasena': typeof RecuperarContrasenaRoute
+  '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
+  '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
+  '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
+  '/recuperar-contrasena': typeof RecuperarContrasenaRoute
+  '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
   '/intranet/inicio': typeof IntranetInicioRoute
+  '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
+  '/intranet/matriculas/$codigo': typeof IntranetMatriculasCodigoRoute
+  '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
+  '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -78,31 +134,51 @@ export interface FileRouteTypes {
     | '/'
     | '/intranet'
     | '/login'
+    | '/recuperar-contrasena'
+    | '/restablecer-contrasena'
     | '/intranet/auditoria'
     | '/intranet/inicio'
+    | '/intranet/usuarios'
     | '/intranet/horarios/bloques'
+    | '/intranet/matriculas/$codigo'
+    | '/intranet/matriculas/'
+    | '/intranet/horarios/$anio/elaborar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/intranet'
     | '/login'
+    | '/recuperar-contrasena'
+    | '/restablecer-contrasena'
     | '/intranet/auditoria'
     | '/intranet/inicio'
+    | '/intranet/usuarios'
     | '/intranet/horarios/bloques'
+    | '/intranet/matriculas/$codigo'
+    | '/intranet/matriculas'
+    | '/intranet/horarios/$anio/elaborar'
   id:
     | '__root__'
     | '/'
     | '/intranet'
     | '/login'
+    | '/recuperar-contrasena'
+    | '/restablecer-contrasena'
     | '/intranet/auditoria'
     | '/intranet/inicio'
+    | '/intranet/usuarios'
     | '/intranet/horarios/bloques'
+    | '/intranet/matriculas/$codigo'
+    | '/intranet/matriculas/'
+    | '/intranet/horarios/$anio/elaborar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   IntranetRoute: typeof IntranetRouteWithChildren
   LoginRoute: typeof LoginRoute
+  RecuperarContrasenaRoute: typeof RecuperarContrasenaRoute
+  RestablecerContrasenaRoute: typeof RestablecerContrasenaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -128,6 +204,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recuperar-contrasena': {
+      id: '/recuperar-contrasena'
+      path: '/recuperar-contrasena'
+      fullPath: '/recuperar-contrasena'
+      preLoaderRoute: typeof RecuperarContrasenaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restablecer-contrasena': {
+      id: '/restablecer-contrasena'
+      path: '/restablecer-contrasena'
+      fullPath: '/restablecer-contrasena'
+      preLoaderRoute: typeof RestablecerContrasenaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/intranet/auditoria': {
       id: '/intranet/auditoria'
       path: '/auditoria'
@@ -142,11 +232,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetInicioRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/usuarios': {
+      id: '/intranet/usuarios'
+      path: '/usuarios'
+      fullPath: '/intranet/usuarios'
+      preLoaderRoute: typeof IntranetUsuariosRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/bloques': {
       id: '/intranet/horarios/bloques'
       path: '/horarios/bloques'
       fullPath: '/intranet/horarios/bloques'
       preLoaderRoute: typeof IntranetHorariosBloquesRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/matriculas/': {
+      id: '/intranet/matriculas/'
+      path: '/matriculas'
+      fullPath: '/intranet/matriculas/'
+      preLoaderRoute: typeof IntranetMatriculasIndexRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/matriculas/$codigo': {
+      id: '/intranet/matriculas/$codigo'
+      path: '/matriculas/$codigo'
+      fullPath: '/intranet/matriculas/$codigo'
+      preLoaderRoute: typeof IntranetMatriculasCodigoRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/horarios/$anio/elaborar': {
+      id: '/intranet/horarios/$anio/elaborar'
+      path: '/horarios/$anio/elaborar'
+      fullPath: '/intranet/horarios/$anio/elaborar'
+      preLoaderRoute: typeof IntranetHorariosAnioElaborarRouteImport
       parentRoute: typeof IntranetRoute
     }
   }
@@ -155,13 +273,21 @@ declare module '@tanstack/react-router' {
 interface IntranetRouteChildren {
   IntranetAuditoriaRoute: typeof IntranetAuditoriaRoute
   IntranetInicioRoute: typeof IntranetInicioRoute
+  IntranetUsuariosRoute: typeof IntranetUsuariosRoute
   IntranetHorariosBloquesRoute: typeof IntranetHorariosBloquesRoute
+  IntranetMatriculasCodigoRoute: typeof IntranetMatriculasCodigoRoute
+  IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
+  IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
 }
 
 const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetAuditoriaRoute: IntranetAuditoriaRoute,
   IntranetInicioRoute: IntranetInicioRoute,
+  IntranetUsuariosRoute: IntranetUsuariosRoute,
   IntranetHorariosBloquesRoute: IntranetHorariosBloquesRoute,
+  IntranetMatriculasCodigoRoute: IntranetMatriculasCodigoRoute,
+  IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,
+  IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,
 }
 
 const IntranetRouteWithChildren = IntranetRoute._addFileChildren(
@@ -172,6 +298,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   IntranetRoute: IntranetRouteWithChildren,
   LoginRoute: LoginRoute,
+  RecuperarContrasenaRoute: RecuperarContrasenaRoute,
+  RestablecerContrasenaRoute: RestablecerContrasenaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

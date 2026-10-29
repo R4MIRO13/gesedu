@@ -10,10 +10,12 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import pe.edu.gesedu.auditoria.dominio.RegistroAuditoria;
+import pe.edu.gesedu.auditoria.infraestructura.CambioAuditoriaRepository;
 import pe.edu.gesedu.auditoria.infraestructura.RegistroAuditoriaFiltros;
 import pe.edu.gesedu.auditoria.infraestructura.RegistroAuditoriaRepository;
 import pe.edu.gesedu.compartido.error.CodigoError;
@@ -35,11 +37,14 @@ public class ConsultaAuditoriaService {
     }
 
     private final RegistroAuditoriaRepository registros;
+    private final CambioAuditoriaRepository cambios;
     private final DirectorioUsuarios directorio;
     private final Clock reloj;
 
-    ConsultaAuditoriaService(RegistroAuditoriaRepository registros, DirectorioUsuarios directorio, Clock reloj) {
+    ConsultaAuditoriaService(RegistroAuditoriaRepository registros, CambioAuditoriaRepository cambios,
+                             DirectorioUsuarios directorio, Clock reloj) {
         this.registros = registros;
+        this.cambios = cambios;
         this.directorio = directorio;
         this.reloj = reloj;
     }
@@ -53,22 +58,54 @@ public class ConsultaAuditoriaService {
             throw new ExcepcionNegocio(CodigoError.VALIDACION_INVALIDA,
                     "page debe ser >= 0 y size debe estar entre 1 y " + TAMANO_MAXIMO);
         }
-        if (filtros.desde() != null && filtros.hasta() != null && filtros.desde().isAfter(filtros.hasta())) {
-            throw new ExcepcionNegocio(CodigoError.VALIDACION_INVALIDA, "desde no puede ser posterior a hasta");
-        }
-        Page<RegistroAuditoria> resultado = registros.findAll(
-                RegistroAuditoriaFiltros.con(blancoANulo(filtros.usuarioId()), blancoANulo(filtros.modulo()),
-                        blancoANulo(filtros.accion()),
-                        filtros.desde() == null ? null : filtros.desde().atStartOfDay(reloj.getZone()).toInstant(),
-                        // hasta es inclusive: el límite excluido es el inicio del día siguiente
-                        filtros.hasta() == null ? null
-                                : filtros.hasta().plusDays(1).atStartOfDay(reloj.getZone()).toInstant()),
+        Page<RegistroAuditoria> resultado = registros.findAll(especificacion(filtros),
                 PageRequest.of(pagina, tamano, ordenamiento(orden)));
-
         Set<String> ids = resultado.getContent().stream().map(RegistroAuditoria::getUsuarioId)
                 .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
         Map<String, String> nombres = ids.isEmpty() ? Map.of() : directorio.nombresCompletos(ids);
         return Pagina.de(resultado, r -> aDto(r, nombres));
+    }
+
+    /** Un registro con los cambios de campo que lo acompañan (valor anterior y nuevo, RF-49). */
+    @Transactional(readOnly = true)
+    public DetalleRegistroAuditoriaDto detalle(String id) {
+        RegistroAuditoria registro = registros.findById(id).orElseThrow(() -> new ExcepcionNegocio(
+                CodigoError.RECURSO_NO_ENCONTRADO, "No existe el registro de auditoría indicado"));
+        Map<String, String> nombres = registro.getUsuarioId() == null ? Map.of()
+                : directorio.nombresCompletos(Set.of(registro.getUsuarioId()));
+        List<CambioAuditoriaDto> lista = cambios.findByRegistroAuditoriaIdOrderByCampo(id).stream()
+                .map(c -> new CambioAuditoriaDto(c.getCampo(), c.getValorAnterior(), c.getValorNuevo())).toList();
+        return new DetalleRegistroAuditoriaDto(aDto(registro, nombres), lista);
+    }
+
+    /** Módulos con sus acciones y usuarios que aparecen en la auditoría, para armar los filtros (RF-51). */
+    @Transactional(readOnly = true)
+    public CatalogosAuditoriaDto catalogos() {
+        Map<String, List<String>> accionesPorModulo = new java.util.TreeMap<>();
+        for (var par : registros.modulosYAcciones()) {
+            accionesPorModulo.computeIfAbsent(par.getModulo(), m -> new java.util.ArrayList<>()).add(par.getAccion());
+        }
+        List<String> ids = registros.usuariosConRegistros();
+        Map<String, String> nombres = ids.isEmpty() ? Map.of() : directorio.nombresCompletos(ids);
+        return new CatalogosAuditoriaDto(
+                accionesPorModulo.entrySet().stream()
+                        .map(e -> new ModuloAuditoriaDto(e.getKey(), e.getValue())).toList(),
+                ids.stream().filter(nombres::containsKey)
+                        .map(id -> new UsuarioAuditoriaDto(id, nombres.get(id)))
+                        .sorted(java.util.Comparator.comparing(UsuarioAuditoriaDto::nombre)).toList());
+    }
+
+    /** Valida el rango de fechas y arma el filtro de la consulta; lo comparten la lista y la exportación. */
+    Specification<RegistroAuditoria> especificacion(Filtros filtros) {
+        if (filtros.desde() != null && filtros.hasta() != null && filtros.desde().isAfter(filtros.hasta())) {
+            throw new ExcepcionNegocio(CodigoError.VALIDACION_INVALIDA, "desde no puede ser posterior a hasta");
+        }
+        return RegistroAuditoriaFiltros.con(blancoANulo(filtros.usuarioId()), blancoANulo(filtros.modulo()),
+                blancoANulo(filtros.accion()),
+                filtros.desde() == null ? null : filtros.desde().atStartOfDay(reloj.getZone()).toInstant(),
+                // hasta es inclusive: el límite excluido es el inicio del día siguiente
+                filtros.hasta() == null ? null
+                        : filtros.hasta().plusDays(1).atStartOfDay(reloj.getZone()).toInstant());
     }
 
     private static Sort ordenamiento(String orden) {
@@ -90,7 +127,7 @@ public class ConsultaAuditoriaService {
         return Sort.by(direccion, campo).and(Sort.by(direccion, "id"));
     }
 
-    private RegistroAuditoriaDto aDto(RegistroAuditoria r, Map<String, String> nombres) {
+    RegistroAuditoriaDto aDto(RegistroAuditoria r, Map<String, String> nombres) {
         return new RegistroAuditoriaDto(r.getId(), r.getFechaHora().atZone(reloj.getZone()).toOffsetDateTime(),
                 r.getUsuarioId(), r.getUsuarioId() == null ? null : nombres.get(r.getUsuarioId()), r.getAccion(),
                 r.getModulo(), r.getTipoEntidad(), r.getIdEntidadAfectada(), r.getDescripcion());
