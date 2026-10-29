@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useForm, type FieldPath } from 'react-hook-form'
 import { ApiError } from '../../../compartido/api/errores'
 import { exigirPermiso } from '../../../compartido/auth/guardias'
+import { useCambiarSeccion, useMatriculaGestionable, type MatriculaGestionable, type ResultadoCambioSeccion } from '../../../modulos/matricula/api'
+import { mensajeDeCambioSeccion } from '../../../modulos/matricula/mensajes'
 import {
   useActualizarAlumno,
   useActualizarApoderado,
@@ -70,6 +72,7 @@ function EditarDatos() {
       </div>
       <FormularioAlumno key={alumno.data.id} ficha={alumno.data} />
       <SeccionApoderado apoderadoId={alumno.data.apoderadoId} />
+      <SeccionMatricula alumnoId={alumno.data.id} />
     </>
   )
 }
@@ -261,6 +264,87 @@ function FormularioApoderado({ ficha }: { ficha: FichaApoderado }) {
         <div className="acciones">
           <button className="btn btn-primario" type="submit" disabled={guardar.isPending}>
             {guardar.isPending ? 'Guardando…' : 'Guardar datos del apoderado'}
+          </button>
+        </div>
+      </form>
+    </section>
+  )
+}
+
+function SeccionMatricula({ alumnoId }: { alumnoId: string }) {
+  const matricula = useMatriculaGestionable(alumnoId)
+  if (matricula.isPending) return <p className="muted">Cargando matrícula…</p>
+  if (matricula.isError) {
+    return (
+      <section className="tarjeta" aria-labelledby="titulo-matricula">
+        <h2 id="titulo-matricula">Matrícula</h2>
+        <p className="muted">El estudiante no tiene una matrícula vigente: no hay sección que cambiar.</p>
+      </section>
+    )
+  }
+  return <CambioSeccion m={matricula.data} />
+}
+
+function CambioSeccion({ m }: { m: MatriculaGestionable }) {
+  const cambiar = useCambiarSeccion(m.alumnoId, m.matriculaId)
+  const [destino, setDestino] = useState('')
+  const [resultado, setResultado] = useState<ResultadoCambioSeccion | null>(null)
+
+  return (
+    <section className="tarjeta" aria-labelledby="titulo-matricula">
+      <h2 id="titulo-matricula">Matrícula {m.anio}</h2>
+      <dl className="datos">
+        <dt>Estado</dt>
+        <dd>
+          <span className="etiqueta etiqueta-si">{m.estado}</span>
+        </dd>
+        <dt>Grado y sección actual</dt>
+        <dd>
+          {m.grado}, sección {m.seccion.split(' ')[1]}
+        </dd>
+      </dl>
+      {resultado && (
+        <p className="alerta alerta-ok" role="status">
+          {resultado.sinCambios
+            ? 'La matrícula ya estaba en esa sección: no hubo cambios.'
+            : `Se cambió a ${resultado.seccionNueva}. ${resultado.seccionAnterior} queda con ${resultado.vacantesOrigen} vacantes y ${resultado.seccionNueva} con ${resultado.vacantesDestino}.`}
+        </p>
+      )}
+      {cambiar.error && (
+        <p className="alerta alerta-error" role="alert">
+          {mensajeDeCambioSeccion(cambiar.error)}
+        </p>
+      )}
+      <form
+        className="formulario"
+        aria-label="Cambiar sección"
+        onSubmit={(e) => {
+          e.preventDefault()
+          setResultado(null)
+          cambiar.mutate(destino, {
+            onSuccess: (r) => {
+              setResultado(r)
+              setDestino('')
+            },
+          })
+        }}
+      >
+        <label className="campo">
+          Nueva sección
+          <select value={destino} onChange={(e) => setDestino(e.target.value)}>
+            <option value="">Elige…</option>
+            {m.secciones
+              .filter((s) => s.id !== m.seccionId)
+              .map((s) => (
+                <option key={s.id} value={s.id} disabled={s.vacantes === 0}>
+                  {s.nombre} — {s.vacantes === 0 ? 'sin vacantes' : `${s.vacantes} vacantes`}
+                </option>
+              ))}
+          </select>
+        </label>
+        <div className="acciones">
+          <button className="btn btn-primario" type="submit" disabled={destino === '' || cambiar.isPending}>
+            {cambiar.isPending ? 'Cambiando…' : 'Cambiar sección'}
           </button>
         </div>
       </form>

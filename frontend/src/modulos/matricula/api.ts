@@ -359,3 +359,48 @@ export function useMisHijos() {
     staleTime: 0,
   })
 }
+
+// ---- RF-05: cambio de grado o sección ----
+
+/** La matrícula vigente de un estudiante con las secciones de su año y su cupo. */
+export interface MatriculaGestionable {
+  matriculaId: string
+  alumnoId: string
+  alumno: string
+  anio: number
+  grado: string
+  seccionId: string
+  seccion: string
+  estado: string
+  version: number
+  secciones: SeccionConVacantes[]
+}
+
+export interface ResultadoCambioSeccion {
+  matriculaId: string
+  alumno: string
+  seccionAnterior: string
+  seccionNueva: string
+  vacantesOrigen: number
+  vacantesDestino: number
+  sinCambios: boolean
+}
+
+export function useMatriculaGestionable(alumnoId: string) {
+  return useQuery({
+    queryKey: ['matricula-gestionable', alumnoId],
+    queryFn: () => api<MatriculaGestionable>(`/matriculas/alumno/${alumnoId}`),
+    staleTime: 0,
+    retry: false,
+  })
+}
+
+export function useCambiarSeccion(alumnoId: string, matriculaId: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (seccionId: string) =>
+      api<ResultadoCambioSeccion>(`/matriculas/${matriculaId}/seccion`, { method: 'PATCH', cuerpo: { seccionId } }),
+    // Con éxito o con 409 (la sección se llenó) las vacantes ya cambiaron: se recarga la lista
+    onSettled: () => cliente.invalidateQueries({ queryKey: ['matricula-gestionable', alumnoId] }),
+  })
+}

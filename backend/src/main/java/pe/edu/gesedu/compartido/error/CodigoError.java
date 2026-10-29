@@ -46,6 +46,7 @@ public enum CodigoError {
     NO_ADMITIDO(HttpStatus.UNPROCESSABLE_ENTITY, "El alumno no fue admitido"),
     DOCUMENTACION_INCOMPLETA(HttpStatus.UNPROCESSABLE_ENTITY, "La documentación está incompleta"),
     OBLIGACION_YA_PAGADA(HttpStatus.UNPROCESSABLE_ENTITY, "La obligación ya fue pagada"),
+    MATRICULA_NO_VIGENTE(HttpStatus.UNPROCESSABLE_ENTITY, "La matrícula no está vigente"),
     MONTO_INSUFICIENTE(HttpStatus.UNPROCESSABLE_ENTITY, "El monto no cubre la obligación"),
     DOCENTE_NO_ASOCIADO(HttpStatus.UNPROCESSABLE_ENTITY, "El docente no está asociado al curso"),
     DOCENTE_NO_DISPONIBLE(HttpStatus.UNPROCESSABLE_ENTITY, "El docente no está disponible en ese bloque"),

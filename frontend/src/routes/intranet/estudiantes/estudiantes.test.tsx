@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { guardarSesion } from '../../../compartido/auth/sesion'
+import type { MatriculaGestionable } from '../../../modulos/matricula/api'
 import type { FichaAlumno, FichaApoderado } from '../../../modulos/seguridad/api'
 import { problema, sesionDe } from '../../../test/msw/handlers'
 import { servidor } from '../../../test/msw/servidor'
@@ -35,6 +36,24 @@ const APODERADO: FichaApoderado = {
   version: 7,
 }
 
+const MATRICULA: MatriculaGestionable = {
+  matriculaId: 'm-1',
+  alumnoId: 'a-1',
+  alumno: 'Lucía García Rojas',
+  anio: 2027,
+  grado: '3° de secundaria',
+  seccionId: 's-3a',
+  seccion: '3° A',
+  estado: 'Confirmada',
+  version: 0,
+  secciones: [
+    { id: 's-2a', gradoId: 'g-2', nombre: '2° A', capacidad: 30, vacantes: 2 },
+    { id: 's-3a', gradoId: 'g-3', nombre: '3° A', capacidad: 30, vacantes: 3 },
+    { id: 's-3b', gradoId: 'g-3', nombre: '3° B', capacidad: 30, vacantes: 0 },
+    { id: 's-3c', gradoId: 'g-3', nombre: '3° C', capacidad: 30, vacantes: 7 },
+  ],
+}
+
 interface Escritura {
   ruta: string
   ifMatch: string | null
@@ -51,6 +70,12 @@ function simular(escrituras: Escritura[] = []) {
     }),
     http.get('*/api/v1/alumnos/a-1', () => HttpResponse.json(alumno)),
     http.get('*/api/v1/apoderados/ap-1', () => HttpResponse.json(apoderado)),
+    http.get('*/api/v1/matriculas/alumno/a-1', () => HttpResponse.json(MATRICULA)),
+    http.patch('*/api/v1/matriculas/m-1/seccion', async ({ request }) => {
+      const cuerpo = (await request.json()) as { seccionId: string }
+      escrituras.push({ ruta: 'seccion', ifMatch: null, cuerpo })
+      return HttpResponse.json({ matriculaId: 'm-1', alumno: 'Lucía García Rojas', seccionAnterior: '3° A', seccionNueva: '3° C', vacantesOrigen: 4, vacantesDestino: 6, sinCambios: false })
+    }),
     http.put('*/api/v1/alumnos/a-1', async ({ request }) => {
       const cuerpo = (await request.json()) as Record<string, unknown>
       escrituras.push({ ruta: 'alumno', ifMatch: request.headers.get('If-Match'), cuerpo })
@@ -181,6 +206,49 @@ describe('Datos de estudiantes y apoderados (RF-02)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Guardar datos del estudiante' }))
 
     expect(await screen.findByText(/cambiaron mientras los editabas/)).toBeInTheDocument()
+  })
+
+  it('RF-05: muestra la matrícula vigente y deshabilita las secciones sin vacantes', async () => {
+    simular()
+    await renderizarRuta('/intranet/estudiantes/a-1')
+
+    const seccion = await screen.findByRole('region', { name: 'Matrícula 2027' })
+    expect(seccion).toHaveTextContent('3° de secundaria, sección A')
+    expect(screen.getByRole('option', { name: '3° B — sin vacantes' })).toBeDisabled()
+    expect(screen.getByRole('option', { name: '3° C — 7 vacantes' })).toBeEnabled()
+    expect(screen.queryByRole('option', { name: /^3° A/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cambiar sección' })).toBeDisabled()
+  })
+
+  it('RF-05: cambia la sección y muestra las vacantes que quedaron', async () => {
+    const escrituras = simular()
+    await renderizarRuta('/intranet/estudiantes/a-1')
+
+    await userEvent.selectOptions(await screen.findByLabelText('Nueva sección'), 's-3c')
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar sección' }))
+
+    expect(await screen.findByText('Se cambió a 3° C. 3° A queda con 4 vacantes y 3° C con 6.')).toBeInTheDocument()
+    expect(escrituras).toEqual([{ ruta: 'seccion', ifMatch: null, cuerpo: { seccionId: 's-3c' } }])
+  })
+
+  it('RF-05: si el destino se llenó avisa que no se movió nada', async () => {
+    simular()
+    servidor.use(http.patch('*/api/v1/matriculas/m-1/seccion', () => problema(409, 'SIN_VACANTE', 'La sección no tiene vacantes disponibles')))
+    await renderizarRuta('/intranet/estudiantes/a-1')
+
+    await userEvent.selectOptions(await screen.findByLabelText('Nueva sección'), 's-3c')
+    await userEvent.click(screen.getByRole('button', { name: 'Cambiar sección' }))
+
+    expect(await screen.findByText('La sección elegida ya no tiene vacantes. Elige otra; no se movió nada.')).toBeInTheDocument()
+  })
+
+  it('RF-05: un estudiante sin matrícula vigente no tiene sección que cambiar', async () => {
+    simular()
+    servidor.use(http.get('*/api/v1/matriculas/alumno/a-1', () => problema(404, 'RECURSO_NO_ENCONTRADO', 'El estudiante no tiene una matrícula vigente')))
+    await renderizarRuta('/intranet/estudiantes/a-1')
+
+    expect(await screen.findByText(/no tiene una matrícula vigente: no hay sección que cambiar/)).toBeInTheDocument()
+    expect(screen.queryByRole('form', { name: 'Cambiar sección' })).not.toBeInTheDocument()
   })
 
   it('sin el permiso USUARIO_GESTIONAR la ruta no se muestra', async () => {
