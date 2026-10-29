@@ -12,7 +12,7 @@
 | Fase | Rama | Estado |
 |---|---|---|
 | 0 Base | `feat/fase-0` | **terminada** (0.1–0.11) |
-| 1 Demo ampliada | `feat/fase-1` | en curso |
+| 1 Demo ampliada | `feat/fase-1` | **terminada** (1.1–1.9) |
 | 2 Matrícula y pagos | `feat/fase-2` | pendiente |
 | 3 Académico y horarios | `feat/fase-3` | pendiente |
 | 4 Asistencia | `feat/fase-4` | pendiente |
@@ -95,6 +95,11 @@ C-32 versiones de frontend (Vite 8, TS 6, oxlint se mantienen) · C-33 Mailpit s
 ### Fase 0 — Base (`feat/fase-0`, 28/10/2026)
 Entregado: CI, dependencias, núcleo compartido, `AsistenciaProperties` (DA-10), esquema completo V1–V11, seguridad con refresh token rotativo / cierre de sesión revocable / caché / límite de peticiones, Gestor de Archivos (disco y S3), Notificador (SMTP y SES), ShedLock, `GeneradorExcel`, ArchUnit completo y frontend base. Backend: `./mvnw -B verify` en verde (124 pruebas); frontend: lint, typecheck, 30 pruebas y build en verde. Las contradicciones C-32 a C-43 están en `docs/PLAN.md` § 13.
 RF/RNF: RF-01 (sin DELETE de usuarios), RF-48, RF-49, RF-50, RF-52, RNF-01, RNF-06, RNF-07, RNF-08 y la base de RNF-03.
+
+### Fase 1 — Demo ampliada (`feat/fase-1`, 28/10/2026)
+Entregado: inicio de sesión real con los 4 roles y bloqueo (1.1), UC-21 backend y frontend (1.2, 1.3), UC-25 con exportación (1.4), semilla P1 y Swagger por módulo (1.5), UC-02 con confirmación atómica, vacantes, obligaciones y correo (1.6), recuperación de contraseña (1.7), usuarios con desbloqueo (1.8) y el guion actualizado (1.9). Backend: `./mvnw -B verify` en verde (81 unitarias + 174 de integración); frontend: lint, typecheck, 86 pruebas y build en verde.
+RF/RNF: RF-04, RF-05, RF-07, RF-12, RF-39 a RF-42, RF-47, RF-49 a RF-52 (RF-43 parcial); RNF-01 (BCrypt), RNF-02, RNF-03, RNF-06 a RNF-10. Suposiciones nuevas: S-39 a S-48.
+Pendiente para el despliegue compartido: cada integrante debe ejecutar `.\scriptseiniciar-bd.ps1` para cargar la semilla `V1002`.
 
 ## Cobertura RF / UC
 (Se completa en la tarea 6.6.)
