@@ -78,6 +78,16 @@ public class CatalogoAcademicoService {
         return new GradoResumen(grado.getId(), grado.getAnioEscolarId(), grado.getNumeroNivel());
     }
 
+    /** Una sección con su grado (para mostrar «3° A»). */
+    @Transactional(readOnly = true)
+    public SeccionResumen seccion(String seccionId) {
+        Seccion seccion = secciones.findById(seccionId).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe la sección"));
+        Grado grado = grados.findById(seccion.getGradoId()).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el grado"));
+        return aResumen(seccion, grado);
+    }
+
     /** Grados del año ordenados por nivel (las solicitudes de matrícula eligen uno). */
     @Transactional(readOnly = true)
     public List<GradoResumen> gradosDelAnio(String anioEscolarId) {

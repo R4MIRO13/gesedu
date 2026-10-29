@@ -508,3 +508,13 @@ dd {
     grid-template-columns: 1fr;
   }
 }
+
+.cifra {
+  margin: 0.25rem 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cifra-alerta {
+  color: var(--color-error, #b42318);
+}

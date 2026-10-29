@@ -39,6 +39,12 @@ export const OPCIONES_MENU = [
     permiso: 'MATRICULA_SOLICITAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/pagos' }),
+    titulo: 'Matrícula y pagos',
+    descripcion: 'Consulta la matrícula de tus hijos, sus obligaciones de pago y presenta comprobantes.',
+    permiso: 'OBLIGACION_CONSULTAR_PROPIA',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/pagos/configuracion' }),
     titulo: 'Configuración de cobros',
     descripcion: 'Costos, vencimientos y penalidad del año escolar.',

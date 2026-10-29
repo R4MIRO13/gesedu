@@ -12,4 +12,6 @@ public interface AnioEscolarRepository extends JpaRepository<AnioEscolar, String
     Optional<AnioEscolar> findByAnio(int anio);
 
     List<AnioEscolar> findByAnioLessThan(int anio);
+
+    List<AnioEscolar> findByEstadoNot(String estado);
 }

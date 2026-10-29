@@ -84,6 +84,10 @@ public class ObligacionPago extends EntidadBase {
         return alumnoId;
     }
 
+    public String getApoderadoId() {
+        return apoderadoId;
+    }
+
     public ConceptoPago getConcepto() {
         return concepto;
     }
@@ -102,5 +106,22 @@ public class ObligacionPago extends EntidadBase {
 
     public EstadoObligacion getEstado() {
         return estado;
+    }
+
+    public BigDecimal getMontoPenalidad() {
+        return montoPenalidad;
+    }
+
+    public Instant getPenalidadAplicadaEn() {
+        return penalidadAplicadaEn;
+    }
+
+    public long getVersion() {
+        return version;
+    }
+
+    /** Importe a pagar: monto base más la penalidad ya aplicada (RF-10). */
+    public BigDecimal totalAPagar() {
+        return montoBase.add(montoPenalidad);
     }
 }

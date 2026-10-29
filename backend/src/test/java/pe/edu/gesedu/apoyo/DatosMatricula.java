@@ -160,4 +160,43 @@ public final class DatosMatricula {
                 id, nombres, apellidos, id.substring(0, 20), correo, rol);
         return id;
     }
+
+    /** Un alumno sin acceso a cargo del apoderado, con documento y código propios. */
+    public String alumnoDe(String apoderadoId, String nombres) {
+        String sufijo = id().substring(0, 8);
+        String usuarioAlumno = usuario(nombres, "Prueba " + sufijo, "ALUMNO", null);
+        String alumnoId = id();
+        jdbc.update("INSERT INTO seguridad.alumno (id, usuario_id, codigo_alumno, fecha_nacimiento, apoderado_id, "
+                + "parentesco_apoderado) VALUES (?, ?, ?, DATE '2012-01-01', ?, 'MADRE')", alumnoId, usuarioAlumno,
+                "H" + sufijo, apoderadoId);
+        return alumnoId;
+    }
+
+    /**
+     * Matrícula confirmada del alumno en el año del escenario, con una obligación por cada línea del cronograma
+     * (sin cuota de ingreso), como las deja UC-02. Devuelve el id de la matrícula.
+     */
+    public String matriculaConObligaciones(Escenario e, String apoderadoId, String alumnoId, String seccionId) {
+        String solicitud = id();
+        jdbc.update("INSERT INTO matricula.solicitud_matricula (id, codigo_seguimiento, anio_escolar_id, alumno_id, "
+                + "apoderado_id, grado_id, fecha_solicitud, tipo_estudiante, estado, costos_aceptados) "
+                + "VALUES (?, ?, ?, ?, ?, ?, DATE '2027-01-05', 'RECURRENTE', 'APROBADA', TRUE)", solicitud,
+                "P-" + solicitud.substring(0, 12), e.anioId(), alumnoId, apoderadoId, e.grado3());
+        String matricula = id();
+        jdbc.update("INSERT INTO matricula.matricula (id, solicitud_id, alumno_id, anio_escolar_id, seccion_id, "
+                + "fecha_matricula) VALUES (?, ?, ?, ?, ?, DATE '2027-01-06')", matricula, solicitud, alumnoId,
+                e.anioId(), seccionId);
+        jdbc.update("INSERT INTO pagos.obligacion_pago (id, matricula_id, anio_escolar_id, alumno_id, apoderado_id, "
+                + "concepto, periodo, monto_base, fecha_vencimiento) SELECT gen_random_uuid()::text, ?, anio_escolar_id, "
+                + "?, ?, concepto, periodo, monto, fecha_vencimiento FROM pagos.cronograma_cobro "
+                + "WHERE anio_escolar_id = ? AND concepto <> 'CUOTA_INGRESO'", matricula, alumnoId, apoderadoId,
+                e.anioId());
+        return matricula;
+    }
+
+    /** Id de la obligación de la matrícula para el periodo («2027» matrícula; «2027-03» pensión de marzo). */
+    public String obligacion(String matriculaId, String periodo) {
+        return jdbc.queryForObject("SELECT id FROM pagos.obligacion_pago WHERE matricula_id = ? AND periodo = ?",
+                String.class, matriculaId, periodo);
+    }
 }

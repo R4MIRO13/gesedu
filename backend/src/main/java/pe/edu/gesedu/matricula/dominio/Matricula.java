@@ -70,6 +70,10 @@ public class Matricula extends EntidadBase {
         return seccionId;
     }
 
+    public LocalDate getFechaMatricula() {
+        return fechaMatricula;
+    }
+
     public EstadoMatricula getEstado() {
         return estado;
     }

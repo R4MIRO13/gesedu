@@ -3,6 +3,7 @@ package pe.edu.gesedu.pagos.infraestructura;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,4 +22,8 @@ public interface ObligacionPagoRepository extends JpaRepository<ObligacionPago, 
                             @Param("pagada") EstadoObligacion pagada, @Param("hoy") LocalDate hoy);
 
     long countByMatriculaId(String matriculaId);
+
+    List<ObligacionPago> findByAlumnoIdAndAnioEscolarIdIn(String alumnoId, Collection<String> anios);
+
+    List<ObligacionPago> findByAlumnoId(String alumnoId);
 }

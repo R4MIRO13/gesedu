@@ -332,3 +332,30 @@ export function useMisSolicitudes() {
     staleTime: 0,
   })
 }
+
+// ---- UC-03: matrícula de los hijos ----
+
+export interface MatriculaVigente {
+  matriculaId: string
+  anio: number
+  grado: string
+  seccion: string
+  estado: string
+  fechaMatricula: string
+}
+
+/** Un estudiante del alcance; `matricula` es nulo si no tiene matrícula vigente (UC-03 FA-2). */
+export interface HijoMatricula {
+  alumnoId: string
+  codigoAlumno: string
+  alumno: string
+  matricula: MatriculaVigente | null
+}
+
+export function useMisHijos() {
+  return useQuery({
+    queryKey: ['matriculas-mias'],
+    queryFn: () => api<HijoMatricula[]>('/matriculas/mias'),
+    staleTime: 0,
+  })
+}
