@@ -27,6 +27,12 @@ export const OPCIONES_MENU = [
     permiso: 'ACADEMICO_CONFIGURAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/horario' }),
+    titulo: 'Horario',
+    descripcion: 'Consulta el horario publicado: por sección o por docente, según tu alcance.',
+    permiso: 'HORARIO_CONSULTAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/bloques' }),
     titulo: 'Bloques horarios',
     descripcion: 'Franjas de clase del año escolar.',

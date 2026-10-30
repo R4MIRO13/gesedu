@@ -465,3 +465,38 @@ export function usePublicarHorario(anio: number) {
       ]),
   })
 }
+
+// --- UC-23: consulta del horario publicado (RF-39, RF-45) ------------------------------------------------------
+
+export interface HorarioVigente {
+  anio: number
+  numeroVersion: number
+  vigenteDesde: string
+  perspectiva: Perspectiva
+  perspectivas: Perspectiva[]
+  seccionId: string | null
+  docenteId: string | null
+  bloques: BloqueHorario[]
+  /** Las secciones y los docentes que el rol de quien consulta puede elegir. */
+  secciones: SeccionHorario[]
+  docentes: DocenteHorario[]
+  asignaciones: Asignacion[]
+}
+
+export const HORARIO_NO_PUBLICADO = 'HORARIO_NO_PUBLICADO'
+
+export function useHorarioVigente(anio: number, perspectiva?: Perspectiva, seccionId?: string, docenteId?: string) {
+  return useQuery({
+    queryKey: ['horario-vigente', anio, perspectiva ?? null, seccionId ?? null, docenteId ?? null],
+    queryFn: () => {
+      const parametros = new URLSearchParams()
+      if (perspectiva) parametros.set('perspectiva', perspectiva)
+      if (seccionId) parametros.set('seccionId', seccionId)
+      if (docenteId) parametros.set('docenteId', docenteId)
+      const consulta = parametros.size > 0 ? `?${parametros}` : ''
+      return api<HorarioVigente>(`/horarios/${anio}/vigente${consulta}`)
+    },
+    staleTime: 0,
+    retry: false,
+  })
+}

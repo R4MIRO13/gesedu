@@ -13,6 +13,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class ContextoUsuario {
 
+    /** {@code true} si la petición en curso tiene el permiso (el mismo que comprueba {@code @PreAuthorize}). */
+    public boolean tienePermiso(String permiso) {
+        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        return autenticacion != null && autenticacion.getAuthorities().stream().anyMatch(a -> permiso.equals(a.getAuthority()));
+    }
+
     public Optional<String> idUsuarioActual() {
         Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
         if (autenticacion != null && autenticacion.getPrincipal() instanceof UsuarioAutenticado usuario) {

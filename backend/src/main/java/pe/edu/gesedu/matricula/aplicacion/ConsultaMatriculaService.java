@@ -39,6 +39,10 @@ public class ConsultaMatriculaService {
     public record HijoMatricula(String alumnoId, String codigoAlumno, String alumno, MatriculaVigente matricula) {
     }
 
+    /** La sección en que está matriculado un estudiante del alcance (para el horario, UC-23). */
+    public record SeccionDeAlumno(String alumnoId, String alumno, String seccionId, String seccion) {
+    }
+
     private final MatriculaRepository matriculas;
     private final AnioEscolarService anios;
     private final CatalogoAcademicoService catalogo;
@@ -86,6 +90,28 @@ public class ConsultaMatriculaService {
 
     private int anio(Matricula m) {
         return anios.obtenerPorId(m.getAnioEscolarId()).anio();
+    }
+
+    /**
+     * Las secciones de los estudiantes del alcance («mis hijos» o «yo»), según su matrícula vigente. Es lo que decide qué
+     * horario puede ver un apoderado o un alumno (UC-23). Un estudiante sin matrícula vigente no aporta ninguna.
+     */
+    @Transactional(readOnly = true)
+    public List<SeccionDeAlumno> seccionesDeMiAlcance() {
+        String usuarioId = contexto.idUsuarioActual().orElseThrow(() -> new ExcepcionNegocio(CodigoError.NO_AUTENTICADO));
+        List<AlumnoResumen> alcance = familias.apoderadoDeUsuario(usuarioId)
+                .map(ap -> familias.hijosDe(ap.id()))
+                .or(() -> familias.alumnoDeUsuario(usuarioId).map(List::of))
+                .orElse(List.of());
+        Set<String> vigentes = Set.copyOf(anios.idsNoCerrados());
+        Map<String, Matricula> porAlumno = matriculas
+                .findByAlumnoIdInAndEstado(alcance.stream().map(AlumnoResumen::id).toList(), EstadoMatricula.CONFIRMADA)
+                .stream().filter(m -> vigentes.contains(m.getAnioEscolarId()))
+                .collect(Collectors.toMap(Matricula::getAlumnoId, m -> m, (a, b) -> anio(a) >= anio(b) ? a : b));
+        return alcance.stream().filter(a -> porAlumno.containsKey(a.id()))
+                .map(a -> new SeccionDeAlumno(a.id(), a.nombreCompleto(), porAlumno.get(a.id()).getSeccionId(),
+                        catalogo.seccion(porAlumno.get(a.id()).getSeccionId()).nombre()))
+                .sorted(Comparator.comparing(SeccionDeAlumno::alumno)).toList();
     }
 
     private MatriculaVigente aVigente(Matricula m) {

@@ -30,7 +30,7 @@ public class CacheHorarioVigente {
         return (T) cache.get(anio, clave -> cargador.get());
     }
 
-    void invalidar(int anio) {
+    public void invalidar(int anio) {
         cache.invalidate(anio);
     }
 

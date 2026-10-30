@@ -238,7 +238,8 @@ class DatosDemoIT extends BaseIT {
         assertThat(borrador.get("carga").get("totalRequeridas").asInt()).isEqualTo(22);
         assertThat(borrador.get("asignaciones")).hasSize(19);
         assertThat(borrador.get("secciones")).hasSize(10);
-        assertThat(borrador.get("docentes")).hasSize(8);
+        // Ocho docentes de V1000/V1001 y las dos de la fase 3 (V1003)
+        assertThat(borrador.get("docentes")).hasSize(10);
     }
 
     @Test
@@ -290,9 +291,10 @@ class DatosDemoIT extends BaseIT {
 
         // Desde la perspectiva Docente se ve el mismo borrador, con la clase nueva
         JsonNode porDocente = get(base + "?perspectiva=DOCENTE&docenteId=" + fernando, admin).cuerpo();
-        assertThat(porDocente.get("asignaciones").valueStream().map(a -> a.get("seccion").asString()).distinct().toList())
-                .containsExactly("3° A");
-        assertThat(porDocente.get("asignaciones")).hasSize(6);
+        // Fernando dicta Matemática en 3° A (5 h + la nueva) y, desde V1003, en 1° A y 1° B (5 h cada una)
+        assertThat(porDocente.get("asignaciones").valueStream().map(a -> a.get("seccion").asString()).distinct().sorted().toList())
+                .containsExactly("1° A", "1° B", "3° A");
+        assertThat(porDocente.get("asignaciones")).hasSize(16);
         // y la auditoría guarda el alta
         assertThat(jdbc.queryForObject("SELECT count(*) FROM auditoria.registro_auditoria WHERE accion = "
                 + "'CREAR_ASIGNACION_HORARIO'", Long.class)).isEqualTo(1);

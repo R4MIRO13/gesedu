@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RecuperarContrasenaRouteImport } from './routes/recuperar-contrasena'
 import { Route as RestablecerContrasenaRouteImport } from './routes/restablecer-contrasena'
 import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditoria'
+import { Route as IntranetHorarioRouteImport } from './routes/intranet/horario'
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetUsuariosRouteImport } from './routes/intranet/usuarios'
 import { Route as IntranetAcademicoAniosRouteImport } from './routes/intranet/academico/anios'
@@ -67,6 +68,11 @@ const RestablecerContrasenaRoute = RestablecerContrasenaRouteImport.update({
 const IntranetAuditoriaRoute = IntranetAuditoriaRouteImport.update({
   id: '/auditoria',
   path: '/auditoria',
+  getParentRoute: () => IntranetRoute,
+} as any)
+const IntranetHorarioRoute = IntranetHorarioRouteImport.update({
+  id: '/horario',
+  path: '/horario',
   getParentRoute: () => IntranetRoute,
 } as any)
 const IntranetInicioRoute = IntranetInicioRouteImport.update({
@@ -207,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/recuperar-contrasena': typeof RecuperarContrasenaRoute
   '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
+  '/intranet/horario': typeof IntranetHorarioRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/recuperar-contrasena': typeof RecuperarContrasenaRoute
   '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
+  '/intranet/horario': typeof IntranetHorarioRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/recuperar-contrasena': typeof RecuperarContrasenaRoute
   '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/intranet/auditoria': typeof IntranetAuditoriaRoute
+  '/intranet/horario': typeof IntranetHorarioRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/recuperar-contrasena'
     | '/restablecer-contrasena'
     | '/intranet/auditoria'
+    | '/intranet/horario'
     | '/intranet/inicio'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
     | '/recuperar-contrasena'
     | '/restablecer-contrasena'
     | '/intranet/auditoria'
+    | '/intranet/horario'
     | '/intranet/inicio'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/recuperar-contrasena'
     | '/restablecer-contrasena'
     | '/intranet/auditoria'
+    | '/intranet/horario'
     | '/intranet/inicio'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
@@ -440,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/auditoria'
       fullPath: '/intranet/auditoria'
       preLoaderRoute: typeof IntranetAuditoriaRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/horario': {
+      id: '/intranet/horario'
+      path: '/horario'
+      fullPath: '/intranet/horario'
+      preLoaderRoute: typeof IntranetHorarioRouteImport
       parentRoute: typeof IntranetRoute
     }
     '/intranet/inicio': {
@@ -608,6 +627,7 @@ declare module '@tanstack/react-router' {
 
 interface IntranetRouteChildren {
   IntranetAuditoriaRoute: typeof IntranetAuditoriaRoute
+  IntranetHorarioRoute: typeof IntranetHorarioRoute
   IntranetInicioRoute: typeof IntranetInicioRoute
   IntranetUsuariosRoute: typeof IntranetUsuariosRoute
   IntranetAcademicoAniosRoute: typeof IntranetAcademicoAniosRoute
@@ -635,6 +655,7 @@ interface IntranetRouteChildren {
 
 const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetAuditoriaRoute: IntranetAuditoriaRoute,
+  IntranetHorarioRoute: IntranetHorarioRoute,
   IntranetInicioRoute: IntranetInicioRoute,
   IntranetUsuariosRoute: IntranetUsuariosRoute,
   IntranetAcademicoAniosRoute: IntranetAcademicoAniosRoute,
