@@ -41,6 +41,16 @@ public class Seccion extends EntidadBase {
     protected Seccion() {
     }
 
+    /** Sección nueva: todas sus vacantes están libres (RF-04). */
+    public Seccion(String gradoId, String anioEscolarId, String letra, int capacidad, String tutorDocenteId) {
+        this.gradoId = gradoId;
+        this.anioEscolarId = anioEscolarId;
+        this.letra = letra;
+        this.capacidad = capacidad;
+        this.vacantesDisponibles = capacidad;
+        this.tutorDocenteId = tutorDocenteId;
+    }
+
     public String getGradoId() {
         return gradoId;
     }
@@ -63,5 +73,9 @@ public class Seccion extends EntidadBase {
 
     public String getTutorDocenteId() {
         return tutorDocenteId;
+    }
+
+    public long getVersion() {
+        return version;
     }
 }

@@ -44,3 +44,23 @@ export const esquemaCurso = z.object({
 })
 
 export type DatosCurso = z.infer<typeof esquemaCurso>
+
+const capacidad = z
+  .string()
+  .trim()
+  .regex(/^\d{1,2}$/, 'Ingresa la capacidad (un número entero).')
+  .refine((v) => Number(v) >= 1 && Number(v) <= 60, 'La capacidad debe estar entre 1 y 60.')
+
+/** Sección nueva de un grado (RF-04): letra, capacidad y tutor opcional. */
+export const esquemaSeccionNueva = z.object({
+  letra: z.string().trim().regex(/^[A-Za-z]$/, 'Usa una sola letra, de la A a la Z.'),
+  capacidad,
+  tutorDocenteId: z.string(),
+})
+
+export type DatosSeccionNueva = z.infer<typeof esquemaSeccionNueva>
+
+/** Edición de una sección: capacidad y tutor. */
+export const esquemaSeccion = z.object({ capacidad, tutorDocenteId: z.string() })
+
+export type DatosSeccion = z.infer<typeof esquemaSeccion>

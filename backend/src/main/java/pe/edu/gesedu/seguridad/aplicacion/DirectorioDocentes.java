@@ -37,6 +37,13 @@ public class DirectorioDocentes {
         this.docentes = docentes;
     }
 
+    /** Todos los docentes registrados, ordenados por apellidos y nombres (para elegir tutor, vincular al año…). */
+    @Transactional(readOnly = true)
+    public java.util.List<DocenteResumen> todos() {
+        return docentes.buscarTodosConNombres().stream()
+                .map(d -> new DocenteResumen(d.getId(), d.getNombres(), d.getApellidos())).toList();
+    }
+
     /** Id → docente. Los ids que no existen no aparecen en el mapa. */
     @Transactional(readOnly = true)
     public Map<String, DocenteResumen> porIds(Collection<String> ids) {

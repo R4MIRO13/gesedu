@@ -30,6 +30,7 @@ import { Route as IntranetPagosComprobanteRouteImport } from './routes/intranet/
 import { Route as IntranetPagosConfiguracionRouteImport } from './routes/intranet/pagos/configuracion'
 import { Route as IntranetPagosValidarRouteImport } from './routes/intranet/pagos/validar'
 import { Route as IntranetAcademicoAnioCursosRouteImport } from './routes/intranet/academico/$anio/cursos'
+import { Route as IntranetAcademicoAnioSeccionesRouteImport } from './routes/intranet/academico/$anio/secciones'
 import { Route as IntranetAcademicoAnioEscolarNuevoRouteImport } from './routes/intranet/academico/anio-escolar/nuevo'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 import { Route as IntranetPagosHistorialIndexRouteImport } from './routes/intranet/pagos/historial/index'
@@ -147,6 +148,12 @@ const IntranetAcademicoAnioCursosRoute =
     path: '/academico/$anio/cursos',
     getParentRoute: () => IntranetRoute,
   } as any)
+const IntranetAcademicoAnioSeccionesRoute =
+  IntranetAcademicoAnioSeccionesRouteImport.update({
+    id: '/academico/$anio/secciones',
+    path: '/academico/$anio/secciones',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetAcademicoAnioEscolarNuevoRoute =
   IntranetAcademicoAnioEscolarNuevoRouteImport.update({
     id: '/academico/anio-escolar/nuevo',
@@ -194,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
+  '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
@@ -221,6 +229,7 @@ export interface FileRoutesByTo {
   '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos': typeof IntranetPagosIndexRoute
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
+  '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
@@ -249,6 +258,7 @@ export interface FileRoutesById {
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
+  '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
     | '/intranet/academico/$anio/cursos'
+    | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/pagos/historial/$codigo'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/intranet/matriculas'
     | '/intranet/pagos'
     | '/intranet/academico/$anio/cursos'
+    | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/pagos/historial/$codigo'
@@ -332,6 +344,7 @@ export interface FileRouteTypes {
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
     | '/intranet/academico/$anio/cursos'
+    | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/pagos/historial/$codigo'
@@ -495,6 +508,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetAcademicoAnioCursosRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/academico/$anio/secciones': {
+      id: '/intranet/academico/$anio/secciones'
+      path: '/academico/$anio/secciones'
+      fullPath: '/intranet/academico/$anio/secciones'
+      preLoaderRoute: typeof IntranetAcademicoAnioSeccionesRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/academico/anio-escolar/nuevo': {
       id: '/intranet/academico/anio-escolar/nuevo'
       path: '/academico/anio-escolar/nuevo'
@@ -543,6 +563,7 @@ interface IntranetRouteChildren {
   IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
   IntranetPagosIndexRoute: typeof IntranetPagosIndexRoute
   IntranetAcademicoAnioCursosRoute: typeof IntranetAcademicoAnioCursosRoute
+  IntranetAcademicoAnioSeccionesRoute: typeof IntranetAcademicoAnioSeccionesRoute
   IntranetAcademicoAnioEscolarNuevoRoute: typeof IntranetAcademicoAnioEscolarNuevoRoute
   IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
   IntranetPagosHistorialCodigoRoute: typeof IntranetPagosHistorialCodigoRoute
@@ -566,6 +587,7 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,
   IntranetPagosIndexRoute: IntranetPagosIndexRoute,
   IntranetAcademicoAnioCursosRoute: IntranetAcademicoAnioCursosRoute,
+  IntranetAcademicoAnioSeccionesRoute: IntranetAcademicoAnioSeccionesRoute,
   IntranetAcademicoAnioEscolarNuevoRoute:
     IntranetAcademicoAnioEscolarNuevoRoute,
   IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,

@@ -31,6 +31,18 @@ public interface SeccionRepository extends JpaRepository<Seccion, String> {
             + "WHERE s.id = :id AND s.vacantesDisponibles < s.capacidad")
     int liberarVacante(@Param("id") String id);
 
+    /**
+     * Cambia la capacidad y el tutor en una sola sentencia (RF-04): las vacantes suben o bajan lo mismo que la
+     * capacidad y solo se aplica si la versión coincide y la capacidad nueva cubre a los matriculados. Una matrícula
+     * simultánea no se pierde: su {@code UPDATE} y este se serializan en la fila. Devuelve 0 si no se aplicó.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Seccion s SET s.vacantesDisponibles = s.vacantesDisponibles + (:capacidad - s.capacidad), "
+            + "s.capacidad = :capacidad, s.tutorDocenteId = :tutor, s.version = s.version + 1 "
+            + "WHERE s.id = :id AND s.version = :version AND (s.capacidad - s.vacantesDisponibles) <= :capacidad")
+    int actualizarConfiguracion(@Param("id") String id, @Param("capacidad") int capacidad,
+                                @Param("tutor") String tutorDocenteId, @Param("version") long version);
+
     /** Cupo de una sección leído con bloqueo (sin cargar la entidad). */
     interface CupoFila {
         String getId();

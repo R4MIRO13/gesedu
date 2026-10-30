@@ -204,3 +204,59 @@ export function useCopiarCursos(anio: number) {
     onSuccess: () => invalidarCursos(cliente, anio),
   })
 }
+
+// ---- RF-03, RF-04: grados, secciones, capacidad, vacantes y tutor ----
+
+export interface Seccion {
+  id: string
+  gradoId: string
+  letra: string
+  nombre: string
+  capacidad: number
+  vacantes: number
+  matriculados: number
+  tutorDocenteId: string | null
+  tutor: string | null
+  version: number
+}
+
+export interface GradoConSecciones {
+  id: string
+  numeroNivel: number
+  secciones: Seccion[]
+}
+
+export interface DocenteTutor {
+  id: string
+  nombre: string
+}
+
+export interface GradosAnio {
+  anio: number
+  estado: EstadoAnio
+  grados: GradoConSecciones[]
+  docentes: DocenteTutor[]
+}
+
+export function useGrados(anio: number) {
+  return useQuery({ queryKey: ['grados', anio], queryFn: () => api<GradosAnio>(`/anios-escolares/${anio}/grados`), staleTime: 0 })
+}
+
+export function useCrearSeccion(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ gradoId, ...cuerpo }: { gradoId: string; letra: string; capacidad: number; tutorDocenteId: string | null }) =>
+      api<Seccion>(`/grados/${gradoId}/secciones`, { method: 'POST', cuerpo }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['grados', anio] }),
+  })
+}
+
+export function useModificarSeccion(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, version, ...cuerpo }: { id: string; version: number; capacidad: number; tutorDocenteId: string | null }) =>
+      api<Seccion>(`/secciones/${id}`, { method: 'PUT', cuerpo, cabeceras: { 'If-Match': `"${version}"` } }),
+    // Si la sección cambió (409) o ya hay más matriculados (422) se recarga para mostrar el cupo real
+    onSettled: () => cliente.invalidateQueries({ queryKey: ['grados', anio] }),
+  })
+}
