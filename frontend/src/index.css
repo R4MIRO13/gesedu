@@ -625,3 +625,58 @@ dd {
   background: var(--color-error-fondo);
   color: var(--color-error);
 }
+
+/* Cursos y competencias (UC-14) */
+.lista-cursos,
+.lista-competencias {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.curso-item {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  background: var(--color-superficie);
+  color: var(--color-texto);
+  cursor: pointer;
+}
+.curso-item-activo {
+  border-color: var(--color-primario);
+  background: var(--color-hover);
+}
+.lista-competencias li,
+.fila-agregar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.lista-competencias li input,
+.fila-agregar input {
+  flex: 1;
+  min-width: 160px;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+}
+.codigo-competencia {
+  flex: 0 0 2.2rem;
+  font-weight: 700;
+  color: var(--color-primario);
+}
+.opcion-copia {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}

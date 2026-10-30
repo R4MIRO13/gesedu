@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 
 import pe.edu.gesedu.compartido.dominio.EntidadBase;
 
-/** Curso de un año escolar, igual para todos los grados (RF-23). Sus competencias llegan con UC-14. */
+/** Curso de un año escolar, igual para todos los grados (RF-23). Sus competencias son entidades aparte (UC-14). */
 @Entity
 @Table(name = "curso", schema = "academico")
 public class Curso extends EntidadBase {
@@ -27,6 +27,21 @@ public class Curso extends EntidadBase {
     private boolean habilitado;
 
     protected Curso() {
+    }
+
+    public Curso(String anioEscolarId, String nombre, String slug, int horasLectivas) {
+        this.anioEscolarId = anioEscolarId;
+        this.nombre = nombre;
+        this.slug = slug;
+        this.horasLectivas = horasLectivas;
+        this.habilitado = true;
+    }
+
+    /** Edita el nombre (y su slug) y las horas lectivas semanales de referencia (RF-23). */
+    public void actualizar(String nombre, String slug, int horasLectivas) {
+        this.nombre = nombre;
+        this.slug = slug;
+        this.horasLectivas = horasLectivas;
     }
 
     public String getAnioEscolarId() {

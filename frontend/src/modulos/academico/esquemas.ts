@@ -21,3 +21,26 @@ export const esquemaAnioNuevo = z.object({
 })
 
 export type DatosAnioNuevoForm = z.infer<typeof esquemaAnioNuevo>
+
+/** Curso con sus competencias (UC-14, pasos 6 a 11): solo formato; el backend decide duplicados y año cerrado. */
+export const esquemaCurso = z.object({
+  nombre: z.string().trim().min(1, 'Ingresa el nombre del curso.').max(80, 'Admite hasta 80 caracteres.'),
+  horasLectivas: z
+    .string()
+    .trim()
+    .regex(/^\d{1,2}$/, 'Ingresa las horas semanales (un número entero).')
+    .refine((v) => Number(v) >= 1 && Number(v) <= 40, 'Las horas deben estar entre 1 y 40.'),
+  competencias: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        codigo: z.string().optional(),
+        nombre: z.string().trim().min(1, 'Escribe el nombre de la competencia.').max(160, 'Admite hasta 160 caracteres.'),
+        nivelEsperado: z.string().optional(),
+      }),
+    )
+    .min(1, 'El curso necesita al menos una competencia.')
+    .max(12, 'Un curso admite hasta 12 competencias.'),
+})
+
+export type DatosCurso = z.infer<typeof esquemaCurso>
