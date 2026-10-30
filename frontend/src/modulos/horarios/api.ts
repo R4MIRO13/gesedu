@@ -327,3 +327,60 @@ export function useEliminarBloque(anio: number) {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['bloques', anio] }),
   })
 }
+
+// --- UC-20: disponibilidad horaria del docente (RF-46) ---------------------------------------------------------
+
+export interface ValidacionDisponibilidad {
+  bloquesMarcados: number
+  cargaSemanalReferencia: number
+  faltan: number
+  suficiente: boolean
+  mensaje: string | null
+}
+
+/** La disponibilidad del docente autenticado frente a un año: la matriz, lo último que confirmó y el periodo. */
+export interface Disponibilidad {
+  anio: number
+  vinculado: boolean
+  vinculacionId: string | null
+  docente: string
+  cargaSemanalReferencia: number
+  cursos: CursoOpcion[]
+  periodo: PeriodoDisponibilidad
+  bloques: BloqueHorario[]
+  bloqueIds: string[]
+  observaciones: string | null
+  ultimaConfirmacion: string | null
+  validacion: ValidacionDisponibilidad | null
+}
+
+export function useDisponibilidad(anio: number) {
+  return useQuery({
+    queryKey: ['disponibilidad', anio],
+    queryFn: () => api<Disponibilidad>(`/anios-escolares/${anio}/disponibilidad/mia`),
+    staleTime: 0,
+  })
+}
+
+/** Advertencia de insuficiencia (FA-2): compara los bloques marcados con la carga del docente, sin guardar. */
+export function useValidacionDisponibilidad(anio: number, bloqueIds: string[], habilitada: boolean) {
+  return useQuery({
+    queryKey: ['disponibilidad-validacion', anio, bloqueIds],
+    enabled: habilitada,
+    staleTime: 0,
+    queryFn: () =>
+      api<ValidacionDisponibilidad>(`/anios-escolares/${anio}/disponibilidad/mia/validacion`, {
+        method: 'POST',
+        cuerpo: { bloqueIds },
+      }),
+  })
+}
+
+export function useConfirmarDisponibilidad(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (cuerpo: { bloqueIds: string[]; observaciones: string }) =>
+      api<Disponibilidad>(`/anios-escolares/${anio}/disponibilidad/mia`, { method: 'PUT', cuerpo }),
+    onSuccess: (datos) => cliente.setQueryData(['disponibilidad', anio], datos),
+  })
+}

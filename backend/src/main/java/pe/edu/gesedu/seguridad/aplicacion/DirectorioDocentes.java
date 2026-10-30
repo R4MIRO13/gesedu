@@ -44,6 +44,13 @@ public class DirectorioDocentes {
                 .map(d -> new DocenteResumen(d.getId(), d.getNombres(), d.getApellidos())).toList();
     }
 
+    /** El perfil de docente de la cuenta, si la cuenta es de un docente (alcance «mis clases», «mi disponibilidad»). */
+    @Transactional(readOnly = true)
+    public java.util.Optional<DocenteResumen> docenteDeUsuario(String usuarioId) {
+        return docentes.buscarPorUsuario(usuarioId).stream().findFirst()
+                .map(d -> new DocenteResumen(d.getId(), d.getNombres(), d.getApellidos()));
+    }
+
     /** Id → docente. Los ids que no existen no aparecen en el mapa. */
     @Transactional(readOnly = true)
     public Map<String, DocenteResumen> porIds(Collection<String> ids) {

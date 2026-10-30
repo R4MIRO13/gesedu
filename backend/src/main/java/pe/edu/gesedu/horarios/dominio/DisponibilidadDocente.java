@@ -25,6 +25,18 @@ public class DisponibilidadDocente extends EntidadBase {
     protected DisponibilidadDocente() {
     }
 
+    public DisponibilidadDocente(String vinculacionId, Instant fechaHoraConfirmacion, String observaciones) {
+        this.vinculacionId = vinculacionId;
+        this.fechaHoraConfirmacion = fechaHoraConfirmacion;
+        this.observaciones = observaciones;
+    }
+
+    /** Registra una nueva confirmación: la anterior deja de ser la vigente (UC-20, FA-1). */
+    public void confirmar(Instant fechaHoraConfirmacion, String observaciones) {
+        this.fechaHoraConfirmacion = fechaHoraConfirmacion;
+        this.observaciones = observaciones;
+    }
+
     public String getVinculacionId() {
         return vinculacionId;
     }

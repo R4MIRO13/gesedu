@@ -712,3 +712,46 @@ dd {
   border-radius: 8px;
   text-align: center;
 }
+
+/* Disponibilidad docente (UC-20) */
+.matriz-disponibilidad th,
+.matriz-disponibilidad td {
+  text-align: center;
+}
+.celda-disp {
+  width: 100%;
+  min-width: 5.5rem;
+  font: inherit;
+  padding: 0.45rem 0.4rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 6px;
+  background: var(--color-superficie);
+  color: var(--color-suave);
+  cursor: pointer;
+}
+.celda-disp-si {
+  background: var(--color-ok-fondo);
+  border-color: var(--color-ok);
+  color: var(--color-ok);
+  font-weight: 600;
+}
+.celda-disp:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+.fila-recreo td {
+  background: var(--color-hover);
+}
+.datos {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0 0 1rem;
+}
+.datos dt {
+  color: var(--color-suave);
+}
+.datos dd {
+  margin: 0;
+  font-weight: 600;
+}

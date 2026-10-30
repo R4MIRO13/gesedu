@@ -20,6 +20,11 @@ public class BloqueDisponible extends EntidadBase {
     protected BloqueDisponible() {
     }
 
+    public BloqueDisponible(String disponibilidadId, String bloqueId) {
+        this.disponibilidadId = disponibilidadId;
+        this.bloqueId = bloqueId;
+    }
+
     public String getDisponibilidadId() {
         return disponibilidadId;
     }
