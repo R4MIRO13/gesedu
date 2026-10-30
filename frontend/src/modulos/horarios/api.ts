@@ -384,3 +384,84 @@ export function useConfirmarDisponibilidad(anio: number) {
     onSuccess: (datos) => cliente.setQueryData(['disponibilidad', anio], datos),
   })
 }
+
+// --- UC-22: completitud y publicación del horario (RF-43, RF-44) -----------------------------------------------
+
+export type EstadoCompletitud = 'COMPLETO' | 'FALTAN' | 'EXCEDE' | 'FALTAN_Y_EXCEDE'
+
+export interface DiferenciaCurso {
+  cursoId: string
+  curso: string
+  asignadas: number
+  requeridas: number
+}
+
+export interface SeccionCompletitud {
+  seccionId: string
+  seccion: string
+  horasAsignadas: number
+  horasRequeridas: number
+  estado: EstadoCompletitud
+  faltan: number
+  sobran: number
+  detalle: DiferenciaCurso[]
+}
+
+export interface Advertencia {
+  tipo: string
+  mensaje: string
+  docentes: string[]
+}
+
+export interface Publicacion {
+  id: string
+  numeroVersion: number
+  fechaHoraPublicacion: string
+  vigente: boolean
+  publicadoPor: string | null
+  clases: number
+}
+
+/** Resultado de validar el borrador; `versionBorrador` va en `If-Match` al publicar exactamente lo revisado. */
+export interface Completitud {
+  anio: number
+  versionBorrador: number
+  secciones: SeccionCompletitud[]
+  completas: number
+  conObservaciones: number
+  publicable: boolean
+  advertencias: Advertencia[]
+  vigente: Publicacion | null
+  sinCambios: boolean
+}
+
+export function useCompletitud(anio: number) {
+  return useQuery({
+    queryKey: ['completitud', anio],
+    queryFn: () => api<Completitud>(`/horarios/${anio}/borrador/completitud`),
+    staleTime: 0,
+  })
+}
+
+export function useVersionesPublicadas(anio: number) {
+  return useQuery({
+    queryKey: ['publicaciones', anio],
+    queryFn: () => api<Publicacion[]>(`/horarios/${anio}/publicaciones`),
+    staleTime: 0,
+  })
+}
+
+export function usePublicarHorario(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (versionBorrador: number) =>
+      api<Publicacion>(`/horarios/${anio}/publicaciones`, { method: 'POST', cabeceras: { 'If-Match': `"${versionBorrador}"` } }),
+    // Pase lo que pase se recarga la completitud: si el borrador cambió, hay que volver a revisarlo
+    onSettled: () =>
+      Promise.all([
+        cliente.invalidateQueries({ queryKey: ['completitud', anio] }),
+        cliente.invalidateQueries({ queryKey: ['publicaciones', anio] }),
+        cliente.invalidateQueries({ queryKey: ['horario-vigente'] }),
+      ]),
+  })
+}

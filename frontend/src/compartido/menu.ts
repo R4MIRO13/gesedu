@@ -51,6 +51,12 @@ export const OPCIONES_MENU = [
     permiso: 'HORARIO_GESTIONAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/horarios/$anio/publicar', params: { anio: String(ANIO_TRABAJO) } }),
+    titulo: 'Publicar horario',
+    descripcion: 'Valida la carga de cada sección y publica la versión vigente del horario.',
+    permiso: 'HORARIO_GESTIONAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/matriculas' }),
     titulo: 'Matrículas',
     descripcion: 'Evalúa las solicitudes: valida, confirma la sección y genera los compromisos de pago.',
