@@ -209,3 +209,121 @@ export function useEliminarAsignacion(anio: number) {
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['borrador', anio] }),
   })
 }
+
+// --- Configuración de horarios del año: periodo, docentes y cargas (RF-46, RF-47, RF-43) ---------------------
+
+export interface PeriodoDisponibilidad {
+  anio: number
+  configurado: boolean
+  fechaHoraInicio: string | null
+  fechaHoraFin: string | null
+  estado: 'HABILITADO' | 'CERRADO' | null
+  /** Lo decide el servidor: habilitado y dentro de las fechas. */
+  abierto: boolean
+}
+
+export interface CursoOpcion {
+  id: string
+  nombre: string
+}
+
+export interface Vinculacion {
+  docenteId: string
+  nombre: string
+  vinculacionId: string | null
+  vinculado: boolean
+  habilitado: boolean
+  cargaSemanalReferencia: number
+  cursoIds: string[]
+  disponibilidadConfirmada: boolean
+  bloquesDisponibles: number
+  ultimaConfirmacion: string | null
+}
+
+export interface VinculacionesAnio {
+  anio: number
+  estado: 'PLANIFICADO' | 'ACTIVO' | 'CERRADO'
+  docentes: Vinculacion[]
+  cursos: CursoOpcion[]
+}
+
+export interface CeldaCarga {
+  gradoId: string
+  bloques: number
+  personalizada: boolean
+}
+
+export interface FilaCarga {
+  cursoId: string
+  curso: string
+  horasLectivas: number
+  grados: CeldaCarga[]
+}
+
+export interface CargasHorarias {
+  anio: number
+  estado: 'PLANIFICADO' | 'ACTIVO' | 'CERRADO'
+  bloquesPorSemana: number
+  grados: { id: string; numeroNivel: number }[]
+  cursos: FilaCarga[]
+  totales: { gradoId: string; total: number; excedeLaSemana: boolean }[]
+}
+
+export function usePeriodoDisponibilidad(anio: number) {
+  return useQuery({
+    queryKey: ['periodo-disponibilidad', anio],
+    queryFn: () => api<PeriodoDisponibilidad>(`/anios-escolares/${anio}/periodo-disponibilidad`),
+    staleTime: 0,
+  })
+}
+
+export function useGuardarPeriodo(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (cuerpo: { fechaHoraInicio: string; fechaHoraFin: string; habilitado: boolean }) =>
+      api<PeriodoDisponibilidad>(`/anios-escolares/${anio}/periodo-disponibilidad`, { method: 'PUT', cuerpo }),
+    onSuccess: (datos) => cliente.setQueryData(['periodo-disponibilidad', anio], datos),
+  })
+}
+
+export function useVinculaciones(anio: number) {
+  return useQuery({
+    queryKey: ['vinculaciones', anio],
+    queryFn: () => api<VinculacionesAnio>(`/anios-escolares/${anio}/vinculaciones-docentes`),
+    staleTime: 0,
+  })
+}
+
+export function useGuardarVinculacion(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ docenteId, ...cuerpo }: { docenteId: string; habilitado: boolean; cargaSemanalReferencia: number; cursoIds: string[] }) =>
+      api<Vinculacion>(`/anios-escolares/${anio}/vinculaciones-docentes/${docenteId}`, { method: 'PUT', cuerpo }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['vinculaciones', anio] }),
+  })
+}
+
+export function useCargasHorarias(anio: number) {
+  return useQuery({
+    queryKey: ['cargas-horarias', anio],
+    queryFn: () => api<CargasHorarias>(`/anios-escolares/${anio}/cargas-horarias`),
+    staleTime: 0,
+  })
+}
+
+export function useGuardarCargas(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (cargas: { gradoId: string; cursoId: string; bloques: number }[]) =>
+      api<CargasHorarias>(`/anios-escolares/${anio}/cargas-horarias`, { method: 'PUT', cuerpo: { cargas } }),
+    onSuccess: (datos) => cliente.setQueryData(['cargas-horarias', anio], datos),
+  })
+}
+
+export function useEliminarBloque(anio: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api<void>(`/anios-escolares/${anio}/bloques/${id}`, { method: 'DELETE' }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['bloques', anio] }),
+  })
+}

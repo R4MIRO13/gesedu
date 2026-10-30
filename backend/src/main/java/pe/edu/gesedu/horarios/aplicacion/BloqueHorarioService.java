@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import pe.edu.gesedu.academico.aplicacion.AnioEscolarService;
+import pe.edu.gesedu.academico.aplicacion.AnioEscolarService.AnioEscolarResumen;
 import pe.edu.gesedu.compartido.auditoria.Auditable;
 import pe.edu.gesedu.compartido.auditoria.ContextoAuditoria;
 import pe.edu.gesedu.compartido.error.CodigoError;
@@ -61,6 +62,32 @@ public class BloqueHorarioService {
         ContextoAuditoria.registrarCambio("horaInicio", null, horaInicio);
         ContextoAuditoria.registrarCambio("horaFin", null, horaFin);
         return aDto(nuevo);
+    }
+
+    /**
+     * Elimina un bloque del año que nadie usa. Si ya hay disponibilidades, clases del borrador o horarios publicados que
+     * lo referencian, las llaves foráneas de la base lo impiden y responde 409 {@code BLOQUE_EN_USO}.
+     */
+    @Transactional
+    @Auditable(accion = "ELIMINAR_BLOQUE_HORARIO", modulo = "HORARIOS", tipoEntidad = "BloqueHorario", idEntidad = "#bloqueId")
+    public void eliminar(int anio, String bloqueId) {
+        AnioEscolarResumen a = anios.obtenerPorAnio(anio);
+        if ("CERRADO".equals(a.estado())) {
+            throw new ExcepcionNegocio(CodigoError.ANIO_CERRADO);
+        }
+        BloqueHorario bloque = bloques.findById(bloqueId).filter(b -> b.getAnioEscolarId().equals(a.id()))
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el bloque en el año " + anio));
+        try {
+            bloques.delete(bloque);
+            bloques.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ExcepcionNegocio(CodigoError.BLOQUE_EN_USO,
+                    "El bloque ya tiene clases o disponibilidades registradas y no se puede eliminar");
+        }
+        ContextoAuditoria.registrarCambio("anio", anio, null);
+        ContextoAuditoria.registrarCambio("diaSemana", bloque.getDiaSemana(), null);
+        ContextoAuditoria.registrarCambio("horaInicio", bloque.getHoraInicio(), null);
+        ContextoAuditoria.registrarCambio("horaFin", bloque.getHoraFin(), null);
     }
 
     private ExcepcionNegocio conflicto(List<BloqueHorarioDto> conflictos) {

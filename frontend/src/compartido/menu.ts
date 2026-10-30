@@ -33,6 +33,12 @@ export const OPCIONES_MENU = [
     permiso: 'HORARIO_CONSULTAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/horarios/$anio/configuracion', params: { anio: String(ANIO_TRABAJO) }, search: { seccion: 'periodo' } }),
+    titulo: 'Configuración de horarios',
+    descripcion: 'Periodo de disponibilidad, docentes con sus cursos y bloques semanales de cada curso.',
+    permiso: 'HORARIO_CONFIGURAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',

@@ -32,6 +32,7 @@ import { Route as IntranetPagosValidarRouteImport } from './routes/intranet/pago
 import { Route as IntranetAcademicoAnioCursosRouteImport } from './routes/intranet/academico/$anio/cursos'
 import { Route as IntranetAcademicoAnioSeccionesRouteImport } from './routes/intranet/academico/$anio/secciones'
 import { Route as IntranetAcademicoAnioEscolarNuevoRouteImport } from './routes/intranet/academico/anio-escolar/nuevo'
+import { Route as IntranetHorariosAnioConfiguracionRouteImport } from './routes/intranet/horarios/$anio/configuracion'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 import { Route as IntranetPagosHistorialIndexRouteImport } from './routes/intranet/pagos/historial/index'
 import { Route as IntranetPagosHistorialCodigoRouteImport } from './routes/intranet/pagos/historial/$codigo'
@@ -160,6 +161,12 @@ const IntranetAcademicoAnioEscolarNuevoRoute =
     path: '/academico/anio-escolar/nuevo',
     getParentRoute: () => IntranetRoute,
   } as any)
+const IntranetHorariosAnioConfiguracionRoute =
+  IntranetHorariosAnioConfiguracionRouteImport.update({
+    id: '/horarios/$anio/configuracion',
+    path: '/horarios/$anio/configuracion',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetHorariosAnioElaborarRoute =
   IntranetHorariosAnioElaborarRouteImport.update({
     id: '/horarios/$anio/elaborar',
@@ -203,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
+  '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
   '/intranet/pagos/historial/': typeof IntranetPagosHistorialIndexRoute
@@ -231,6 +239,7 @@ export interface FileRoutesByTo {
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
+  '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
   '/intranet/pagos/historial': typeof IntranetPagosHistorialIndexRoute
@@ -260,6 +269,7 @@ export interface FileRoutesById {
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
+  '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/pagos/historial/$codigo': typeof IntranetPagosHistorialCodigoRoute
   '/intranet/pagos/historial/': typeof IntranetPagosHistorialIndexRoute
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/intranet/academico/$anio/cursos'
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
+    | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/pagos/historial/$codigo'
     | '/intranet/pagos/historial/'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/intranet/academico/$anio/cursos'
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
+    | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/pagos/historial/$codigo'
     | '/intranet/pagos/historial'
@@ -346,6 +358,7 @@ export interface FileRouteTypes {
     | '/intranet/academico/$anio/cursos'
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
+    | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/pagos/historial/$codigo'
     | '/intranet/pagos/historial/'
@@ -522,6 +535,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetAcademicoAnioEscolarNuevoRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/horarios/$anio/configuracion': {
+      id: '/intranet/horarios/$anio/configuracion'
+      path: '/horarios/$anio/configuracion'
+      fullPath: '/intranet/horarios/$anio/configuracion'
+      preLoaderRoute: typeof IntranetHorariosAnioConfiguracionRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/$anio/elaborar': {
       id: '/intranet/horarios/$anio/elaborar'
       path: '/horarios/$anio/elaborar'
@@ -565,6 +585,7 @@ interface IntranetRouteChildren {
   IntranetAcademicoAnioCursosRoute: typeof IntranetAcademicoAnioCursosRoute
   IntranetAcademicoAnioSeccionesRoute: typeof IntranetAcademicoAnioSeccionesRoute
   IntranetAcademicoAnioEscolarNuevoRoute: typeof IntranetAcademicoAnioEscolarNuevoRoute
+  IntranetHorariosAnioConfiguracionRoute: typeof IntranetHorariosAnioConfiguracionRoute
   IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
   IntranetPagosHistorialCodigoRoute: typeof IntranetPagosHistorialCodigoRoute
   IntranetPagosHistorialIndexRoute: typeof IntranetPagosHistorialIndexRoute
@@ -590,6 +611,8 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetAcademicoAnioSeccionesRoute: IntranetAcademicoAnioSeccionesRoute,
   IntranetAcademicoAnioEscolarNuevoRoute:
     IntranetAcademicoAnioEscolarNuevoRoute,
+  IntranetHorariosAnioConfiguracionRoute:
+    IntranetHorariosAnioConfiguracionRoute,
   IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,
   IntranetPagosHistorialCodigoRoute: IntranetPagosHistorialCodigoRoute,
   IntranetPagosHistorialIndexRoute: IntranetPagosHistorialIndexRoute,

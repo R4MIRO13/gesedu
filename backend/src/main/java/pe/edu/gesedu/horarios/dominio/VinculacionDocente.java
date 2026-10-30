@@ -26,6 +26,18 @@ public class VinculacionDocente extends EntidadBase {
     protected VinculacionDocente() {
     }
 
+    public VinculacionDocente(String docenteId, String anioEscolarId, boolean habilitado, int cargaSemanalReferencia) {
+        this.docenteId = docenteId;
+        this.anioEscolarId = anioEscolarId;
+        this.habilitado = habilitado;
+        this.cargaSemanalReferencia = cargaSemanalReferencia;
+    }
+
+    public void actualizar(boolean habilitado, int cargaSemanalReferencia) {
+        this.habilitado = habilitado;
+        this.cargaSemanalReferencia = cargaSemanalReferencia;
+    }
+
     public String getDocenteId() {
         return docenteId;
     }

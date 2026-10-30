@@ -21,6 +21,11 @@ public class AsociacionDocenteCurso extends EntidadBase {
     protected AsociacionDocenteCurso() {
     }
 
+    public AsociacionDocenteCurso(String vinculacionId, String cursoId) {
+        this.vinculacionId = vinculacionId;
+        this.cursoId = cursoId;
+    }
+
     public String getVinculacionId() {
         return vinculacionId;
     }

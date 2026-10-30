@@ -23,6 +23,16 @@ public class CargaHorariaCurso extends EntidadBase {
     protected CargaHorariaCurso() {
     }
 
+    public CargaHorariaCurso(String gradoId, String cursoId, int bloquesSemanales) {
+        this.gradoId = gradoId;
+        this.cursoId = cursoId;
+        this.bloquesSemanales = bloquesSemanales;
+    }
+
+    public void setBloquesSemanales(int bloquesSemanales) {
+        this.bloquesSemanales = bloquesSemanales;
+    }
+
     public String getGradoId() {
         return gradoId;
     }

@@ -694,3 +694,21 @@ dd {
   gap: 0.75rem;
   align-items: flex-end;
 }
+
+/* Configuración de horarios (RF-46, RF-47, RF-43) */
+.bloques li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bloques li .hora {
+  flex: 1;
+}
+.entrada-numero {
+  width: 4rem;
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  text-align: center;
+}

@@ -41,6 +41,8 @@ public enum CodigoError {
     CURSO_DUPLICADO(HttpStatus.CONFLICT, "Ya existe un curso con ese nombre en el año escolar"),
     SECCION_DUPLICADA(HttpStatus.CONFLICT, "Ya existe una sección con esa letra en el grado"),
     TUTOR_YA_ASIGNADO(HttpStatus.CONFLICT, "El docente ya es tutor de otra sección del año"),
+    DOCENTE_CON_CLASES(HttpStatus.CONFLICT, "El docente tiene clases en el borrador del horario"),
+    BLOQUE_EN_USO(HttpStatus.CONFLICT, "El bloque ya se usa en disponibilidades o en horarios"),
     CURSO_EN_USO(HttpStatus.CONFLICT, "El curso o la competencia ya se usa en horarios o evaluaciones"),
     NUMERO_OPERACION_DUPLICADO(HttpStatus.CONFLICT, "El número de operación ya fue presentado"),
     COMPROBANTE_PENDIENTE(HttpStatus.CONFLICT, "La obligación ya tiene un comprobante pendiente de revisión"),

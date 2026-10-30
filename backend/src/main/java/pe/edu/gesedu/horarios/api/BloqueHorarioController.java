@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,6 +37,14 @@ class BloqueHorarioController {
     @PreAuthorize("hasAuthority('HORARIO_CONSULTAR')")
     List<BloqueHorarioDto> listar(@PathVariable int anio) {
         return bloques.listar(anio);
+    }
+
+    @Operation(summary = "Elimina un bloque que aún no se usa. 409 BLOQUE_EN_USO si hay disponibilidades o clases que lo referencian")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('HORARIO_CONFIGURAR')")
+    void eliminar(@PathVariable int anio, @PathVariable String id) {
+        bloques.eliminar(anio, id);
     }
 
     @Operation(summary = "Crea un bloque horario (solo Administrador). 409 si se superpone con otro del mismo día")

@@ -1,5 +1,7 @@
 package pe.edu.gesedu.horarios.infraestructura;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import pe.edu.gesedu.horarios.dominio.BloqueDisponible;
 
 public interface BloqueDisponibleRepository extends JpaRepository<BloqueDisponible, String> {
+
+    List<BloqueDisponible> findByDisponibilidadIdIn(Collection<String> disponibilidadIds);
 
     /**
      * Docentes habilitados en el año que confirmaron su disponibilidad e incluyeron ese bloque. Un docente que

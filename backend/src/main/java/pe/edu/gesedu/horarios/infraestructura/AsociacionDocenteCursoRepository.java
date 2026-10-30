@@ -10,4 +10,6 @@ import pe.edu.gesedu.horarios.dominio.AsociacionDocenteCurso;
 public interface AsociacionDocenteCursoRepository extends JpaRepository<AsociacionDocenteCurso, String> {
 
     List<AsociacionDocenteCurso> findByVinculacionIdIn(Collection<String> vinculacionIds);
+
+    List<AsociacionDocenteCurso> findByVinculacionId(String vinculacionId);
 }

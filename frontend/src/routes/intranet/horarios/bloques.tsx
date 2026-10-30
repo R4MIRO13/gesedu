@@ -7,6 +7,7 @@ import {
   NOMBRE_DIA,
   useBloques,
   useCrearBloque,
+  useEliminarBloque,
   type BloqueHorario,
   type DiaSemana,
 } from '../../../modulos/horarios/api'
@@ -23,6 +24,8 @@ function Bloques() {
   const [anio, setAnio] = useState(ANIO_INICIAL)
   const bloques = useBloques(anio)
   const puedeCrear = tienePermiso(sesion ?? obtenerSesion(), 'HORARIO_CONFIGURAR')
+  const eliminar = useEliminarBloque(anio)
+  const [aviso, setAviso] = useState<string | null>(null)
 
   const porDia = new Map<DiaSemana, BloqueHorario[]>()
   for (const b of bloques.data ?? []) porDia.set(b.diaSemana, [...(porDia.get(b.diaSemana) ?? []), b])
@@ -50,6 +53,16 @@ function Bloques() {
           {bloques.error.message}
         </p>
       )}
+      {aviso && (
+        <p className="alerta alerta-ok" role="status">
+          {aviso}
+        </p>
+      )}
+      {eliminar.error && (
+        <p className="alerta alerta-error" role="alert">
+          {eliminar.error.message}
+        </p>
+      )}
       {bloques.isSuccess && diasConBloques.length === 0 && (
         <p className="alerta">No hay bloques horarios registrados para {anio}.</p>
       )}
@@ -64,6 +77,22 @@ function Bloques() {
                   <span className="hora">
                     {b.horaInicio} – {b.horaFin}
                   </span>
+                  {puedeCrear && (
+                    <button
+                      type="button"
+                      className="btn"
+                      aria-label={`Eliminar el bloque del ${NOMBRE_DIA[dia].toLowerCase()} de ${b.horaInicio} a ${b.horaFin}`}
+                      disabled={eliminar.isPending}
+                      onClick={() => {
+                        setAviso(null)
+                        eliminar.mutate(b.id, {
+                          onSuccess: () => setAviso(`Se eliminó el bloque del ${NOMBRE_DIA[dia].toLowerCase()} de ${b.horaInicio} a ${b.horaFin}.`),
+                        })
+                      }}
+                    >
+                      Eliminar
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

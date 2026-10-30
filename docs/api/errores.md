@@ -41,3 +41,4 @@ Los códigos de abajo ya existen en el enum; cada módulo los empieza a lanzar e
 ⁵ Agregados en la fase 3 (UC-13, UC-14, RF-03, RF-04): el año escolar, el nombre del curso o la letra de la sección ya existen, o el docente ya es tutor de otra sección del año (`ux_seccion_tutor`). Los de año, curso y sección no están en `docs/PLAN.md` § 5.2 (C-42).
 ⁶ Agregados en la tarea 3.2: `CURSO_EN_USO` (409; el curso o la competencia ya tiene docentes, cargas, clases o logros, lo decide la llave foránea) y `ANIO_CERRADO` (422; un año cerrado ya no se configura).
 ⁷ Agregado en la tarea 3.3: `CAPACIDAD_INSUFICIENTE` (422; la capacidad de la sección no puede quedar por debajo de los estudiantes matriculados).
+⁸ Agregados en la tarea 3.4: `DOCENTE_CON_CLASES` (409; el docente tiene clases en el borrador del horario y no se puede deshabilitar ni desasociar de ese curso) y `BLOQUE_EN_USO` (409; el bloque ya está en disponibilidades, clases u horarios publicados).
