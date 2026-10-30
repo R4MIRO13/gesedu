@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.DocenteTutorDto;
 import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.GradoSeccionesDto;
 import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.GradosAnioDto;
-import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.SeccionDto;
+import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.SeccionConfiguracionDto;
 import pe.edu.gesedu.academico.dominio.AnioEscolar;
 import pe.edu.gesedu.academico.dominio.Grado;
 import pe.edu.gesedu.academico.dominio.Seccion;
@@ -72,7 +72,7 @@ public class SeccionService {
     }
 
     @Transactional(readOnly = true)
-    public SeccionDto obtener(String seccionId) {
+    public SeccionConfiguracionDto obtener(String seccionId) {
         Seccion s = seccion(seccionId);
         Grado g = grados.findById(s.getGradoId()).orElseThrow();
         return dto(s, g.getNumeroNivel(), docentesDe(s.getTutorDocenteId()));
@@ -81,7 +81,7 @@ public class SeccionService {
     /** Agrega una sección al grado, con todas sus vacantes libres. */
     @Transactional
     @Auditable(accion = "CREAR_SECCION", modulo = "ACADEMICO", tipoEntidad = "Seccion", idEntidad = "#result.id()")
-    public SeccionDto crear(String gradoId, String letra, int capacidad, String tutorDocenteId) {
+    public SeccionConfiguracionDto crear(String gradoId, String letra, int capacidad, String tutorDocenteId) {
         Grado grado = grados.findById(gradoId).orElseThrow(() ->
                 new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el grado"));
         abierto(grado.getAnioEscolarId());
@@ -110,7 +110,7 @@ public class SeccionService {
      */
     @Transactional
     @Auditable(accion = "MODIFICAR_SECCION", modulo = "ACADEMICO", tipoEntidad = "Seccion", idEntidad = "#seccionId")
-    public SeccionDto modificar(String seccionId, int capacidad, String tutorDocenteId, String ifMatch) {
+    public SeccionConfiguracionDto modificar(String seccionId, int capacidad, String tutorDocenteId, String ifMatch) {
         long version = Etags.leerVersion(ifMatch);
         Seccion actual = seccion(seccionId);
         abierto(actual.getAnioEscolarId());
@@ -207,9 +207,9 @@ public class SeccionService {
         }
     }
 
-    private static SeccionDto dto(Seccion s, int nivel, Map<String, DocenteResumen> tutores) {
+    private static SeccionConfiguracionDto dto(Seccion s, int nivel, Map<String, DocenteResumen> tutores) {
         DocenteResumen tutor = s.getTutorDocenteId() == null ? null : tutores.get(s.getTutorDocenteId());
-        return new SeccionDto(s.getId(), s.getGradoId(), s.getLetra(), nivel + "° " + s.getLetra(), s.getCapacidad(),
+        return new SeccionConfiguracionDto(s.getId(), s.getGradoId(), s.getLetra(), nivel + "° " + s.getLetra(), s.getCapacidad(),
                 s.getVacantesDisponibles(), s.getCapacidad() - s.getVacantesDisponibles(), s.getTutorDocenteId(),
                 tutor == null ? null : tutor.nombreCompleto(), s.getVersion());
     }

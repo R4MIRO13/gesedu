@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import pe.edu.gesedu.academico.aplicacion.SeccionService;
 import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.GradosAnioDto;
-import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.SeccionDto;
+import pe.edu.gesedu.academico.aplicacion.SeccionesDtos.SeccionConfiguracionDto;
 import pe.edu.gesedu.compartido.web.Etags;
 
 /** Grados y secciones del año con su capacidad, sus vacantes y su tutor (RF-03, RF-04). */
@@ -62,16 +62,16 @@ class SeccionController {
             + "docente ya es tutor de otra sección del año. Queda auditado")
     @PostMapping("/grados/{gradoId}/secciones")
     @PreAuthorize("hasAuthority('ACADEMICO_CONFIGURAR')")
-    ResponseEntity<SeccionDto> crear(@PathVariable String gradoId, @Valid @RequestBody NuevaSeccionRequest solicitud) {
-        SeccionDto creada = secciones.crear(gradoId, solicitud.letra(), solicitud.capacidad(), vacioANulo(solicitud.tutorDocenteId()));
+    ResponseEntity<SeccionConfiguracionDto> crear(@PathVariable String gradoId, @Valid @RequestBody NuevaSeccionRequest solicitud) {
+        SeccionConfiguracionDto creada = secciones.crear(gradoId, solicitud.letra(), solicitud.capacidad(), vacioANulo(solicitud.tutorDocenteId()));
         return ResponseEntity.status(HttpStatus.CREATED).header(HttpHeaders.ETAG, Etags.de(creada.version())).body(creada);
     }
 
     @Operation(summary = "Una sección con su versión en el ETag")
     @GetMapping("/secciones/{id}")
     @PreAuthorize("hasAuthority('ACADEMICO_CONSULTAR')")
-    ResponseEntity<SeccionDto> obtener(@PathVariable String id) {
-        SeccionDto dto = secciones.obtener(id);
+    ResponseEntity<SeccionConfiguracionDto> obtener(@PathVariable String id) {
+        SeccionConfiguracionDto dto = secciones.obtener(id);
         return ResponseEntity.ok().header(HttpHeaders.ETAG, Etags.de(dto.version())).body(dto);
     }
 
@@ -80,9 +80,9 @@ class SeccionController {
                     + "matriculados; 409 CONFLICTO_CONCURRENCIA si la sección cambió; 409 TUTOR_YA_ASIGNADO.")
     @PutMapping("/secciones/{id}")
     @PreAuthorize("hasAuthority('ACADEMICO_CONFIGURAR')")
-    ResponseEntity<SeccionDto> modificar(@PathVariable String id, @Valid @RequestBody SeccionRequest solicitud,
+    ResponseEntity<SeccionConfiguracionDto> modificar(@PathVariable String id, @Valid @RequestBody SeccionRequest solicitud,
                                          @RequestHeader(name = HttpHeaders.IF_MATCH, required = false) String ifMatch) {
-        SeccionDto dto = secciones.modificar(id, solicitud.capacidad(), vacioANulo(solicitud.tutorDocenteId()), ifMatch);
+        SeccionConfiguracionDto dto = secciones.modificar(id, solicitud.capacidad(), vacioANulo(solicitud.tutorDocenteId()), ifMatch);
         return ResponseEntity.ok().header(HttpHeaders.ETAG, Etags.de(dto.version())).body(dto);
     }
 

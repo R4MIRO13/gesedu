@@ -12,11 +12,11 @@ public final class SeccionesDtos {
      * Una sección con su cupo: {@code matriculados = capacidad − vacantes}. {@code version} viaja también como
      * {@code ETag} y se devuelve en {@code If-Match} al editar.
      */
-    public record SeccionDto(String id, String gradoId, String letra, String nombre, int capacidad, int vacantes,
+    public record SeccionConfiguracionDto(String id, String gradoId, String letra, String nombre, int capacidad, int vacantes,
                              int matriculados, String tutorDocenteId, String tutor, long version) {
     }
 
-    public record GradoSeccionesDto(String id, int numeroNivel, List<SeccionDto> secciones) {
+    public record GradoSeccionesDto(String id, int numeroNivel, List<SeccionConfiguracionDto> secciones) {
     }
 
     /** Docente que puede ser tutor (para el selector de la pantalla). */

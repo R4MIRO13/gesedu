@@ -61,6 +61,40 @@ import type {
   SolicitudRegistrada,
 } from '../../modulos/matricula/api'
 import type { EstadoCuenta, FichaAlumno, FichaApoderado, PaginaUsuarios, UsuarioFila } from '../../modulos/seguridad/api'
+import type {
+  AnioDetalle,
+  AnioResumen,
+  Bimestre,
+  Competencia,
+  CopiaAnterior,
+  Curso,
+  CursoCopiable,
+  CursosAnio,
+  DocenteTutor,
+  GradoConSecciones,
+  GradosAnio,
+  ProblemaAnio,
+  ResultadoCopia,
+  Seccion,
+  ValidacionAnio,
+} from '../../modulos/academico/api'
+import type {
+  Advertencia,
+  CargasHorarias,
+  CeldaCarga,
+  Completitud,
+  CursoOpcion,
+  Disponibilidad,
+  DiferenciaCurso,
+  FilaCarga,
+  HorarioVigente,
+  PeriodoDisponibilidad,
+  Publicacion,
+  SeccionCompletitud,
+  ValidacionDisponibilidad,
+  Vinculacion,
+  VinculacionesAnio,
+} from '../../modulos/horarios/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -178,5 +212,62 @@ describe('contrato de usuarios (UC-24)', () => {
     expectTypeOf<keyof FichaApoderado>().toEqualTypeOf<keyof Esquemas['FichaApoderado']>()
     expectTypeOf<keyof MatriculaGestionable>().toEqualTypeOf<keyof Esquemas['MatriculaGestionable']>()
     expectTypeOf<keyof ResultadoCambioSeccion>().toEqualTypeOf<keyof Esquemas['ResultadoCambioSeccion']>()
+  })
+})
+
+describe('contrato académico (UC-13, UC-14, RF-03, RF-04)', () => {
+  it('el año escolar y su validación tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof AnioResumen>().toEqualTypeOf<keyof Esquemas['AnioResumenDto']>()
+    expectTypeOf<keyof AnioDetalle>().toEqualTypeOf<keyof Esquemas['AnioDetalleDto']>()
+    expectTypeOf<keyof Bimestre>().toEqualTypeOf<keyof Esquemas['BimestreDto']>()
+    expectTypeOf<keyof ValidacionAnio>().toEqualTypeOf<keyof Esquemas['ValidacionAnioDto']>()
+    expectTypeOf<keyof ProblemaAnio>().toEqualTypeOf<keyof Esquemas['ProblemaDto']>()
+  })
+
+  it('los cursos y la copia del año anterior coinciden con el backend', () => {
+    expectTypeOf<keyof Curso>().toEqualTypeOf<keyof Esquemas['CursoDto']>()
+    expectTypeOf<keyof Competencia>().toEqualTypeOf<keyof Esquemas['CompetenciaDto']>()
+    expectTypeOf<keyof CursosAnio>().toEqualTypeOf<keyof Esquemas['CursosAnioDto']>()
+    expectTypeOf<keyof CursoCopiable>().toEqualTypeOf<keyof Esquemas['CursoCopiable']>()
+    expectTypeOf<keyof CopiaAnterior>().toEqualTypeOf<keyof Esquemas['CopiaAnteriorDto']>()
+    expectTypeOf<keyof ResultadoCopia>().toEqualTypeOf<keyof Esquemas['ResultadoCopiaDto']>()
+  })
+
+  it('los grados y las secciones coinciden con el backend', () => {
+    expectTypeOf<keyof Seccion>().toEqualTypeOf<keyof Esquemas['SeccionConfiguracionDto']>()
+    expectTypeOf<keyof GradoConSecciones>().toEqualTypeOf<keyof Esquemas['GradoSeccionesDto']>()
+    expectTypeOf<keyof GradosAnio>().toEqualTypeOf<keyof Esquemas['GradosAnioDto']>()
+    expectTypeOf<keyof DocenteTutor>().toEqualTypeOf<keyof Esquemas['DocenteTutorDto']>()
+  })
+})
+
+describe('contrato de la configuración de horarios y UC-20', () => {
+  it('el periodo, las vinculaciones y las cargas coinciden con el backend', () => {
+    expectTypeOf<keyof PeriodoDisponibilidad>().toEqualTypeOf<keyof Esquemas['PeriodoDto']>()
+    expectTypeOf<keyof Vinculacion>().toEqualTypeOf<keyof Esquemas['VinculacionDto']>()
+    expectTypeOf<keyof VinculacionesAnio>().toEqualTypeOf<keyof Esquemas['VinculacionesAnioDto']>()
+    expectTypeOf<keyof CursoOpcion>().toEqualTypeOf<keyof Esquemas['CursoOpcionDto']>()
+    expectTypeOf<keyof CargasHorarias>().toEqualTypeOf<keyof Esquemas['CargasHorariasDto']>()
+    expectTypeOf<keyof FilaCarga>().toEqualTypeOf<keyof Esquemas['FilaCargaDto']>()
+    expectTypeOf<keyof CeldaCarga>().toEqualTypeOf<keyof Esquemas['CeldaCargaDto']>()
+  })
+
+  it('la disponibilidad del docente coincide con el backend', () => {
+    expectTypeOf<keyof Disponibilidad>().toEqualTypeOf<keyof Esquemas['DisponibilidadDto']>()
+    expectTypeOf<keyof ValidacionDisponibilidad>().toEqualTypeOf<keyof Esquemas['ValidacionDisponibilidadDto']>()
+  })
+})
+
+describe('contrato de la publicación y la consulta del horario (UC-22, UC-23)', () => {
+  it('la completitud y las versiones publicadas coinciden con el backend', () => {
+    expectTypeOf<keyof Completitud>().toEqualTypeOf<keyof Esquemas['CompletitudDto']>()
+    expectTypeOf<keyof SeccionCompletitud>().toEqualTypeOf<keyof Esquemas['SeccionCompletitudDto']>()
+    expectTypeOf<keyof DiferenciaCurso>().toEqualTypeOf<keyof Esquemas['DiferenciaDto']>()
+    expectTypeOf<keyof Advertencia>().toEqualTypeOf<keyof Esquemas['AdvertenciaDto']>()
+    expectTypeOf<keyof Publicacion>().toEqualTypeOf<keyof Esquemas['PublicacionDto']>()
+  })
+
+  it('el horario vigente coincide con el backend', () => {
+    expectTypeOf<keyof HorarioVigente>().toEqualTypeOf<keyof Esquemas['HorarioVigenteDto']>()
   })
 })

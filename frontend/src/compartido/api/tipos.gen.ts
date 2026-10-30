@@ -21,6 +21,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/secciones/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Una sección con su versión en el ETag */
+        get: operations["obtener"];
+        /**
+         * Cambia la capacidad y el tutor de la sección. Exige If-Match
+         * @description Las vacantes se ajustan con la capacidad. 422 CAPACIDAD_INSUFICIENTE si queda por debajo de los matriculados; 409 CONFLICTO_CONCURRENCIA si la sección cambió; 409 TUTOR_YA_ASIGNADO.
+         */
+        put: operations["modificar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/horarios/{anio}/borrador/asignaciones/{id}": {
         parameters: {
             query?: never;
@@ -30,10 +51,29 @@ export interface paths {
         };
         get?: never;
         /** Modifica el bloque, el curso o el docente de una clase (FA-1). Exige If-Match */
-        put: operations["modificar"];
+        put: operations["modificar_1"];
         post?: never;
         /** Elimina una clase del borrador (FA-2). Exige If-Match */
         delete: operations["eliminar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cursos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Un curso con sus competencias */
+        get: operations["obtener_1"];
+        /** Edita el curso y su lista de competencias (agrega, edita y quita; RF-24) */
+        put: operations["modificar_2"];
+        post?: never;
+        /** Elimina un curso que aún no se usa. 409 CURSO_EN_USO si tiene docentes, cargas, clases o logros */
+        delete: operations["eliminar_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -57,6 +97,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/anios-escolares/{anio}/vinculaciones-docentes/{docenteId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Vincula o actualiza al docente con el año y reemplaza sus cursos asociados (RF-47)
+         * @description 409 DOCENTE_CON_CLASES si se intenta deshabilitarlo o quitarle un curso que ya tiene clases en el borrador.
+         */
+        put: operations["guardarVinculacion"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/periodo-disponibilidad": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Periodo en que los docentes registran su disponibilidad (`abierto` lo decide el servidor) */
+        get: operations["obtenerPeriodo"];
+        /** Define el periodo de registro de disponibilidad. `habilitado=false` lo cierra aunque no haya vencido. Queda auditado */
+        put: operations["guardarPeriodo"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/disponibilidad/mia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mi disponibilidad del año: la matriz de bloques, lo último que confirmé y el estado del periodo
+         * @description 422 VINCULO_ACADEMICO_INEXISTENTE no aplica aquí: si el docente no está habilitado, `vinculado` es falso.
+         */
+        get: operations["consultar"];
+        /**
+         * Confirma mi disponibilidad: queda como la última versión confirmada (FA-1)
+         * @description 422 PERIODO_DISPONIBILIDAD_CERRADO si el periodo no está abierto (FE-1: se conserva la anterior). La advertencia de insuficiencia no impide confirmar. Queda auditado.
+         */
+        put: operations["confirmar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/anios-escolares/{anio}/cobros": {
         parameters: {
             query?: never;
@@ -65,9 +167,27 @@ export interface paths {
             cookie?: never;
         };
         /** Cronograma de cobros y porcentaje de penalidad del año */
-        get: operations["obtener"];
+        get: operations["obtener_2"];
         /** Guarda el cronograma completo (reemplaza al anterior) y la penalidad, y actualiza el monto y el vencimiento de las obligaciones PENDIENTES del año (RF-07): las pagadas y las vencidas no cambian y las líneas nuevas no crean obligaciones retroactivas. `obligacionesActualizadas` dice cuántas cambiaron. Queda auditado */
         put: operations["guardar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/cargas-horarias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bloques semanales de cada curso por grado, con el total por grado frente a los bloques de la semana */
+        get: operations["obtenerCargas"];
+        /** Guarda las cargas indicadas (las demás celdas no cambian). Queda auditado */
+        put: operations["guardarCargas"];
         post?: never;
         delete?: never;
         options?: never;
@@ -138,7 +258,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Confirma la matrícula en una sola transacción: vacante, matrícula, compromisos de pago y correo al apoderado. Exige If-Match. 422 si una validación falla; 409 SIN_VACANTE o CONFLICTO_CONCURRENCIA */
-        post: operations["confirmar"];
+        post: operations["confirmar_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -196,6 +316,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/horarios/{anio}/publicaciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versiones publicadas del año, de la más reciente a la más antigua */
+        get: operations["versiones"];
+        put?: never;
+        /**
+         * Publica el borrador como nueva versión vigente (la anterior deja de serlo). Exige If-Match
+         * @description 422 HORARIO_INCOMPLETO con `secciones[]` si alguna sección no cuadra con su carga (el borrador no cambia); 409 CONFLICTO_CONCURRENCIA si el borrador cambió desde que se revisó. Sincroniza los responsables de cada curso con la evaluación y queda auditado.
+         */
+        post: operations["publicar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/horarios/{anio}/borrador/validaciones": {
         parameters: {
             query?: never;
@@ -224,6 +365,23 @@ export interface paths {
         put?: never;
         /** Agrega una clase al borrador. Exige If-Match. 409 por cruce o por versión; 422 si el docente no está asociado al curso o no está disponible */
         post: operations["crear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/grados/{gradoId}/secciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Agrega una sección a un grado, con todas sus vacantes libres. 409 si la letra ya existe o el docente ya es tutor de otra sección del año. Queda auditado */
+        post: operations["crear_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -325,7 +483,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Define la contraseña nueva con el enlace (un solo uso, 30 min). Revoca las sesiones abiertas. 400 TOKEN_RECUPERACION_INVALIDO si el enlace no sirve */
-        post: operations["confirmar_1"];
+        post: operations["confirmar_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -366,6 +524,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/anios-escolares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Años escolares, del más reciente al más antiguo */
+        get: operations["listar_1"];
+        put?: never;
+        /**
+         * Crea el año escolar PLANIFICADO con sus cuatro bimestres y sus cinco grados
+         * @description 422 RANGO_ANIO_INVALIDO si no dura entre 10 y 12 meses; 422 BIMESTRES_SUPERPUESTOS si un bimestre sale del año o se cruza con otro (con `problemas[]`); 409 si el año ya existe. Queda auditado.
+         */
+        post: operations["crear_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/disponibilidad/mia/validacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compara los bloques marcados con mi carga horaria, sin guardar (advertencia de insuficiencia, FA-2) */
+        post: operations["validar_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/cursos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cursos del año con sus competencias y el total de horas semanales */
+        get: operations["listar_2"];
+        put?: never;
+        /** Crea un curso con sus competencias (códigos C1, C2…). 409 si el nombre ya existe en el año; 422 si el año está cerrado. Queda auditado */
+        post: operations["crear_3"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/cursos/copia-anterior": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Configuración de cursos y competencias del año anterior más reciente que tenga cursos (FA-1)
+         * @description Cada curso trae `yaExiste` si el año ya tiene uno con el mismo nombre.
+         */
+        get: operations["copiaAnterior"];
+        put?: never;
+        /**
+         * Copia al año los cursos elegidos del año anterior, con sus competencias (FA-1)
+         * @description Los cursos que el año ya tiene se omiten: repetir la copia no duplica nada.
+         */
+        post: operations["copiar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/anios-escolares/{anio}/bloques": {
         parameters: {
             query?: never;
@@ -374,10 +612,30 @@ export interface paths {
             cookie?: never;
         };
         /** Lista los bloques horarios del año, ordenados por día y hora */
-        get: operations["listar_1"];
+        get: operations["listar_3"];
         put?: never;
         /** Crea un bloque horario (solo Administrador). 409 si se superpone con otro del mismo día */
-        post: operations["crear_1"];
+        post: operations["crear_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/validaciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Valida las fechas del año (y de los bimestres, si se envían) sin guardar nada
+         * @description Devuelve la duración y la lista de problemas (año fuera de 10–12 meses, bimestres fuera del año o cruzados) para mostrarlos antes de crear el año.
+         */
+        post: operations["validar_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -426,7 +684,7 @@ export interface paths {
             cookie?: never;
         };
         /** Lista las cuentas, paginada, filtrable por texto (nombre o correo), rol y estado */
-        get: operations["listar_2"];
+        get: operations["listar_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -537,6 +795,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/horarios/{anio}/vigente": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * La última versión publicada del horario, por sección o por docente, según el alcance del usuario
+         * @description Administrador: cualquier sección o docente. Docente: sus clases y las secciones donde dicta o es tutor. Alumno y apoderado: la sección de su alcance. 404 HORARIO_NO_PUBLICADO si el año no tiene versión vigente (FA-1); 403 FUERA_DE_ALCANCE si pide una sección o un docente fuera de su alcance. Sin parámetros devuelve la perspectiva principal del rol y el primer elemento permitido.
+         */
+        get: operations["vigente"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/horarios/{anio}/borrador": {
         parameters: {
             query?: never;
@@ -548,7 +826,7 @@ export interface paths {
          * El borrador del año para una perspectiva (lo crea si no existe). Devuelve ETag con la versión
          * @description perspectiva=SECCION con seccionId, o perspectiva=DOCENTE con docenteId; ambas ven el mismo borrador. Sin id se toma la primera sección o el primer docente.
          */
-        get: operations["obtener_1"];
+        get: operations["obtener_3"];
         put?: never;
         post?: never;
         delete?: never;
@@ -574,6 +852,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/horarios/{anio}/borrador/completitud": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compara, sección por sección, los bloques del borrador con la carga semanal de cada curso
+         * @description Devuelve el ETag con la versión del borrador revisado: se manda en `If-Match` al publicar. `publicable` es verdadero solo si todas las secciones están completas; las advertencias (por ejemplo, docentes sin disponibilidad confirmada) no bloquean.
+         */
+        get: operations["completitud"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/comprobantes": {
         parameters: {
             query?: never;
@@ -582,7 +880,7 @@ export interface paths {
             cookie?: never;
         };
         /** Bandeja de comprobantes (paso 1), paginada; por defecto los PENDIENTES, del más antiguo al más reciente */
-        get: operations["listar_3"];
+        get: operations["listar_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -633,7 +931,7 @@ export interface paths {
             cookie?: never;
         };
         /** Consulta los registros de auditoría (más recientes primero). desde y hasta son fechas yyyy-MM-dd, inclusive; sort: fechaHora, accion o modulo, con ,asc o ,desc */
-        get: operations["listar_4"];
+        get: operations["listar_6"];
         put?: never;
         post?: never;
         delete?: never;
@@ -693,6 +991,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/anios-escolares/{anio}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Un año escolar con sus cuatro bimestres */
+        get: operations["obtener_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/vinculaciones-docentes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Docentes frente al año (vinculados o no), con sus cursos asociados y el estado de su disponibilidad */
+        get: operations["listarVinculaciones"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/grados": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Grados del año con sus secciones (capacidad, matriculados, vacantes y tutor) y los docentes que pueden ser tutores */
+        get: operations["listar_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alumnos/{codigoAlumno}/historial-financiero": {
         parameters: {
             query?: never;
@@ -739,6 +1088,23 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/bloques/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Elimina un bloque que aún no se usa. 409 BLOQUE_EN_USO si hay disponibilidades o clases que lo referencian */
+        delete: operations["eliminar_2"];
         options?: never;
         head?: never;
         patch?: never;
@@ -839,6 +1205,31 @@ export interface components {
             /** @enum {string} */
             motivoSugerido?: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
         };
+        SeccionRequest: {
+            /**
+             * Format: int32
+             * @example 30
+             */
+            capacidad: number;
+            /** @description Docente tutor; nulo la deja sin tutor */
+            tutorDocenteId?: string;
+        };
+        SeccionConfiguracionDto: {
+            id?: string;
+            gradoId?: string;
+            letra?: string;
+            nombre?: string;
+            /** Format: int32 */
+            capacidad?: number;
+            /** Format: int32 */
+            vacantes?: number;
+            /** Format: int32 */
+            matriculados?: number;
+            tutorDocenteId?: string;
+            tutor?: string;
+            /** Format: int64 */
+            version?: number;
+        };
         AsignacionRequest: {
             /**
              * @description Bloque horario (martes de 9:15 a 10:00 en la demo)
@@ -873,6 +1264,40 @@ export interface components {
             docenteId?: string;
             docente?: string;
         };
+        CompetenciaRequest: {
+            /** @description Sin id es una competencia nueva; con id edita la existente. Las que no vienen se quitan */
+            id?: string;
+            /** @example Resuelve problemas de cantidad */
+            nombre: string;
+            nivelEsperado?: string;
+        };
+        CursoRequest: {
+            /** @example Matemática */
+            nombre: string;
+            /**
+             * Format: int32
+             * @example 5
+             */
+            horasLectivas: number;
+            competencias: components["schemas"]["CompetenciaRequest"][];
+        };
+        CompetenciaDto: {
+            id?: string;
+            codigo?: string;
+            nombre?: string;
+            nivelEsperado?: string;
+            /** Format: int32 */
+            orden?: number;
+        };
+        CursoDto: {
+            id?: string;
+            nombre?: string;
+            slug?: string;
+            /** Format: int32 */
+            horasLectivas?: number;
+            habilitado?: boolean;
+            competencias?: components["schemas"]["CompetenciaDto"][];
+        };
         ApoderadoRequest: {
             /** @example Marcos */
             nombres: string;
@@ -898,6 +1323,102 @@ export interface components {
             cuentaActiva?: boolean;
             /** Format: int64 */
             version?: number;
+        };
+        VinculacionRequest: {
+            habilitado: boolean;
+            /**
+             * Format: int32
+             * @description Bloques semanales que se espera que dicte (referencia para la advertencia de UC-20)
+             * @example 20
+             */
+            cargaSemanalReferencia: number;
+            /** @description Cursos que puede dictar; reemplaza a los anteriores */
+            cursoIds?: string[];
+        };
+        VinculacionDto: {
+            docenteId?: string;
+            nombre?: string;
+            vinculacionId?: string;
+            vinculado?: boolean;
+            habilitado?: boolean;
+            /** Format: int32 */
+            cargaSemanalReferencia?: number;
+            cursoIds?: string[];
+            disponibilidadConfirmada?: boolean;
+            /** Format: int32 */
+            bloquesDisponibles?: number;
+            /** Format: date-time */
+            ultimaConfirmacion?: string;
+        };
+        PeriodoRequest: {
+            /**
+             * Format: date-time
+             * @example 2027-01-04T08:00:00-05:00
+             */
+            fechaHoraInicio: string;
+            /**
+             * Format: date-time
+             * @example 2027-01-15T23:59:00-05:00
+             */
+            fechaHoraFin: string;
+            /** @description false cierra el periodo aunque las fechas sigan vigentes */
+            habilitado: boolean;
+        };
+        PeriodoDto: {
+            /** Format: int32 */
+            anio?: number;
+            configurado?: boolean;
+            /** Format: date-time */
+            fechaHoraInicio?: string;
+            /** Format: date-time */
+            fechaHoraFin?: string;
+            estado?: string;
+            abierto?: boolean;
+        };
+        ConfirmacionRequest: {
+            /** @description Ids de los bloques en que el docente puede dictar */
+            bloqueIds: string[];
+            observaciones?: string;
+        };
+        BloqueHorarioDto: {
+            id?: string;
+            /** @enum {string} */
+            diaSemana?: "LUNES" | "MARTES" | "MIERCOLES" | "JUEVES" | "VIERNES" | "SABADO" | "DOMINGO";
+            /** Format: time-local */
+            horaInicio?: string;
+            /** Format: time-local */
+            horaFin?: string;
+        };
+        CursoOpcionDto: {
+            id?: string;
+            nombre?: string;
+        };
+        DisponibilidadDto: {
+            /** Format: int32 */
+            anio?: number;
+            vinculado?: boolean;
+            vinculacionId?: string;
+            docente?: string;
+            /** Format: int32 */
+            cargaSemanalReferencia?: number;
+            cursos?: components["schemas"]["CursoOpcionDto"][];
+            periodo?: components["schemas"]["PeriodoDto"];
+            bloques?: components["schemas"]["BloqueHorarioDto"][];
+            bloqueIds?: string[];
+            observaciones?: string;
+            /** Format: date-time */
+            ultimaConfirmacion?: string;
+            validacion?: components["schemas"]["ValidacionDisponibilidadDto"];
+        };
+        ValidacionDisponibilidadDto: {
+            /** Format: int32 */
+            bloquesMarcados?: number;
+            /** Format: int32 */
+            cargaSemanalReferencia?: number;
+            /** Format: int32 */
+            faltan?: number;
+            suficiente?: boolean;
+            mensaje?: string;
         };
         CobrosRequest: {
             /** @example 5 */
@@ -942,6 +1463,49 @@ export interface components {
             monto?: string;
             /** Format: date */
             fechaVencimiento?: string;
+        };
+        CargaRequest: {
+            gradoId: string;
+            cursoId: string;
+            /** Format: int32 */
+            bloques: number;
+        };
+        CargasRequest: {
+            cargas: components["schemas"]["CargaRequest"][];
+        };
+        CargasHorariasDto: {
+            /** Format: int32 */
+            anio?: number;
+            estado?: string;
+            /** Format: int32 */
+            bloquesPorSemana?: number;
+            grados?: components["schemas"]["GradoOpcionDto"][];
+            cursos?: components["schemas"]["FilaCargaDto"][];
+            totales?: components["schemas"]["TotalGradoDto"][];
+        };
+        CeldaCargaDto: {
+            gradoId?: string;
+            /** Format: int32 */
+            bloques?: number;
+            personalizada?: boolean;
+        };
+        FilaCargaDto: {
+            cursoId?: string;
+            curso?: string;
+            /** Format: int32 */
+            horasLectivas?: number;
+            grados?: components["schemas"]["CeldaCargaDto"][];
+        };
+        GradoOpcionDto: {
+            id?: string;
+            /** Format: int32 */
+            numeroNivel?: number;
+        };
+        TotalGradoDto: {
+            gradoId?: string;
+            /** Format: int32 */
+            total?: number;
+            excedeLaSemana?: boolean;
         };
         AlumnoRequest: {
             /** @example Valeria */
@@ -1034,15 +1598,6 @@ export interface components {
             motivo?: "NO_ADMITIDO" | "DUPLICIDAD" | "DEUDAS" | "SIN_VACANTE" | "VOLUNTAD_APODERADO";
             estadoVisible?: string;
         };
-        ConfirmacionRequest: {
-            /** @description Sección elegida, del mismo grado que la solicitud */
-            seccionId: string;
-            /**
-             * @description El apoderado aceptó el resumen de costos (debe ser true)
-             * @example true
-             */
-            costosAceptados: boolean;
-        };
         ResultadoConfirmacion: {
             matriculaId?: string;
             codigoSolicitud?: string;
@@ -1111,6 +1666,17 @@ export interface components {
             montoPresentado?: string;
             medioPago?: string;
         };
+        PublicacionDto: {
+            id?: string;
+            /** Format: int32 */
+            numeroVersion?: number;
+            /** Format: date-time */
+            fechaHoraPublicacion?: string;
+            vigente?: boolean;
+            publicadoPor?: string;
+            /** Format: int32 */
+            clases?: number;
+        };
         ConflictoDto: {
             tipo?: string;
             mensaje?: string;
@@ -1121,6 +1687,17 @@ export interface components {
         ValidacionDto: {
             valido?: boolean;
             conflictos?: components["schemas"]["ConflictoDto"][];
+        };
+        NuevaSeccionRequest: {
+            /** @example C */
+            letra: string;
+            /**
+             * Format: int32
+             * @example 30
+             */
+            capacidad: number;
+            /** @description Docente tutor; opcional */
+            tutorDocenteId?: string;
         };
         ResultadoValidacion: {
             comprobanteId?: string;
@@ -1185,6 +1762,69 @@ export interface components {
              */
             contrasena: string;
         };
+        AnioRequest: {
+            /**
+             * Format: date
+             * @example 2028-02-14
+             */
+            fechaInicio: string;
+            /**
+             * Format: date
+             * @example 2028-12-20
+             */
+            fechaFin: string;
+            bimestres: components["schemas"]["BimestreRequest"][];
+        };
+        BimestreRequest: {
+            /**
+             * Format: int32
+             * @example 1
+             */
+            numero: number;
+            /**
+             * Format: date
+             * @example 2027-02-15
+             */
+            fechaInicio: string;
+            /**
+             * Format: date
+             * @example 2027-04-30
+             */
+            fechaFin: string;
+        };
+        AnioDetalleDto: {
+            id?: string;
+            /** Format: int32 */
+            anio?: number;
+            /** Format: date */
+            fechaInicio?: string;
+            /** Format: date */
+            fechaFin?: string;
+            estado?: string;
+            bimestres?: components["schemas"]["BimestreDto"][];
+        };
+        BimestreDto: {
+            /** Format: int32 */
+            numero?: number;
+            /** Format: date */
+            fechaInicio?: string;
+            /** Format: date */
+            fechaFin?: string;
+        };
+        BloquesRequest: {
+            /** @description Ids de los bloques en que el docente puede dictar */
+            bloqueIds: string[];
+        };
+        CopiaRequest: {
+            /** @description Cursos del año anterior que se copian; vacío o ausente = todos */
+            cursoIds?: string[];
+        };
+        ResultadoCopiaDto: {
+            /** Format: int32 */
+            anioOrigen?: number;
+            copiados?: components["schemas"]["CursoDto"][];
+            omitidos?: string[];
+        };
         CrearBloqueRequest: {
             /** @enum {string} */
             diaSemana: "LUNES" | "MARTES" | "MIERCOLES" | "JUEVES" | "VIERNES" | "SABADO" | "DOMINGO";
@@ -1193,14 +1833,35 @@ export interface components {
             /** Format: time-local */
             horaFin: string;
         };
-        BloqueHorarioDto: {
-            id?: string;
-            /** @enum {string} */
-            diaSemana?: "LUNES" | "MARTES" | "MIERCOLES" | "JUEVES" | "VIERNES" | "SABADO" | "DOMINGO";
-            /** Format: time-local */
-            horaInicio?: string;
-            /** Format: time-local */
-            horaFin?: string;
+        ValidacionRequest: {
+            /** Format: date */
+            fechaInicio: string;
+            /** Format: date */
+            fechaFin: string;
+            bimestres?: components["schemas"]["BimestreRequest"][];
+        };
+        DuracionDto: {
+            /** Format: int32 */
+            meses?: number;
+            /** Format: int32 */
+            dias?: number;
+        };
+        ProblemaDto: {
+            tipo?: string;
+            /** Format: int32 */
+            bimestre?: number;
+            /** Format: int32 */
+            otroBimestre?: number;
+            /** Format: date */
+            desde?: string;
+            /** Format: date */
+            hasta?: string;
+            mensaje?: string;
+        };
+        ValidacionAnioDto: {
+            valido?: boolean;
+            duracion?: components["schemas"]["DuracionDto"];
+            problemas?: components["schemas"]["ProblemaDto"][];
         };
         UsuarioFila: {
             id?: string;
@@ -1333,6 +1994,31 @@ export interface components {
             version?: number;
             secciones?: components["schemas"]["SeccionConVacantes"][];
         };
+        DocenteDto: {
+            id?: string;
+            nombre?: string;
+        };
+        HorarioVigenteDto: {
+            /** Format: int32 */
+            anio?: number;
+            /** Format: int32 */
+            numeroVersion?: number;
+            /** Format: date-time */
+            vigenteDesde?: string;
+            /** @enum {string} */
+            perspectiva?: "SECCION" | "DOCENTE";
+            perspectivas?: ("SECCION" | "DOCENTE")[];
+            seccionId?: string;
+            docenteId?: string;
+            bloques?: components["schemas"]["BloqueHorarioDto"][];
+            secciones?: components["schemas"]["SeccionDto"][];
+            docentes?: components["schemas"]["DocenteDto"][];
+            asignaciones?: components["schemas"]["AsignacionDto"][];
+        };
+        SeccionDto: {
+            id?: string;
+            nombre?: string;
+        };
         BorradorDto: {
             id?: string;
             /** Format: int32 */
@@ -1364,14 +2050,6 @@ export interface components {
             /** Format: int32 */
             totalRequeridas?: number;
         };
-        DocenteDto: {
-            id?: string;
-            nombre?: string;
-        };
-        SeccionDto: {
-            id?: string;
-            nombre?: string;
-        };
         OpcionDocenteDto: {
             docenteId?: string;
             nombre?: string;
@@ -1382,6 +2060,48 @@ export interface components {
         OpcionesDto: {
             cursos?: components["schemas"]["CargaCursoDto"][];
             docentes?: components["schemas"]["OpcionDocenteDto"][];
+        };
+        AdvertenciaDto: {
+            tipo?: string;
+            mensaje?: string;
+            docentes?: string[];
+        };
+        CompletitudDto: {
+            /** Format: int32 */
+            anio?: number;
+            /** Format: int64 */
+            versionBorrador?: number;
+            secciones?: components["schemas"]["SeccionCompletitudDto"][];
+            /** Format: int32 */
+            completas?: number;
+            /** Format: int32 */
+            conObservaciones?: number;
+            publicable?: boolean;
+            advertencias?: components["schemas"]["AdvertenciaDto"][];
+            vigente?: components["schemas"]["PublicacionDto"];
+            sinCambios?: boolean;
+        };
+        DiferenciaDto: {
+            cursoId?: string;
+            curso?: string;
+            /** Format: int32 */
+            asignadas?: number;
+            /** Format: int32 */
+            requeridas?: number;
+        };
+        SeccionCompletitudDto: {
+            seccionId?: string;
+            seccion?: string;
+            /** Format: int32 */
+            horasAsignadas?: number;
+            /** Format: int32 */
+            horasRequeridas?: number;
+            estado?: string;
+            /** Format: int32 */
+            faltan?: number;
+            /** Format: int32 */
+            sobran?: number;
+            detalle?: components["schemas"]["DiferenciaDto"][];
         };
         ComprobanteBandeja: {
             id?: string;
@@ -1493,6 +2213,61 @@ export interface components {
         UsuarioAuditoriaDto: {
             id?: string;
             nombre?: string;
+        };
+        AnioResumenDto: {
+            id?: string;
+            /** Format: int32 */
+            anio?: number;
+            /** Format: date */
+            fechaInicio?: string;
+            /** Format: date */
+            fechaFin?: string;
+            estado?: string;
+        };
+        VinculacionesAnioDto: {
+            /** Format: int32 */
+            anio?: number;
+            estado?: string;
+            docentes?: components["schemas"]["VinculacionDto"][];
+            cursos?: components["schemas"]["CursoOpcionDto"][];
+        };
+        DocenteTutorDto: {
+            id?: string;
+            nombre?: string;
+        };
+        GradoSeccionesDto: {
+            id?: string;
+            /** Format: int32 */
+            numeroNivel?: number;
+            secciones?: components["schemas"]["SeccionConfiguracionDto"][];
+        };
+        GradosAnioDto: {
+            /** Format: int32 */
+            anio?: number;
+            estado?: string;
+            grados?: components["schemas"]["GradoSeccionesDto"][];
+            docentes?: components["schemas"]["DocenteTutorDto"][];
+        };
+        CursosAnioDto: {
+            /** Format: int32 */
+            anio?: number;
+            estado?: string;
+            /** Format: int32 */
+            totalHoras?: number;
+            cursos?: components["schemas"]["CursoDto"][];
+        };
+        CopiaAnteriorDto: {
+            /** Format: int32 */
+            anioOrigen?: number;
+            cursos?: components["schemas"]["CursoCopiable"][];
+        };
+        CursoCopiable: {
+            id?: string;
+            nombre?: string;
+            /** Format: int32 */
+            horasLectivas?: number;
+            competencias?: components["schemas"]["CompetenciaDto"][];
+            yaExiste?: boolean;
         };
         BoletaDto: {
             numero?: string;
@@ -1653,7 +2428,57 @@ export interface operations {
             };
         };
     };
+    obtener: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SeccionConfiguracionDto"];
+                };
+            };
+        };
+    };
     modificar: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeccionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SeccionConfiguracionDto"];
+                };
+            };
+        };
+    };
+    modificar_1: {
         parameters: {
             query?: never;
             header?: {
@@ -1698,6 +2523,74 @@ export interface operations {
         responses: {
             /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    obtener_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursoDto"];
+                };
+            };
+        };
+    };
+    modificar_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CursoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursoDto"];
+                };
+            };
+        };
+    };
+    eliminar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1755,7 +2648,130 @@ export interface operations {
             };
         };
     };
-    obtener: {
+    guardarVinculacion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+                docenteId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VinculacionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VinculacionDto"];
+                };
+            };
+        };
+    };
+    obtenerPeriodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PeriodoDto"];
+                };
+            };
+        };
+    };
+    guardarPeriodo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PeriodoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PeriodoDto"];
+                };
+            };
+        };
+    };
+    consultar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DisponibilidadDto"];
+                };
+            };
+        };
+    };
+    confirmar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmacionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DisponibilidadDto"];
+                };
+            };
+        };
+    };
+    obtener_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -1799,6 +2815,54 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ConfiguracionCobros"];
+                };
+            };
+        };
+    };
+    obtenerCargas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CargasHorariasDto"];
+                };
+            };
+        };
+    };
+    guardarCargas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CargasRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CargasHorariasDto"];
                 };
             };
         };
@@ -1931,7 +2995,7 @@ export interface operations {
             };
         };
     };
-    confirmar: {
+    confirmar_1: {
         parameters: {
             query?: never;
             header?: {
@@ -2035,6 +3099,52 @@ export interface operations {
             };
         };
     };
+    versiones: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PublicacionDto"][];
+                };
+            };
+        };
+    };
+    publicar: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PublicacionDto"];
+                };
+            };
+        };
+    };
     validar: {
         parameters: {
             query?: never;
@@ -2085,6 +3195,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AsignacionDto"];
+                };
+            };
+        };
+    };
+    crear_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                gradoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NuevaSeccionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SeccionConfiguracionDto"];
                 };
             };
         };
@@ -2209,7 +3345,7 @@ export interface operations {
             };
         };
     };
-    confirmar_1: {
+    confirmar_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -2279,6 +3415,172 @@ export interface operations {
         parameters: {
             query?: never;
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnioResumenDto"][];
+                };
+            };
+        };
+    };
+    crear_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnioRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnioDetalleDto"];
+                };
+            };
+        };
+    };
+    validar_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BloquesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ValidacionDisponibilidadDto"];
+                };
+            };
+        };
+    };
+    listar_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursosAnioDto"];
+                };
+            };
+        };
+    };
+    crear_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CursoRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursoDto"];
+                };
+            };
+        };
+    };
+    copiaAnterior: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CopiaAnteriorDto"];
+                };
+            };
+        };
+    };
+    copiar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CopiaRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResultadoCopiaDto"];
+                };
+            };
+        };
+    };
+    listar_3: {
+        parameters: {
+            query?: never;
+            header?: never;
             path: {
                 anio: number;
             };
@@ -2297,7 +3599,7 @@ export interface operations {
             };
         };
     };
-    crear_1: {
+    crear_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2319,6 +3621,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["BloqueHorarioDto"];
+                };
+            };
+        };
+    };
+    validar_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ValidacionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ValidacionAnioDto"];
                 };
             };
         };
@@ -2371,7 +3697,7 @@ export interface operations {
             };
         };
     };
-    listar_2: {
+    listar_4: {
         parameters: {
             query?: {
                 q?: string;
@@ -2529,7 +3855,33 @@ export interface operations {
             };
         };
     };
-    obtener_1: {
+    vigente: {
+        parameters: {
+            query?: {
+                perspectiva?: "SECCION" | "DOCENTE";
+                seccionId?: string;
+                docenteId?: string;
+            };
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HorarioVigenteDto"];
+                };
+            };
+        };
+    };
+    obtener_3: {
         parameters: {
             query?: {
                 perspectiva?: "SECCION" | "DOCENTE";
@@ -2583,7 +3935,29 @@ export interface operations {
             };
         };
     };
-    listar_3: {
+    completitud: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CompletitudDto"];
+                };
+            };
+        };
+    };
+    listar_5: {
         parameters: {
             query?: {
                 estado?: "PENDIENTE" | "APROBADO" | "OBSERVADO" | "RECHAZADO";
@@ -2650,7 +4024,7 @@ export interface operations {
             };
         };
     };
-    listar_4: {
+    listar_6: {
         parameters: {
             query?: {
                 usuarioId?: string;
@@ -2748,6 +4122,72 @@ export interface operations {
             };
         };
     };
+    obtener_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnioDetalleDto"];
+                };
+            };
+        };
+    };
+    listarVinculaciones: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["VinculacionesAnioDto"];
+                };
+            };
+        };
+    };
+    listar_7: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["GradosAnioDto"];
+                };
+            };
+        };
+    };
     historial: {
         parameters: {
             query?: never;
@@ -2811,6 +4251,27 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["AlumnoBusqueda"][];
                 };
+            };
+        };
+    };
+    eliminar_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
