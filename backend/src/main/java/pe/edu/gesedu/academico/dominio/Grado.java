@@ -20,6 +20,11 @@ public class Grado extends EntidadBase {
     protected Grado() {
     }
 
+    public Grado(String anioEscolarId, int numeroNivel) {
+        this.anioEscolarId = anioEscolarId;
+        this.numeroNivel = numeroNivel;
+    }
+
     public String getAnioEscolarId() {
         return anioEscolarId;
     }

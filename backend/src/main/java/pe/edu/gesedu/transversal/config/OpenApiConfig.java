@@ -44,6 +44,16 @@ public class OpenApiConfig {
     }
 
     @Bean
+    GroupedOpenApi grupoAcademico() {
+        return GroupedOpenApi.builder().group("6-academico").displayName("Académico")
+                .pathsToMatch("/api/v1/anios-escolares", "/api/v1/anios-escolares/*", "/api/v1/anios-escolares/validaciones",
+                        "/api/v1/anios-escolares/*/cursos/**", "/api/v1/anios-escolares/*/grados/**",
+                        "/api/v1/anios-escolares/*/docentes", "/api/v1/cursos/**", "/api/v1/grados/**",
+                        "/api/v1/secciones/**")
+                .build();
+    }
+
+    @Bean
     GroupedOpenApi grupoAuditoria() {
         return GroupedOpenApi.builder().group("3-auditoria").displayName("Auditoría")
                 .pathsToMatch("/api/v1/auditoria/**").build();

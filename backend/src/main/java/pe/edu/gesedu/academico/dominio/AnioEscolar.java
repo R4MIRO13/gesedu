@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 
 import pe.edu.gesedu.compartido.dominio.EntidadBase;
 
-/** Año escolar. En la demo solo se lee (lo siembra db/demo); su configuración llega con UC-13. */
+/** Año escolar (RF-03). Se crea con UC-13 y queda PLANIFICADO; el activo y el cerrado vienen sembrados. */
 @Entity
 @Table(name = "anio_escolar", schema = "academico")
 public class AnioEscolar extends EntidadBase {
@@ -26,6 +26,21 @@ public class AnioEscolar extends EntidadBase {
     private String estado;
 
     protected AnioEscolar() {
+    }
+
+    public AnioEscolar(int anio, LocalDate fechaInicio, LocalDate fechaFin, String estado) {
+        this.anio = anio;
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
+        this.estado = estado;
+    }
+
+    public LocalDate getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public LocalDate getFechaFin() {
+        return fechaFin;
     }
 
     public int getAnio() {

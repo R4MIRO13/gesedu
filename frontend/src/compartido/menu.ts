@@ -9,6 +9,24 @@ export const ANIO_TRABAJO = 2027
 /** Opciones de la intranet; la SPA solo oculta, la autorización real la hace el backend. */
 export const OPCIONES_MENU = [
   {
+    enlace: linkOptions({ to: '/intranet/academico/anios' }),
+    titulo: 'Año escolar',
+    descripcion: 'Crea el año escolar con sus cuatro bimestres y revisa los años registrados.',
+    permiso: 'ACADEMICO_CONFIGURAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/academico/$anio/cursos', params: { anio: String(ANIO_TRABAJO) } }),
+    titulo: 'Cursos y competencias',
+    descripcion: 'Cursos del año con sus horas y competencias; copia la configuración del año anterior.',
+    permiso: 'ACADEMICO_CONFIGURAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/academico/$anio/secciones', params: { anio: String(ANIO_TRABAJO) } }),
+    titulo: 'Secciones y vacantes',
+    descripcion: 'Secciones de cada grado: capacidad, vacantes y tutor.',
+    permiso: 'ACADEMICO_CONFIGURAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/bloques' }),
     titulo: 'Bloques horarios',
     descripcion: 'Franjas de clase del año escolar.',

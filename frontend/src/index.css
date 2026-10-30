@@ -535,3 +535,93 @@ dd {
 .fila-activa {
   background: var(--color-hover);
 }
+
+/* Línea de tiempo del año escolar (UC-13) */
+.linea-tiempo {
+  margin-top: 1rem;
+}
+.linea-tiempo h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+}
+.linea-tiempo-pista {
+  position: relative;
+  height: 6.8rem;
+  background: var(--color-hover);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.tramo {
+  position: absolute;
+  height: 1.4rem;
+  line-height: 1.4rem;
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  background: var(--color-primario);
+  color: #fff;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.tramo-error {
+  background: var(--color-error);
+}
+.tramo-cruce {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(45deg, rgba(166, 27, 27, 0.35), rgba(166, 27, 27, 0.35) 4px, transparent 4px, transparent 8px);
+  pointer-events: none;
+}
+.linea-tiempo-meses {
+  position: relative;
+  height: 1.2rem;
+  font-size: 0.75rem;
+  color: var(--color-suave);
+}
+.linea-tiempo-meses span {
+  position: absolute;
+  transform: translateX(-1px);
+}
+.linea-tiempo-extremos {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+}
+.pasos {
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  flex-wrap: wrap;
+}
+.paso {
+  padding: 0.25rem 0.8rem;
+  border-radius: 999px;
+  background: var(--color-hover);
+  color: var(--color-suave);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.paso-activo {
+  background: var(--color-primario);
+  color: #fff;
+}
+.fila-bimestre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin: 0.5rem 0;
+}
+.fila-bimestre > strong {
+  flex: 0 0 6rem;
+  padding-top: 1.9rem;
+}
+.etiqueta-alerta {
+  background: var(--color-error-fondo);
+  color: var(--color-error);
+}
