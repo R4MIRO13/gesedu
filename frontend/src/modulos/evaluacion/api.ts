@@ -193,3 +193,64 @@ export function useGuardarConfiguracion(asignacionId: string) {
     },
   })
 }
+
+// ---- UC-17: notas finales del curso ----
+
+/** Las notas de un alumno en una competencia: el logro de cada bimestre (por número) y la nota anual si ya se calculó. */
+export interface CeldaNota {
+  bimestres: Record<string, NivelLogro>
+  anual: NivelLogro | null
+}
+
+export interface FilaNotas {
+  alumnoId: string
+  codigo: string
+  apellidos: string
+  nombres: string
+  /** Por id de competencia. */
+  competencias: Record<string, CeldaNota>
+}
+
+export interface ResultadoCalculo {
+  creadas: number
+  actualizadas: number
+  sinCambios: number
+  sinNota: number
+}
+
+export interface NotasFinales {
+  asignacionId: string
+  curso: string
+  seccion: string
+  anio: number
+  regla: TipoRegla
+  bimestres: number[]
+  competencias: CompetenciaCurso[]
+  alumnos: FilaNotas[]
+  calculadas: boolean
+  /** Lo registrado después del último cálculo (logros, regla o pesos) daría otras notas. */
+  desactualizada: boolean
+  /** Falso con el año cerrado. */
+  editable: boolean
+  celdasSinNota: number
+  /** Solo viene en la respuesta del cálculo. */
+  calculo: ResultadoCalculo | null
+}
+
+export function useNotasFinales(asignacionId: string | undefined) {
+  return useQuery({
+    queryKey: ['asignaciones-docentes', asignacionId, 'notas-finales'],
+    queryFn: () => api<NotasFinales>(`/asignaciones-docentes/${asignacionId}/notas-finales`),
+    enabled: asignacionId !== undefined,
+    retry: false,
+  })
+}
+
+/** Calcula la nota anual de cada competencia con la regla del curso; repetirlo no cambia nada si los datos son iguales. */
+export function useCalcularNotasFinales(asignacionId: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: () => api<NotasFinales>(`/asignaciones-docentes/${asignacionId}/notas-finales/calculo`, { method: 'POST' }),
+    onSuccess: (notas) => cliente.setQueryData(['asignaciones-docentes', asignacionId, 'notas-finales'], notas),
+  })
+}

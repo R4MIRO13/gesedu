@@ -67,6 +67,14 @@ function MisCursos() {
                         aria-label={`Configurar la regla de ${a.curso} en ${a.seccion}`}
                       >
                         Regla de consolidación
+                      </Link>{' '}
+                      <Link
+                        className="btn"
+                        to="/intranet/notas/$curso/$seccion/finales"
+                        params={{ curso: a.cursoSlug, seccion: a.seccionCodigo }}
+                        aria-label={`Notas finales de ${a.curso} en ${a.seccion}`}
+                      >
+                        Notas finales
                       </Link>
                     </td>
                   </tr>
