@@ -5,5 +5,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 docker compose down -v
-docker compose up -d --wait postgres
-echo 'Base de datos reiniciada. Arranca el backend para que Flyway aplique las migraciones.'
+docker compose up -d --wait postgres mailpit
+echo 'Base de datos reiniciada (postgres y mailpit en marcha). Arranca el backend para que Flyway aplique las migraciones.'
