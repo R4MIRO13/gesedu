@@ -69,6 +69,7 @@ public enum CodigoError {
     RANGO_ANIO_INVALIDO(HttpStatus.UNPROCESSABLE_ENTITY, "El año escolar debe durar entre 10 y 12 meses"),
     BIMESTRES_SUPERPUESTOS(HttpStatus.UNPROCESSABLE_ENTITY, "Los bimestres se superponen o salen del año escolar"),
     BIMESTRE_INCOMPLETO(HttpStatus.UNPROCESSABLE_ENTITY, "El bimestre tiene registros incompletos"),
+    BIMESTRE_NO_VIGENTE(HttpStatus.UNPROCESSABLE_ENTITY, "El bimestre no está vigente: ya no admite registro de logros"),
     NIVEL_LOGRO_INVALIDO(HttpStatus.UNPROCESSABLE_ENTITY, "El nivel de logro no es válido"),
     ARCHIVO_INVALIDO(HttpStatus.UNPROCESSABLE_ENTITY, "El archivo no es válido (PDF, JPG o PNG de hasta 5 MB)"),
     VINCULO_ACADEMICO_INEXISTENTE(HttpStatus.UNPROCESSABLE_ENTITY,

@@ -47,7 +47,8 @@ CREATE TABLE evaluacion.consolidacion_bimestral (
     id                  VARCHAR(36) PRIMARY KEY,
     bimestre_id         VARCHAR(36) NOT NULL UNIQUE REFERENCES academico.bimestre (id),
     fecha_consolidacion TIMESTAMPTZ NOT NULL,
-    estado              VARCHAR(12) NOT NULL DEFAULT 'COMPLETADA' CHECK (estado IN ('COMPLETADA')),
+    -- DESACTUALIZADA: se editaron logros del bimestre después de consolidarlo (S-68); hay que reconsolidar
+    estado              VARCHAR(14) NOT NULL DEFAULT 'COMPLETADA' CHECK (estado IN ('COMPLETADA', 'DESACTUALIZADA')),
     ejecutada_por       VARCHAR(36) REFERENCES seguridad.usuario (id),
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()

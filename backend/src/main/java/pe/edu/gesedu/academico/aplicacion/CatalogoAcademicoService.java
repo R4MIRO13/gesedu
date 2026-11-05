@@ -14,6 +14,7 @@ import pe.edu.gesedu.academico.dominio.Grado;
 import pe.edu.gesedu.academico.dominio.Seccion;
 import pe.edu.gesedu.academico.dominio.MovimientoVacantes;
 import pe.edu.gesedu.academico.dominio.MovimientoVacantes.Cupo;
+import pe.edu.gesedu.academico.infraestructura.CompetenciaRepository;
 import pe.edu.gesedu.academico.infraestructura.CursoRepository;
 import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
@@ -33,7 +34,7 @@ public class CatalogoAcademicoService {
     }
 
     /** Curso con sus horas lectivas semanales de referencia (RF-23, C-10). */
-    public record CursoResumen(String id, String nombre, int horasLectivas) {
+    public record CursoResumen(String id, String nombre, String slug, int horasLectivas) {
     }
 
     /** Sección con su cupo, para elegirla al matricular (RF-04). */
@@ -44,14 +45,41 @@ public class CatalogoAcademicoService {
     public record GradoResumen(String id, String anioEscolarId, int numeroNivel) {
     }
 
+    /** Competencia de un curso con el nivel de logro esperado (RF-24, RF-34). */
+    public record CompetenciaResumen(String id, String cursoId, String codigo, String nombre, String nivelEsperado,
+                                     int orden) {
+    }
+
     private final SeccionRepository secciones;
     private final GradoRepository grados;
     private final CursoRepository cursos;
+    private final CompetenciaRepository competencias;
 
-    CatalogoAcademicoService(SeccionRepository secciones, GradoRepository grados, CursoRepository cursos) {
+    CatalogoAcademicoService(SeccionRepository secciones, GradoRepository grados, CursoRepository cursos,
+                             CompetenciaRepository competencias) {
         this.secciones = secciones;
         this.grados = grados;
         this.cursos = cursos;
+        this.competencias = competencias;
+    }
+
+    /** Un curso por su id. */
+    @Transactional(readOnly = true)
+    public CursoResumen curso(String cursoId) {
+        return cursos.findById(cursoId).map(CatalogoAcademicoService::aResumen).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el curso"));
+    }
+
+    /** Competencias de los cursos indicados, por curso y en el orden del curso. */
+    @Transactional(readOnly = true)
+    public Map<String, List<CompetenciaResumen>> competenciasDe(java.util.Collection<String> cursoIds) {
+        if (cursoIds.isEmpty()) {
+            return Map.of();
+        }
+        return competencias.findByCursoIdInOrderByOrden(cursoIds).stream()
+                .map(c -> new CompetenciaResumen(c.getId(), c.getCursoId(), c.getCodigo(), c.getNombre(),
+                        c.getNivelEsperado(), c.getOrden()))
+                .collect(Collectors.groupingBy(CompetenciaResumen::cursoId));
     }
 
     /** Secciones del año ordenadas por grado y letra. */
@@ -199,6 +227,6 @@ public class CatalogoAcademicoService {
     }
 
     private static CursoResumen aResumen(Curso curso) {
-        return new CursoResumen(curso.getId(), curso.getNombre(), curso.getHorasLectivas());
+        return new CursoResumen(curso.getId(), curso.getNombre(), curso.getSlug(), curso.getHorasLectivas());
     }
 }

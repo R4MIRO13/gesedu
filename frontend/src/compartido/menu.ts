@@ -81,6 +81,12 @@ export const OPCIONES_MENU = [
     permiso: 'ASISTENCIA_REPORTE_GENERAL',
   },
   {
+    enlace: linkOptions({ to: '/intranet/notas' }),
+    titulo: 'Registro de notas',
+    descripcion: 'Califica con AD, A, B o C a tus alumnos en cada competencia del bimestre vigente.',
+    permiso: 'NOTA_REGISTRAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',

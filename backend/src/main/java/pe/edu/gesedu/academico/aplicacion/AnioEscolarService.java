@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import pe.edu.gesedu.academico.infraestructura.AnioEscolarRepository;
+import pe.edu.gesedu.academico.infraestructura.BimestreRepository;
 import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
 
@@ -17,10 +18,29 @@ public class AnioEscolarService {
     public record AnioEscolarResumen(String id, int anio, String estado) {
     }
 
-    private final AnioEscolarRepository anios;
+    /** Bimestre de un año escolar con sus fechas (RF-25). */
+    public record BimestreResumen(String id, int numero, java.time.LocalDate fechaInicio, java.time.LocalDate fechaFin) {
 
-    AnioEscolarService(AnioEscolarRepository anios) {
+        /** El bimestre está en curso en la fecha (inicio y fin inclusivos). */
+        public boolean vigenteEn(java.time.LocalDate fecha) {
+            return !fecha.isBefore(fechaInicio) && !fecha.isAfter(fechaFin);
+        }
+    }
+
+    private final AnioEscolarRepository anios;
+    private final BimestreRepository bimestres;
+
+    AnioEscolarService(AnioEscolarRepository anios, BimestreRepository bimestres) {
         this.anios = anios;
+        this.bimestres = bimestres;
+    }
+
+    /** Los bimestres del año ordenados por número. */
+    @Transactional(readOnly = true)
+    public List<BimestreResumen> bimestres(String anioEscolarId) {
+        return bimestres.findByAnioEscolarIdOrderByNumero(anioEscolarId).stream()
+                .map(b -> new BimestreResumen(b.getId(), b.getNumero(), b.getFechaInicio(), b.getFechaFin()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
