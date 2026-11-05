@@ -37,6 +37,7 @@ import { Route as IntranetAcademicoAnioCursosRouteImport } from './routes/intran
 import { Route as IntranetAcademicoAnioSeccionesRouteImport } from './routes/intranet/academico/$anio/secciones'
 import { Route as IntranetAcademicoAnioEscolarNuevoRouteImport } from './routes/intranet/academico/anio-escolar/nuevo'
 import { Route as IntranetAsistenciaSeccionRegistrarRouteImport } from './routes/intranet/asistencia/$seccion/registrar'
+import { Route as IntranetAsistenciaSeccionRegistroDelDiaRouteImport } from './routes/intranet/asistencia/$seccion/registro-del-dia'
 import { Route as IntranetHorariosAnioConfiguracionRouteImport } from './routes/intranet/horarios/$anio/configuracion'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 import { Route as IntranetHorariosAnioPublicarRouteImport } from './routes/intranet/horarios/$anio/publicar'
@@ -194,6 +195,12 @@ const IntranetAsistenciaSeccionRegistrarRoute =
     path: '/asistencia/$seccion/registrar',
     getParentRoute: () => IntranetRoute,
   } as any)
+const IntranetAsistenciaSeccionRegistroDelDiaRoute =
+  IntranetAsistenciaSeccionRegistroDelDiaRouteImport.update({
+    id: '/asistencia/$seccion/registro-del-dia',
+    path: '/asistencia/$seccion/registro-del-dia',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetHorariosAnioConfiguracionRoute =
   IntranetHorariosAnioConfiguracionRouteImport.update({
     id: '/horarios/$anio/configuracion',
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
   '/intranet/asistencia/$seccion/registrar': typeof IntranetAsistenciaSeccionRegistrarRoute
+  '/intranet/asistencia/$seccion/registro-del-dia': typeof IntranetAsistenciaSeccionRegistroDelDiaRoute
   '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/horarios/$anio/publicar': typeof IntranetHorariosAnioPublicarRoute
@@ -289,6 +297,7 @@ export interface FileRoutesByTo {
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
   '/intranet/asistencia/$seccion/registrar': typeof IntranetAsistenciaSeccionRegistrarRoute
+  '/intranet/asistencia/$seccion/registro-del-dia': typeof IntranetAsistenciaSeccionRegistroDelDiaRoute
   '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/horarios/$anio/publicar': typeof IntranetHorariosAnioPublicarRoute
@@ -325,6 +334,7 @@ export interface FileRoutesById {
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
   '/intranet/asistencia/$seccion/registrar': typeof IntranetAsistenciaSeccionRegistrarRoute
+  '/intranet/asistencia/$seccion/registro-del-dia': typeof IntranetAsistenciaSeccionRegistroDelDiaRoute
   '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/horarios/$anio/publicar': typeof IntranetHorariosAnioPublicarRoute
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
     | '/intranet/asistencia/$seccion/registrar'
+    | '/intranet/asistencia/$seccion/registro-del-dia'
     | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/horarios/$anio/publicar'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
     | '/intranet/asistencia/$seccion/registrar'
+    | '/intranet/asistencia/$seccion/registro-del-dia'
     | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/horarios/$anio/publicar'
@@ -432,6 +444,7 @@ export interface FileRouteTypes {
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
     | '/intranet/asistencia/$seccion/registrar'
+    | '/intranet/asistencia/$seccion/registro-del-dia'
     | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/horarios/$anio/publicar'
@@ -645,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetAsistenciaSeccionRegistrarRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/asistencia/$seccion/registro-del-dia': {
+      id: '/intranet/asistencia/$seccion/registro-del-dia'
+      path: '/asistencia/$seccion/registro-del-dia'
+      fullPath: '/intranet/asistencia/$seccion/registro-del-dia'
+      preLoaderRoute: typeof IntranetAsistenciaSeccionRegistroDelDiaRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/$anio/configuracion': {
       id: '/intranet/horarios/$anio/configuracion'
       path: '/horarios/$anio/configuracion'
@@ -707,6 +727,7 @@ interface IntranetRouteChildren {
   IntranetAcademicoAnioSeccionesRoute: typeof IntranetAcademicoAnioSeccionesRoute
   IntranetAcademicoAnioEscolarNuevoRoute: typeof IntranetAcademicoAnioEscolarNuevoRoute
   IntranetAsistenciaSeccionRegistrarRoute: typeof IntranetAsistenciaSeccionRegistrarRoute
+  IntranetAsistenciaSeccionRegistroDelDiaRoute: typeof IntranetAsistenciaSeccionRegistroDelDiaRoute
   IntranetHorariosAnioConfiguracionRoute: typeof IntranetHorariosAnioConfiguracionRoute
   IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
   IntranetHorariosAnioPublicarRoute: typeof IntranetHorariosAnioPublicarRoute
@@ -740,6 +761,8 @@ const IntranetRouteChildren: IntranetRouteChildren = {
     IntranetAcademicoAnioEscolarNuevoRoute,
   IntranetAsistenciaSeccionRegistrarRoute:
     IntranetAsistenciaSeccionRegistrarRoute,
+  IntranetAsistenciaSeccionRegistroDelDiaRoute:
+    IntranetAsistenciaSeccionRegistroDelDiaRoute,
   IntranetHorariosAnioConfiguracionRoute:
     IntranetHorariosAnioConfiguracionRoute,
   IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,

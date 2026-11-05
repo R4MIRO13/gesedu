@@ -25,11 +25,18 @@ public final class AsistenciaSeccionDtos {
     /**
      * La sección del tutor con la asistencia del día. {@code registroHabilitado} es falso con la jornada cerrada: la
      * pantalla queda en consulta y {@code mensaje} lo explica. {@code limiteTardanza} es la hora hasta la que el tutor
-     * puede cambiar una falta a tardanza (UC-09).
+     * puede cambiar una falta a tardanza (UC-09) y {@code actualizacionTardanzaHabilitada} dice si, a la hora del
+     * servidor, todavía puede hacerlo.
      */
     public record AsistenciaSeccionDto(String codigo, String nombre, LocalDate fecha, OffsetDateTime horaServidor,
                                        boolean registroHabilitado, String mensaje, LocalTime limiteTardanza,
-                                       List<AlumnoAsistenciaDto> alumnos, TotalesAsistenciaDto totales) {
+                                       boolean actualizacionTardanzaHabilitada, List<AlumnoAsistenciaDto> alumnos,
+                                       TotalesAsistenciaDto totales) {
+    }
+
+    /** Una asistencia de alumno tras cambiarla (UC-09); {@code modificado} es falso si ya estaba en TARDANZA. */
+    public record RegistroAlumnoDto(String id, String alumnoId, LocalDate fecha, EstadoAsistencia estado,
+                                    OffsetDateTime actualizadoEn, boolean modificado) {
     }
 
     /** La sección que el docente tiene a cargo como tutor (para llegar a su pantalla de asistencia). */

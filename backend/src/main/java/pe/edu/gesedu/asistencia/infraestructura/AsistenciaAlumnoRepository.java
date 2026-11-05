@@ -27,4 +27,16 @@ public interface AsistenciaAlumnoRepository extends JpaRepository<AsistenciaAlum
             """, nativeQuery = true)
     int insertarSiNoExiste(@Param("alumnoId") String alumnoId, @Param("fecha") LocalDate fecha,
                            @Param("estado") String estado);
+
+    /**
+     * Cambia una FALTA de la fecha a TARDANZA y devuelve cuántas filas cambió (1 o 0): solo cambia si sigue siendo FALTA,
+     * así dos cambios simultáneos o un cambio sobre un registro que ya no es elegible no pisan nada (UC-09). Modifica
+     * el mismo registro y su {@code updated_at}; no deja historial en el módulo (C-07).
+     */
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            UPDATE asistencia.asistencia_alumno SET estado = 'TARDANZA', updated_at = :ahora
+            WHERE id = :id AND fecha = :fecha AND estado = 'FALTA'
+            """, nativeQuery = true)
+    int cambiarFaltaATardanza(@Param("id") String id, @Param("fecha") LocalDate fecha, @Param("ahora") java.time.Instant ahora);
 }

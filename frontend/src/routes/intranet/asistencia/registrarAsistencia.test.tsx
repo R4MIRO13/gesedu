@@ -26,6 +26,7 @@ function seccion(alumnos: AlumnoAsistencia[], extra: Partial<AsistenciaSeccion> 
     registroHabilitado: true,
     mensaje: null,
     limiteTardanza: '08:30:00',
+    actualizacionTardanzaHabilitada: true,
     alumnos,
     totales: totalesDe(alumnos),
     ...extra,

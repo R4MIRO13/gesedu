@@ -28,6 +28,7 @@ import pe.edu.gesedu.asistencia.aplicacion.AsistenciaSeccionDtos.MiSeccionDto;
 import pe.edu.gesedu.asistencia.aplicacion.AsistenciaSeccionDtos.TotalesAsistenciaDto;
 import pe.edu.gesedu.asistencia.dominio.AsistenciaAlumno;
 import pe.edu.gesedu.asistencia.dominio.EstadoAsistencia;
+import pe.edu.gesedu.asistencia.dominio.PlazoTardanza;
 import pe.edu.gesedu.asistencia.infraestructura.AsistenciaAlumnoRepository;
 import pe.edu.gesedu.asistencia.infraestructura.AsistenciaProperties;
 import pe.edu.gesedu.compartido.error.CodigoError;
@@ -95,6 +96,21 @@ public class AsistenciaSeccionService {
                 .orElseThrow(() -> new ExcepcionNegocio(CodigoError.FUERA_DE_ALCANCE,
                         "No tienes una sección a cargo como tutor este año."));
         return new MiSeccionDto(codigo(seccion), seccion.nombre(), matriculas.alumnosDeSeccion(seccion.id()).size());
+    }
+
+    /**
+     * Los alumnos de la sección que el docente tiene a cargo como tutor hoy (para el alcance de UC-09). Sin tutoría: 403;
+     * en un día no lectivo: 422.
+     */
+    Set<String> alumnoIdsDeMiSeccion() {
+        DocenteResumen docente = docenteActual();
+        AnioEscolarResumen anio = anioLectivo(ahora().toLocalDate());
+        SeccionResumen seccion = catalogo.secciones(anio.id()).stream()
+                .filter(x -> docente.id().equals(x.tutorDocenteId())).findFirst()
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.FUERA_DE_ALCANCE,
+                        "No tienes una sección a cargo como tutor este año."));
+        return matriculas.alumnosDeSeccion(seccion.id()).stream().map(AlumnoDeSeccion::alumnoId)
+                .collect(Collectors.toSet());
     }
 
     /** Pasos 2 a 4: la sección con sus alumnos y lo ya registrado hoy; con la jornada cerrada queda en consulta. */
@@ -222,9 +238,10 @@ public class AsistenciaSeccionService {
         boolean habilitado = c.registroHabilitado(propiedades.schoolDayClosingTime());
         String mensaje = !habilitado ? mensajeCierre()
                 : c.alumnos().isEmpty() ? "La sección " + c.seccion().nombre() + " no tiene alumnos matriculados." : null;
+        boolean puedeCambiar = habilitado && PlazoTardanza.admite(c.hora(), propiedades.studentLateCutoffTime());
         return new AsistenciaSeccionDto(codigo(c.seccion()), c.seccion().nombre(), c.fecha(),
                 reloj.instant().atZone(reloj.getZone()).toOffsetDateTime(), habilitado, mensaje,
-                propiedades.studentLateCutoffTime(), alumnos, totales);
+                propiedades.studentLateCutoffTime(), puedeCambiar, alumnos, totales);
     }
 
     private static int contar(List<AlumnoAsistenciaDto> alumnos, EstadoAsistencia estado) {

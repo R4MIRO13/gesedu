@@ -92,6 +92,8 @@ export interface AsistenciaSeccion {
   registroHabilitado: boolean
   mensaje: string | null
   limiteTardanza: string
+  /** Verdadero mientras, a la hora del servidor, aún se puede cambiar una falta a tardanza (UC-09). */
+  actualizacionTardanzaHabilitada: boolean
   alumnos: AlumnoAsistencia[]
   totales: TotalesAsistencia
 }
@@ -130,6 +132,27 @@ export function useRegistrarAsistenciaSeccion(codigo: string) {
     mutationFn: (asistencias: ItemPaseLista[]) =>
       api<AsistenciaSeccion>(`/secciones/${encodeURIComponent(codigo)}/asistencia`, { method: 'POST', cuerpo: { asistencias } }),
     // También tras un 409: otra solicitud ya registró y la pantalla debe mostrar lo vigente
+    onSettled: () => cliente.invalidateQueries({ queryKey: ['asistencia-alumnos'] }),
+  })
+}
+
+/** Una asistencia de alumno tras cambiarla; `modificado` es falso si ya estaba en TARDANZA (UC-09 FA-2). */
+export interface RegistroAlumno {
+  id: string
+  alumnoId: string
+  fecha: string
+  estado: EstadoAsistencia
+  actualizadoEn: string
+  modificado: boolean
+}
+
+/** UC-09: de FALTA a TARDANZA. La hora límite y la fecha las decide el servidor. */
+export function useCambiarATardanza() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (registroId: string) =>
+      api<RegistroAlumno>(`/asistencia-alumnos/${encodeURIComponent(registroId)}`, { method: 'PATCH', cuerpo: { estado: 'TARDANZA' } }),
+    // También tras un error: el plazo pudo vencer o el registro cambiar, y la vista debe mostrar lo vigente
     onSettled: () => cliente.invalidateQueries({ queryKey: ['asistencia-alumnos'] }),
   })
 }

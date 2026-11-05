@@ -96,6 +96,13 @@ function PaseLista({ codigo, datos }: { codigo: string; datos: AsistenciaSeccion
             {guardado.totales.falta === 1 ? 'falta' : 'faltas'}.
           </p>
         )}
+        {(guardado || (datos.alumnos.length > 0 && pendientes.length === 0)) && (
+          <p>
+            <Link to="/intranet/asistencia/$seccion/registro-del-dia" params={{ seccion: codigo }}>
+              Ver el registro del día
+            </Link>
+          </p>
+        )}
         {datos.registroHabilitado && datos.alumnos.length > 0 && pendientes.length === 0 && !guardado && (
           <p className="alerta" role="status">
             Todos los alumnos ya tienen su asistencia registrada hoy: puntuales {t.puntual}, tardanzas {t.tardanza}, faltas {t.falta}.
