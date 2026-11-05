@@ -18,6 +18,8 @@ public interface AnioEscolarRepository extends JpaRepository<AnioEscolar, String
 
     List<AnioEscolar> findByEstadoNot(String estado);
 
+    List<AnioEscolar> findByEstado(String estado);
+
     /** El año ACTIVO que tiene un bimestre en curso en la fecha (S-07: así se reconoce un día lectivo). */
     @Query("""
             SELECT a FROM AnioEscolar a WHERE a.estado = 'ACTIVO' AND EXISTS

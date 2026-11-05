@@ -156,3 +156,42 @@ export function useCambiarATardanza() {
     onSettled: () => cliente.invalidateQueries({ queryKey: ['asistencia-alumnos'] }),
   })
 }
+
+// ---- UC-12: asistencia de los docentes por día (administrador) ----
+
+export interface FilaAsistenciaDocente {
+  docenteId: string
+  nombre: string
+  primerBloque: string | null
+  horaRegistro: string | null
+  /** Nulo = programado sin registro: no es falta. */
+  estado: EstadoAsistencia | null
+  generadaAlCierre: boolean
+}
+
+export interface TotalesDocentes {
+  puntual: number
+  tardanza: number
+  falta: number
+  sinRegistrar: number
+}
+
+export type EstadoCierre = 'PROCESADO' | 'FALLIDO' | 'PENDIENTE'
+
+export interface AsistenciaDocentesDia {
+  fecha: string
+  diaLectivo: boolean
+  cierre: EstadoCierre
+  detalleCierre: string | null
+  totales: TotalesDocentes
+  docentes: FilaAsistenciaDocente[]
+}
+
+/** `fecha` nula = hoy según el servidor. */
+export function useAsistenciaDocentesDia(fecha: string | null) {
+  return useQuery({
+    queryKey: ['asistencia-docentes-dia', fecha],
+    queryFn: () => api<AsistenciaDocentesDia>(fecha ? `/asistencia-docente?fecha=${encodeURIComponent(fecha)}` : '/asistencia-docente'),
+    retry: false,
+  })
+}

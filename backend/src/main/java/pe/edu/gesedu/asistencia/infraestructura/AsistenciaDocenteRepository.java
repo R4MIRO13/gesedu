@@ -16,6 +16,8 @@ public interface AsistenciaDocenteRepository extends JpaRepository<AsistenciaDoc
 
     Optional<AsistenciaDocente> findByDocenteIdAndFecha(String docenteId, LocalDate fecha);
 
+    List<AsistenciaDocente> findByFecha(LocalDate fecha);
+
     List<AsistenciaDocente> findByDocenteIdAndFechaBetweenOrderByFechaDesc(String docenteId, LocalDate desde, LocalDate hasta);
 
     /**
@@ -30,4 +32,16 @@ public interface AsistenciaDocenteRepository extends JpaRepository<AsistenciaDoc
             """, nativeQuery = true)
     int insertarSiNoExiste(@Param("docenteId") String docenteId, @Param("fecha") LocalDate fecha,
                            @Param("horaRegistro") Instant horaRegistro, @Param("estado") String estado);
+
+    /**
+     * Cierre diario (UC-12): crea la FALTA del docente en la fecha, sin hora de registro, solo si aún no tiene asistencia.
+     * Nunca sobrescribe una marcación, y repetirlo o correrlo en paralelo no duplica nada (FA-2, FA-3).
+     */
+    @Modifying
+    @Query(value = """
+            INSERT INTO asistencia.asistencia_docente (id, docente_id, fecha, hora_registro, estado)
+            VALUES (uuidv7()::text, :docenteId, :fecha, NULL, 'FALTA')
+            ON CONFLICT (docente_id, fecha) DO NOTHING
+            """, nativeQuery = true)
+    int insertarFaltaSiNoExiste(@Param("docenteId") String docenteId, @Param("fecha") LocalDate fecha);
 }

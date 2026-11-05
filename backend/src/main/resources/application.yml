@@ -47,6 +47,10 @@ management:
 gesedu:
   # Origen de la SPA: arma los enlaces de los correos (recuperación de contraseña)
   web-origen: ${GESEDU_WEB_ORIGIN:http://localhost:5173}
+  planificador:
+    # Cierre diario de asistencia (UC-12): cada minuto; actúa solo desde la hora de cierre y si la fecha no se procesó.
+    # El valor «-» lo desactiva (lo usan las pruebas, que invocan el job a mano con un reloj fijo).
+    cierre-diario-cron: ${GESEDU_PLANIFICADOR_CIERRE_DIARIO_CRON:0 * * * * *}
   asistencia:
     # DA-10: se validan al arrancar (AsistenciaProperties). Valores de los wireframes (C-24); P-05 los fija la institución.
     time-zone: ${GESEDU_TIME_ZONE:America/Lima}

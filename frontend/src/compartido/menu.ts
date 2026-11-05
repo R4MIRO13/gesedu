@@ -63,6 +63,12 @@ export const OPCIONES_MENU = [
     permiso: 'ASISTENCIA_ALUMNO_REGISTRAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/asistencia/docentes/$fecha', params: { fecha: 'hoy' } }),
+    titulo: 'Asistencia docente',
+    descripcion: 'Quién tenía clases hoy, cómo marcó y las faltas que generó el cierre de la jornada.',
+    permiso: 'ASISTENCIA_DOCENTE_CONSULTAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',

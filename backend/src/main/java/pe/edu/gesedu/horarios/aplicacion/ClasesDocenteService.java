@@ -80,6 +80,37 @@ public class ClasesDocenteService {
         return new ClasesEnDia(true, true, primero);
     }
 
+    /**
+     * Las clases de un día de la semana según la versión vigente del horario: qué docentes dictan y a qué hora empieza su
+     * primera clase (UC-12, consulta de docentes por día).
+     *
+     * @param primerBloquePorDocente docente → inicio de su primera clase; vacío si no hay horario publicado o nadie dicta
+     */
+    public record JornadaDelDia(boolean diaConBloques, boolean horarioPublicado, Map<String, LocalTime> primerBloquePorDocente) {
+    }
+
+    @Transactional(readOnly = true)
+    public JornadaDelDia jornadaDelDia(int anio, DayOfWeek dia) {
+        AnioEscolarResumen a = anios.obtenerPorAnio(anio);
+        List<BloqueHorario> delDia = bloques.findByAnioEscolarIdAndDiaSemana(a.id(), aDiaSemana(dia));
+        if (delDia.isEmpty()) {
+            return new JornadaDelDia(false, false, Map.of());
+        }
+        Optional<HorarioPublicado> vigente = publicados.findByAnioEscolarIdAndVigenteTrue(a.id());
+        if (vigente.isEmpty()) {
+            return new JornadaDelDia(true, false, Map.of());
+        }
+        Map<String, BloqueHorario> porId = delDia.stream().collect(Collectors.toMap(BloqueHorario::getId, Function.identity()));
+        Map<String, LocalTime> primeros = new java.util.TreeMap<>();
+        for (AsignacionPublicada ap : publicadas.findByHorarioPublicadoId(vigente.get().getId())) {
+            BloqueHorario bloque = porId.get(ap.getBloqueId());
+            if (bloque != null) {
+                primeros.merge(ap.getDocenteId(), bloque.getHoraInicio(), (x, y) -> x.isBefore(y) ? x : y);
+            }
+        }
+        return new JornadaDelDia(true, true, primeros);
+    }
+
     /** El año tiene bloques configurados ese día de la semana, es decir, hay jornada escolar (S-57). */
     @Transactional(readOnly = true)
     public boolean hayJornada(int anio, DayOfWeek dia) {

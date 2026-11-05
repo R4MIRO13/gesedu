@@ -49,6 +49,12 @@ public class AnioEscolarService {
                 .map(a -> new AnioEscolarResumen(a.getId(), a.getAnio(), a.getEstado()));
     }
 
+    /** Hay un año escolar ACTIVO: sin él no existe calendario sobre el cual decidir qué días son lectivos. */
+    @Transactional(readOnly = true)
+    public boolean existeAnioActivo() {
+        return !anios.findByEstado("ACTIVO").isEmpty();
+    }
+
     /** Ids de los años escolares anteriores al indicado (para las deudas de años pasados, UC-02 FA-3). */
     @Transactional(readOnly = true)
     public List<String> idsAnterioresA(int anio) {

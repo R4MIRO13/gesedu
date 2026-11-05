@@ -33,7 +33,9 @@ import pe.edu.gesedu.seguridad.aplicacion.CacheCuentas;
 // El límite de peticiones a /auth/* se sube: las pruebas inician sesión muchas veces desde la misma IP.
 // LimiteAuthIT lo baja con su propio @SpringBootTest.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "gesedu.seguridad.limite-auth-por-minuto=100000")
+        properties = {"gesedu.seguridad.limite-auth-por-minuto=100000",
+                // El cierre diario no corre solo en las pruebas (relojes fijos): cada prueba lo invoca a mano
+                "gesedu.planificador.cierre-diario-cron=-"})
 public abstract class BaseIT {
 
     public static final String CONTRASENA = "Gesedu2027!";
