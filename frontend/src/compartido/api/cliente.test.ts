@@ -76,6 +76,21 @@ describe('cliente de la API', () => {
     expect(error.status).toBe(0)
   })
 
+  it('una petición cancelada con AbortSignal sale como AbortError, no como fallo de conexión', async () => {
+    servidor.use(http.get('*/api/v1/lenta', async () => {
+      await new Promise((r) => setTimeout(r, 200))
+      return HttpResponse.json({ ok: true })
+    }))
+    const control = new AbortController()
+
+    const pendiente = api('/lenta', { signal: control.signal }).catch((e: unknown) => e)
+    control.abort()
+    const error = await pendiente
+
+    expect(error).not.toBeInstanceOf(ApiError)
+    expect((error as Error).name).toBe('AbortError')
+  })
+
   it('tras un 401 renueva el token con el refresh y repite la petición una sola vez', async () => {
     guardarSesion(sesionDe('ADMINISTRADOR', ['HORARIO_CONSULTAR'], { token: 'viejo' }))
     const usados: (string | null)[] = []

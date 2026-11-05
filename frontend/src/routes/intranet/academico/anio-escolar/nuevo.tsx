@@ -121,7 +121,7 @@ function NuevoAnioEscolar() {
 
         {paso === 1 ? (
           <div className="acciones">
-            <button type="button" className="btn btn-primario" onClick={siguiente}>
+            <button type="button" className="btn btn-primario" onClick={siguiente} disabled={validacion.pendiente}>
               Siguiente
             </button>
           </div>
@@ -175,7 +175,7 @@ function NuevoAnioEscolar() {
               <button type="button" className="btn" onClick={() => setPaso(1)}>
                 Anterior
               </button>
-              <button type="submit" className="btn btn-primario" disabled={crear.isPending || problemas.length > 0}>
+              <button type="submit" className="btn btn-primario" disabled={crear.isPending || validacion.pendiente || problemas.length > 0}>
                 Crear año escolar
               </button>
             </div>

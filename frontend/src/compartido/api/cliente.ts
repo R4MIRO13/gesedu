@@ -9,6 +9,8 @@ export interface OpcionesApi {
   cabeceras?: Record<string, string>
   /** `blob` para descargar archivos (Excel, CSV, PDF); por defecto se espera JSON. */
   formato?: 'json' | 'blob'
+  /** Permite cancelar la petición (por ejemplo, la validación en vivo que ya quedó vieja). */
+  signal?: AbortSignal
 }
 
 export interface RespuestaApi<T> {
@@ -30,8 +32,11 @@ async function enviar(ruta: string, opciones: OpcionesApi, token: string | undef
       headers: cabeceras,
       body: opciones.cuerpo === undefined ? undefined : JSON.stringify(opciones.cuerpo),
       credentials: 'same-origin',
+      signal: opciones.signal,
     })
-  } catch {
+  } catch (error) {
+    // Una petición cancelada a propósito no es un fallo de conexión: se deja pasar tal cual
+    if (opciones.signal?.aborted) throw error
     throw new ApiError(0, 'No se pudo conectar con el servidor', SIN_CONEXION)
   }
 }

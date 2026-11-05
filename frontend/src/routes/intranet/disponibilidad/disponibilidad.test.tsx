@@ -88,6 +88,11 @@ describe('Mi disponibilidad horaria (UC-20, RF-46)', () => {
     expect(screen.getByText(/Última versión confirmada: 10\/01\/2027/)).toBeInTheDocument()
     // El hueco entre las dos franjas es el recreo
     expect(screen.getByText('Recreo')).toBeInTheDocument()
+    // Con el periodo abierto sí se invita a marcar las celdas
+    expect(screen.getByText('Haz clic en una celda para cambiar su estado.')).toBeInTheDocument()
+    // El campo se puede identificar (accesibilidad y autocompletado del navegador)
+    expect(screen.getByLabelText('Observaciones')).toHaveAttribute('name', 'observaciones')
+    expect(screen.getByLabelText('Observaciones')).toHaveAttribute('id', 'observaciones-disponibilidad')
   })
 
   it('FA-2: al marcar menos bloques que su carga advierte cuántos faltan, y deja de advertir al completarlos', async () => {
@@ -128,6 +133,9 @@ describe('Mi disponibilidad horaria (UC-20, RF-46)', () => {
     expect(screen.getByRole('button', { name: 'Lunes de 07:45 a 08:30: disponible' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Confirmar disponibilidad' })).not.toBeInTheDocument()
     expect(screen.getByLabelText('Observaciones')).toBeDisabled()
+    // En solo lectura no se invita a hacer clic: se explica lo que se está viendo
+    expect(screen.queryByText('Haz clic en una celda para cambiar su estado.')).not.toBeInTheDocument()
+    expect(screen.getByText(/Vista de solo lectura: las celdas marcadas son los bloques que confirmaste como disponibles/)).toBeInTheDocument()
   })
 
   it('si el servidor rechaza la confirmación por periodo cerrado, muestra su mensaje', async () => {

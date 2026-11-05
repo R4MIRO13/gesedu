@@ -116,7 +116,11 @@ function Registro({ anio, datos }: { anio: number; datos: Disponibilidad }) {
         <div className="dos-columnas">
           <section className="tarjeta" aria-label="Matriz de disponibilidad">
             <MatrizDisponibilidad bloques={datos.bloques} seleccionados={seleccion} soloLectura={!abierto} alAlternar={alternar} />
-            <p className="muted">Haz clic en una celda para cambiar su estado.</p>
+            <p className="muted">
+              {abierto
+                ? 'Haz clic en una celda para cambiar su estado.'
+                : 'Vista de solo lectura: las celdas marcadas son los bloques que confirmaste como disponibles.'}
+            </p>
           </section>
 
           <aside className="tarjeta" aria-label="Resumen">
@@ -139,6 +143,8 @@ function Registro({ anio, datos }: { anio: number; datos: Disponibilidad }) {
             <label className="campo">
               Observaciones
               <textarea
+                id="observaciones-disponibilidad"
+                name="observaciones"
                 rows={3}
                 maxLength={500}
                 value={observaciones}

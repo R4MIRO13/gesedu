@@ -1,5 +1,8 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../compartido/api/cliente'
+import { useValorConRetraso } from '../../compartido/useValorConRetraso'
+
+const FECHA = /^\d{4}-\d{2}-\d{2}$/
 
 // ---- UC-13: año escolar y bimestres ----
 
@@ -71,19 +74,28 @@ export function useAnio(anio: number) {
  * año; se consulta cuando las fechas ya tienen forma de fecha.
  */
 export function useValidacionAnio(fechaInicio: string, fechaFin: string, bimestres: Bimestre[] | null) {
-  const completas = /^\d{4}-\d{2}-\d{2}$/.test(fechaInicio) && /^\d{4}-\d{2}-\d{2}$/.test(fechaFin)
-  const conFechas = bimestres?.filter((b) => /^\d{4}-\d{2}-\d{2}$/.test(b.fechaInicio) && /^\d{4}-\d{2}-\d{2}$/.test(b.fechaFin))
-  return useQuery({
-    queryKey: ['validacion-anio', fechaInicio, fechaFin, conFechas ?? null],
-    queryFn: () =>
+  // Se espera a que el usuario termine de teclear (400 ms): sin esto, cada segmento de una fecha era una petición
+  const { valor: entrada, pendiente } = useValorConRetraso({ fechaInicio, fechaFin, bimestres })
+  const completas = FECHA.test(entrada.fechaInicio) && FECHA.test(entrada.fechaFin)
+  const conFechas = entrada.bimestres?.filter((b) => FECHA.test(b.fechaInicio) && FECHA.test(b.fechaFin))
+  const consulta = useQuery({
+    queryKey: ['validacion-anio', entrada.fechaInicio, entrada.fechaFin, conFechas ?? null],
+    // `signal` cancela la petición anterior si la clave cambia mientras sigue en vuelo
+    queryFn: ({ signal }) =>
       api<ValidacionAnio>('/anios-escolares/validaciones', {
         method: 'POST',
-        cuerpo: { fechaInicio, fechaFin, ...(conFechas && conFechas.length > 0 ? { bimestres: conFechas } : {}) },
+        signal,
+        cuerpo: {
+          fechaInicio: entrada.fechaInicio,
+          fechaFin: entrada.fechaFin,
+          ...(conFechas && conFechas.length > 0 ? { bimestres: conFechas } : {}),
+        },
       }),
     enabled: completas,
     placeholderData: keepPreviousData,
     staleTime: 0,
   })
+  return { ...consulta, pendiente }
 }
 
 export function useCrearAnio() {

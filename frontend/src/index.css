@@ -345,6 +345,25 @@ button.celda:hover {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
+/*
+ * Los cinco días deben caber en el ancho que deja el panel lateral (300 px): columnas iguales, relleno corto y
+ * textos que se parten. Si no, «Viernes» quedaba fuera de la vista y había que desplazar la tabla.
+ */
+.matriz-escritorio table {
+  table-layout: fixed;
+}
+.matriz-escritorio th,
+.matriz-escritorio td {
+  padding: 0.4rem 0.3rem;
+}
+.matriz-escritorio th:first-child {
+  width: 6.6rem;
+}
+.matriz-escritorio .celda {
+  padding: 0.3rem 0.35rem;
+  font-size: 0.8rem;
+  overflow-wrap: break-word;
+}
 .pestanas {
   display: flex;
   gap: 0.25rem;
@@ -374,7 +393,7 @@ button.celda:hover {
 }
 .elaborar {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 1rem;
   align-items: start;
 }

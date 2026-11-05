@@ -27,10 +27,11 @@ const BIMESTRES_OK: Bimestre[] = [
 ]
 
 /** El backend simulado: año de 10 meses y 5 días válido; 9 meses inválido; el bimestre III de 2027-06-25 se cruza. */
-function simular(cuerpos: unknown[] = []) {
+function simular(cuerpos: unknown[] = [], validaciones: unknown[] = []) {
   servidor.use(
     http.post('*/api/v1/anios-escolares/validaciones', async ({ request }) => {
       const c = (await request.json()) as { fechaInicio: string; fechaFin: string; bimestres?: Bimestre[] }
+      validaciones.push(c)
       const corto = c.fechaFin < '2027-12-01'
       const cruzado = c.bimestres?.some((b) => b.numero === 3 && b.fechaInicio === '2027-06-25')
       const problemas: ProblemaAnio[] = corto
@@ -144,6 +145,38 @@ describe('Nuevo año escolar (UC-13, RF-03, RF-25)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear año escolar' }))
 
     expect(await screen.findByText('Ya existe el año escolar 2027')).toBeInTheDocument()
+  })
+
+  it('la validación en vivo espera a que termines de teclear: varios cambios seguidos son una sola petición', async () => {
+    const validaciones: unknown[] = []
+    simular([], validaciones)
+    await renderizarRuta('/intranet/academico/anio-escolar/nuevo')
+
+    // Como al teclear una fecha: cada segmento deja una fecha completa distinta
+    for (const v of ['2027-02-01', '2027-02-05', '2027-02-15']) poner('Fecha de inicio', v)
+    for (const v of ['2027-12-01', '2027-12-02', '2027-12-20']) poner('Fecha de fin', v)
+
+    expect(screen.getByRole('button', { name: 'Siguiente' })).toBeDisabled()
+    expect(validaciones).toHaveLength(0)
+    expect(await screen.findByText('Duración: 10 meses y 5 días')).toBeInTheDocument()
+    expect(validaciones).toEqual([{ fechaInicio: '2027-02-15', fechaFin: '2027-12-20' }])
+    expect(screen.getByRole('button', { name: 'Siguiente' })).toBeEnabled()
+  })
+
+  it('en el paso 2 también agrupa los cambios y no deja crear mientras la validación está pendiente', async () => {
+    const validaciones: unknown[] = []
+    simular([], validaciones)
+    await pasarAlPaso2()
+    const antes = validaciones.length
+
+    poner('Fin del Bimestre I', '2027-04-20')
+    poner('Fin del Bimestre I', '2027-04-25')
+    poner('Fin del Bimestre I', '2027-04-30')
+
+    expect(screen.getByRole('button', { name: 'Crear año escolar' })).toBeDisabled()
+    await waitFor(() => expect(validaciones.length).toBe(antes + 1))
+    await new Promise((r) => setTimeout(r, 600))
+    expect(validaciones.length).toBe(antes + 1)
   })
 
   it('un usuario sin ACADEMICO_CONFIGURAR no entra a la pantalla', async () => {
