@@ -38,6 +38,15 @@ public final class ReporteAsistenciaDtos {
                                        List<FilaReporteDto> filas) {
     }
 
+    /**
+     * El resumen de asistencia de un alumno en un mes (inicio del alumno, RF-16 bajo demanda): los mismos conteos y el
+     * mismo porcentaje que el reporte, calculados al pedirlo. {@code porcentaje} nulo = «No disponible».
+     */
+    public record ResumenAsistenciaAlumnoDto(String alumnoId, int anio, int mes, int puntual, int tardanza, int falta,
+                                             int registrados, int diasEsperados, int noRegistrados, String porcentaje,
+                                             boolean parcial, LocalDate fechaCorte) {
+    }
+
     /** Un archivo descargable. */
     public record ArchivoReporte(byte[] contenido, String tipoContenido, String nombre) {
     }

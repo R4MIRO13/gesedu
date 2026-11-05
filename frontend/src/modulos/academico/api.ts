@@ -250,8 +250,14 @@ export interface GradosAnio {
   docentes: DocenteTutor[]
 }
 
-export function useGrados(anio: number) {
-  return useQuery({ queryKey: ['grados', anio], queryFn: () => api<GradosAnio>(`/anios-escolares/${anio}/grados`), staleTime: 0 })
+/** `habilitado` falso no consulta nada (por ejemplo, quien no necesita la lista de secciones). */
+export function useGrados(anio: number, habilitado = true) {
+  return useQuery({
+    queryKey: ['grados', anio],
+    queryFn: () => api<GradosAnio>(`/anios-escolares/${anio}/grados`),
+    staleTime: 0,
+    enabled: habilitado,
+  })
 }
 
 export function useCrearSeccion(anio: number) {

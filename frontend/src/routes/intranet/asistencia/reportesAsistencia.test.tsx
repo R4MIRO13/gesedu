@@ -105,6 +105,27 @@ describe('Reportes de asistencia (UC-10, UC-11, RF-16, RF-17, RF-21)', () => {
       expect(parametros.has('seccion')).toBe(false)
     })
 
+    it('por omisión pide el mes actual: no manda mes ni año, los decide el servidor', async () => {
+      const consultas: string[] = []
+      servidor.use(
+        http.get('*/api/v1/reportes/asistencia', ({ request }) => {
+          consultas.push(new URL(request.url).search)
+          return HttpResponse.json(reporte())
+        }),
+      )
+      await renderizarRuta('/intranet/asistencia/reportes')
+
+      expect(await screen.findByLabelText('Mes')).toHaveValue('')
+      expect(screen.getByRole('option', { name: 'Mes actual' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Año')).toBeDisabled()
+      await userEvent.click(screen.getByRole('button', { name: 'Ver reporte' }))
+
+      await screen.findByRole('table', { name: 'Resumen mensual de asistencia' })
+      const parametros = new URLSearchParams(consultas[0])
+      expect(parametros.has('mes')).toBe(false)
+      expect(parametros.has('anio')).toBe(false)
+    })
+
     it('FA-1: un periodo en curso se marca como parcial con su fecha de corte', async () => {
       servidor.use(http.get('*/api/v1/reportes/asistencia', () => HttpResponse.json(reporte({ parcial: true, fechaCorte: '2027-03-14' }))))
       await renderizarRuta('/intranet/asistencia/reportes')

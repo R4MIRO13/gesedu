@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { ApiError } from '../../../compartido/api/errores'
 import { exigirAlgunPermiso } from '../../../compartido/auth/guardias'
 import { usePermiso } from '../../../compartido/auth/usePermiso'
-import { fechaCorta, hoyLima } from '../../../compartido/formato'
+import { fechaCorta } from '../../../compartido/formato'
 import { guardarArchivo } from '../../../compartido/guardarArchivo'
 import { ANIO_TRABAJO } from '../../../compartido/menu'
 import {
@@ -25,9 +25,9 @@ const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', '
 
 const formatoGeneracion = new Intl.DateTimeFormat('es-PE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Lima' })
 
+/** Por omisión, el mes actual: lo decide el servidor, no la fecha de este equipo. */
 function filtrosIniciales(): FiltrosReporte {
-  const [anio = '', mes = ''] = hoyLima().split('-')
-  return { ambito: 'ALUMNOS', mes: Number(mes), anio: Number(anio), seccion: '' }
+  return { ambito: 'ALUMNOS', mes: null, anio: null, seccion: '' }
 }
 
 /** UC-10 y UC-11: reporte mensual de asistencia de alumnos o docentes, calculado al pedirlo, en pantalla, Excel o PDF. */
@@ -39,7 +39,7 @@ function ReportesDeAsistencia() {
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null)
   const reporte = useReporteAsistencia(pedido)
   // Solo el administrador elige sección; si no puede leer las secciones del año, queda «todas»
-  const grados = useGrados(ANIO_TRABAJO)
+  const grados = useGrados(ANIO_TRABAJO, esGeneral)
   const secciones = esGeneral && borrador.ambito === 'ALUMNOS' ? (grados.data?.grados ?? []).flatMap((g) => g.secciones) : []
 
   function cambiar<K extends keyof FiltrosReporte>(campo: K, valor: FiltrosReporte[K]) {
@@ -81,7 +81,7 @@ function ReportesDeAsistencia() {
           {esGeneral && (
             <label className="campo">
               Ámbito
-              <select value={borrador.ambito} onChange={(e) => cambiar('ambito', e.target.value as AmbitoReporte)}>
+              <select name="ambito" value={borrador.ambito} onChange={(e) => cambiar('ambito', e.target.value as AmbitoReporte)}>
                 <option value="ALUMNOS">Alumnos</option>
                 <option value="DOCENTES">Docentes</option>
               </select>
@@ -89,7 +89,12 @@ function ReportesDeAsistencia() {
           )}
           <label className="campo">
             Mes
-            <select value={borrador.mes} onChange={(e) => cambiar('mes', Number(e.target.value))}>
+            <select
+              name="mes"
+              value={borrador.mes ?? ''}
+              onChange={(e) => setBorrador((actual) => ({ ...actual, mes: e.target.value === '' ? null : Number(e.target.value), anio: e.target.value === '' ? null : actual.anio ?? ANIO_TRABAJO }))}
+            >
+              <option value="">Mes actual</option>
               {MESES.map((nombre, i) => (
                 <option key={nombre} value={i + 1}>
                   {nombre}
@@ -99,12 +104,21 @@ function ReportesDeAsistencia() {
           </label>
           <label className="campo campo-corto">
             Año
-            <input type="number" min={2000} max={2999} value={borrador.anio} onChange={(e) => cambiar('anio', Number(e.target.value))} />
+            <input
+              type="number"
+              name="anio"
+              min={2000}
+              max={2999}
+              value={borrador.anio ?? ''}
+              placeholder="Año actual"
+              disabled={borrador.mes === null}
+              onChange={(e) => cambiar('anio', e.target.value === '' ? null : Number(e.target.value))}
+            />
           </label>
           {esGeneral && borrador.ambito === 'ALUMNOS' && (
             <label className="campo">
               Sección
-              <select value={borrador.seccion} onChange={(e) => cambiar('seccion', e.target.value)}>
+              <select name="seccion" value={borrador.seccion} onChange={(e) => cambiar('seccion', e.target.value)}>
                 <option value="">Todas las secciones</option>
                 {secciones.map((s) => (
                   <option key={s.id} value={s.nombre.replace('° ', '')}>

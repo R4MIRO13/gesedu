@@ -317,6 +317,21 @@ class ReporteAsistenciaIT extends BaseIT {
         assertThat(fila(reporte, "Castro")).as("Luis no tiene clases ni registros").isNull();
     }
 
+    @Test
+    void sinMesNiAnioElPeriodoEsElMesActualDelServidorYUnoSoloSeRechaza() throws Exception {
+        reloj.fijar(lectivos.get(5), "16:00");
+
+        Respuesta actual = get(RUTA + "?ambito=ALUMNOS", token(rosa));
+
+        assertThat(actual.estado()).isEqualTo(200);
+        assertThat(actual.cuerpo().get("mes").asInt()).as("el mes del reloj del servidor").isEqualTo(3);
+        assertThat(actual.cuerpo().get("anio").asInt()).isEqualTo(e.anio());
+        assertThat(actual.cuerpo().get("parcial").asBoolean()).isTrue();
+        assertThat(get(RUTA + "?ambito=ALUMNOS&mes=3", token(rosa)).estado()).isEqualTo(400);
+        assertThat(get(RUTA + "?ambito=ALUMNOS&anio=" + e.anio(), token(rosa)).estado()).isEqualTo(400);
+        assertThat(descargar(RUTA + "?ambito=ALUMNOS&formato=pdf", token(rosa)).estado()).isEqualTo(200);
+    }
+
     // ---- FA-1: periodo en curso ----
 
     @Test

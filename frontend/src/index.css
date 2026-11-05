@@ -784,3 +784,10 @@ dd {
 .reloj-servidor .muted {
   font-size: 1rem;
 }
+
+/* Inicio del alumno: el porcentaje de asistencia del mes en grande */
+.porcentaje-asistencia {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 2.2rem;
+  font-variant-numeric: tabular-nums;
+}

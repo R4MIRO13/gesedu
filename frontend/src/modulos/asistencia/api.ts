@@ -203,8 +203,10 @@ export type FormatoReporte = 'xlsx' | 'pdf'
 
 export interface FiltrosReporte {
   ambito: AmbitoReporte
-  mes: number
-  anio: number
+  /** Nulo = el mes actual, que decide el servidor (la fecha del dispositivo no se usa). */
+  mes: number | null
+  /** Nulo = el año del mes actual del servidor. */
+  anio: number | null
   /** Código de sección («3A»); vacío = la del tutor, o todas para el administrador. */
   seccion: string
 }
@@ -238,7 +240,11 @@ export interface ReporteAsistencia {
 }
 
 function parametrosReporte(f: FiltrosReporte, formato: string): string {
-  const p = new URLSearchParams({ ambito: f.ambito, mes: String(f.mes), anio: String(f.anio), formato })
+  const p = new URLSearchParams({ ambito: f.ambito, formato })
+  if (f.mes !== null && f.anio !== null) {
+    p.set('mes', String(f.mes))
+    p.set('anio', String(f.anio))
+  }
   if (f.seccion) p.set('seccion', f.seccion)
   return p.toString()
 }
@@ -257,4 +263,32 @@ export function useReporteAsistencia(filtros: FiltrosReporte | null) {
 /** Descarga el reporte como Excel o PDF; el nombre lo propone el servidor. */
 export function descargarReporteAsistencia(filtros: FiltrosReporte, formato: FormatoReporte): Promise<ArchivoDescargado> {
   return descargar(`/reportes/asistencia?${parametrosReporte(filtros, formato)}`, `asistencia.${formato}`)
+}
+
+// ---- Inicio del alumno: su resumen de asistencia ----
+
+export interface ResumenAsistenciaAlumno {
+  alumnoId: string
+  anio: number
+  mes: number
+  puntual: number
+  tardanza: number
+  falta: number
+  registrados: number
+  diasEsperados: number
+  noRegistrados: number
+  /** Decimal con 2 decimales en texto; nulo = «No disponible» (sin días registrados). */
+  porcentaje: string | null
+  parcial: boolean
+  fechaCorte: string
+}
+
+/** El resumen del mes actual del alumno (el servidor decide cuál es); solo el propio alumno lo puede pedir. */
+export function useResumenAsistenciaAlumno(alumnoId: string | undefined) {
+  return useQuery({
+    queryKey: ['asistencia-alumno-resumen', alumnoId],
+    enabled: alumnoId !== undefined,
+    retry: false,
+    queryFn: () => api<ResumenAsistenciaAlumno>(`/alumnos/${encodeURIComponent(alumnoId!)}/asistencia/resumen`),
+  })
 }

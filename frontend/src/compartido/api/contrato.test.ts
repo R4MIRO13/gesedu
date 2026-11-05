@@ -95,6 +95,21 @@ import type {
   Vinculacion,
   VinculacionesAnio,
 } from '../../modulos/horarios/api'
+import type {
+  AlumnoAsistencia,
+  AsistenciaDocentesDia,
+  AsistenciaHoy,
+  AsistenciaSeccion,
+  FilaAsistenciaDocente,
+  FilaReporte,
+  MiSeccion,
+  RegistroAlumno,
+  RegistroAsistenciaDocente,
+  ReporteAsistencia,
+  ResumenAsistenciaAlumno,
+  TotalesAsistencia,
+  TotalesDocentes,
+} from '../../modulos/asistencia/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -269,5 +284,32 @@ describe('contrato de la publicación y la consulta del horario (UC-22, UC-23)',
 
   it('el horario vigente coincide con el backend', () => {
     expectTypeOf<keyof HorarioVigente>().toEqualTypeOf<keyof Esquemas['HorarioVigenteDto']>()
+  })
+})
+
+describe('contrato de la asistencia (UC-07 a UC-12, RF-16)', () => {
+  it('la marcación docente y su historial tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof AsistenciaHoy>().toEqualTypeOf<keyof Esquemas['EstadoHoyDto']>()
+    expectTypeOf<keyof RegistroAsistenciaDocente>().toEqualTypeOf<keyof Esquemas['RegistroDto']>()
+  })
+
+  it('el pase de lista y el cambio a tardanza tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof AsistenciaSeccion>().toEqualTypeOf<keyof Esquemas['AsistenciaSeccionDto']>()
+    expectTypeOf<keyof AlumnoAsistencia>().toEqualTypeOf<keyof Esquemas['AlumnoAsistenciaDto']>()
+    expectTypeOf<keyof TotalesAsistencia>().toEqualTypeOf<keyof Esquemas['TotalesAsistenciaDto']>()
+    expectTypeOf<keyof MiSeccion>().toEqualTypeOf<keyof Esquemas['MiSeccionDto']>()
+    expectTypeOf<keyof RegistroAlumno>().toEqualTypeOf<keyof Esquemas['RegistroAlumnoDto']>()
+  })
+
+  it('la consulta de docentes por día tiene las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof AsistenciaDocentesDia>().toEqualTypeOf<keyof Esquemas['AsistenciaDocenteDiaDto']>()
+    expectTypeOf<keyof FilaAsistenciaDocente>().toEqualTypeOf<keyof Esquemas['FilaDocenteDto']>()
+    expectTypeOf<keyof TotalesDocentes>().toEqualTypeOf<keyof Esquemas['TotalesDocentesDto']>()
+  })
+
+  it('los reportes y el resumen del alumno tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof ReporteAsistencia>().toEqualTypeOf<keyof Esquemas['ReporteAsistenciaDto']>()
+    expectTypeOf<keyof FilaReporte>().toEqualTypeOf<keyof Esquemas['FilaReporteDto']>()
+    expectTypeOf<keyof ResumenAsistenciaAlumno>().toEqualTypeOf<keyof Esquemas['ResumenAsistenciaAlumnoDto']>()
   })
 })

@@ -31,6 +31,7 @@ import pe.edu.gesedu.asistencia.aplicacion.ReporteAsistenciaDtos.ArchivoReporte;
 import pe.edu.gesedu.asistencia.aplicacion.ReporteAsistenciaDtos.FilaReporteDto;
 import pe.edu.gesedu.asistencia.aplicacion.ReporteAsistenciaDtos.Formato;
 import pe.edu.gesedu.asistencia.aplicacion.ReporteAsistenciaDtos.ReporteAsistenciaDto;
+import pe.edu.gesedu.asistencia.aplicacion.ReporteAsistenciaDtos.ResumenAsistenciaAlumnoDto;
 import pe.edu.gesedu.asistencia.dominio.AsistenciaAlumno;
 import pe.edu.gesedu.asistencia.dominio.AsistenciaDocente;
 import pe.edu.gesedu.asistencia.dominio.CalculoResumenMensual;
@@ -48,6 +49,7 @@ import pe.edu.gesedu.matricula.aplicacion.ConsultaMatriculaService.AlumnoDeSecci
 import pe.edu.gesedu.seguridad.aplicacion.ContextoUsuario;
 import pe.edu.gesedu.seguridad.aplicacion.DirectorioDocentes;
 import pe.edu.gesedu.seguridad.aplicacion.DirectorioDocentes.DocenteResumen;
+import pe.edu.gesedu.seguridad.aplicacion.DirectorioFamilias;
 import pe.edu.gesedu.transversal.reportes.GeneradorExcel;
 import pe.edu.gesedu.transversal.reportes.GeneradorPdf;
 
@@ -78,6 +80,7 @@ public class ReporteAsistenciaService {
     private final ConsultaMatriculaService matriculas;
     private final ClasesDocenteService clasesDocente;
     private final DirectorioDocentes directorio;
+    private final DirectorioFamilias familias;
     private final ContextoUsuario contexto;
     private final GeneradorExcel excel;
     private final GeneradorPdf pdf;
@@ -85,8 +88,8 @@ public class ReporteAsistenciaService {
 
     ReporteAsistenciaService(AsistenciaProperties propiedades, AsistenciaAlumnoRepository alumnos, AsistenciaDocenteRepository docentes,
                              AnioEscolarService anios, CatalogoAcademicoService catalogo, ConsultaMatriculaService matriculas,
-                             ClasesDocenteService clasesDocente, DirectorioDocentes directorio, ContextoUsuario contexto,
-                             GeneradorExcel excel, GeneradorPdf pdf, Clock reloj) {
+                             ClasesDocenteService clasesDocente, DirectorioDocentes directorio, DirectorioFamilias familias,
+                             ContextoUsuario contexto, GeneradorExcel excel, GeneradorPdf pdf, Clock reloj) {
         this.propiedades = propiedades;
         this.alumnos = alumnos;
         this.docentes = docentes;
@@ -95,6 +98,7 @@ public class ReporteAsistenciaService {
         this.matriculas = matriculas;
         this.clasesDocente = clasesDocente;
         this.directorio = directorio;
+        this.familias = familias;
         this.contexto = contexto;
         this.excel = excel;
         this.pdf = pdf;
@@ -109,9 +113,10 @@ public class ReporteAsistenciaService {
 
     /** Pasos 2 a 7 en JSON: valida filtros y permisos en el servidor y calcula el reporte (UC-11). */
     @Transactional(readOnly = true)
-    public ReporteAsistenciaDto generar(Ambito ambito, int anio, int mes, String seccion) {
+    public ReporteAsistenciaDto generar(Ambito ambito, Integer anio, Integer mes, String seccion) {
         ZonedDateTime ahora = reloj.instant().atZone(reloj.getZone());
-        Calendario calendario = calendario(anio, mes, ahora);
+        YearMonth pedido = periodoPedido(anio, mes, ahora);
+        Calendario calendario = calendario(pedido.getYear(), pedido.getMonthValue(), ahora);
         ReporteAsistenciaDto reporte = switch (ambito) {
             case ALUMNOS -> reporteAlumnos(calendario, seccion, ahora);
             case DOCENTES -> reporteDocentes(calendario, ahora);
@@ -126,7 +131,7 @@ public class ReporteAsistenciaService {
 
     /** El reporte como archivo descargable (Excel o PDF), con la fecha de generación, el periodo, el alcance y los resultados. */
     @Transactional(readOnly = true)
-    public ArchivoReporte archivo(Ambito ambito, int anio, int mes, String seccion, Formato formato) {
+    public ArchivoReporte archivo(Ambito ambito, Integer anio, Integer mes, String seccion, Formato formato) {
         ReporteAsistenciaDto r = generar(ambito, anio, mes, seccion);
         boolean alumnosAmbito = ambito == Ambito.ALUMNOS;
         List<String> encabezados = alumnosAmbito
@@ -163,6 +168,36 @@ public class ReporteAsistenciaService {
             lineas.add("Información incompleta: " + r.totalNoRegistrados() + " días esperados sin registro; no se consideran faltas y quedan fuera del porcentaje.");
         }
         return lineas;
+    }
+
+    // ---- inicio del alumno: su propio resumen ----
+
+    /**
+     * El resumen de asistencia del alumno en el mes (por omisión, el actual), calculado al pedirlo con las mismas reglas
+     * que el reporte (UC-11). Solo el propio alumno: otro id → 403. Sin registros no es un error: los conteos van en
+     * cero y el porcentaje es «No disponible».
+     */
+    @Transactional(readOnly = true)
+    public ResumenAsistenciaAlumnoDto resumenDeAlumno(String alumnoId, YearMonth mes) {
+        String usuarioId = contexto.idUsuarioActual().orElseThrow(() -> new ExcepcionNegocio(CodigoError.NO_AUTENTICADO));
+        boolean esElPropio = familias.alumnoDeUsuario(usuarioId).map(a -> a.id().equals(alumnoId)).orElse(false);
+        if (!esElPropio) {
+            throw new ExcepcionNegocio(CodigoError.FUERA_DE_ALCANCE, "Solo puedes consultar tu propia asistencia");
+        }
+        ZonedDateTime ahora = reloj.instant().atZone(reloj.getZone());
+        YearMonth periodo = mes != null ? mes : YearMonth.from(ahora);
+        Calendario c = calendario(periodo.getYear(), periodo.getMonthValue(), ahora);
+        Set<LocalDate> dias = new HashSet<>(c.dias());
+        Map<EstadoAsistencia, Integer> conteo = new EnumMap<>(EstadoAsistencia.class);
+        for (AsistenciaAlumno a : alumnos.findByFechaBetweenAndAlumnoIdIn(periodo.atDay(1), c.corte(), List.of(alumnoId))) {
+            if (dias.contains(a.getFecha())) {
+                conteo.merge(a.getEstado(), 1, Integer::sum);
+            }
+        }
+        Resumen r = resumenDe(conteo, c.dias().size());
+        return new ResumenAsistenciaAlumnoDto(alumnoId, periodo.getYear(), periodo.getMonthValue(), r.puntual(), r.tardanza(), r.falta(),
+                r.registrados(), r.diasEsperados(), r.noRegistrados(), r.porcentaje() == null ? null : r.porcentaje().toPlainString(),
+                c.parcial(), c.corte());
     }
 
     // ---- UC-11: cálculo por ámbito ----
@@ -274,14 +309,29 @@ public class ReporteAsistenciaService {
     }
 
     /**
-     * Valida el periodo (no futuro, FA-3), exige un año activo (FA-4) y decide los días: los lectivos del mes hasta la fecha
-     * de corte. El día actual solo cuenta con la jornada cerrada; el periodo en curso es parcial (FA-1).
+     * El periodo pedido. Sin mes ni año es el mes actual del servidor (la hora del dispositivo no se usa); con uno solo de
+     * los dos, la solicitud es inválida.
      */
-    private Calendario calendario(int anio, int mes, ZonedDateTime ahora) {
+    private static YearMonth periodoPedido(Integer anio, Integer mes, ZonedDateTime ahora) {
+        if (anio == null && mes == null) {
+            return YearMonth.from(ahora);
+        }
+        if (anio == null || mes == null) {
+            throw new ExcepcionNegocio(CodigoError.VALIDACION_INVALIDA, "Indica el mes y el año, o ninguno para el mes actual")
+                    .con("errores", List.of(Map.of("campo", anio == null ? "anio" : "mes", "mensaje", "Falta " + (anio == null ? "el año" : "el mes"))));
+        }
         if (mes < 1 || mes > 12 || anio < 2000 || anio > 2999) {
             throw new ExcepcionNegocio(CodigoError.VALIDACION_INVALIDA, "El mes o el año no son válidos")
                     .con("errores", List.of(Map.of("campo", mes < 1 || mes > 12 ? "mes" : "anio", "mensaje", "Indica un mes de 1 a 12 y un año entre 2000 y 2999")));
         }
+        return YearMonth.of(anio, mes);
+    }
+
+    /**
+     * Valida el periodo (no futuro, FA-3), exige un año activo (FA-4) y decide los días: los lectivos del mes hasta la fecha
+     * de corte. El día actual solo cuenta con la jornada cerrada; el periodo en curso es parcial (FA-1).
+     */
+    private Calendario calendario(int anio, int mes, ZonedDateTime ahora) {
         YearMonth periodo = YearMonth.of(anio, mes);
         LocalDate hoy = ahora.toLocalDate();
         if (periodo.atDay(1).isAfter(hoy)) {

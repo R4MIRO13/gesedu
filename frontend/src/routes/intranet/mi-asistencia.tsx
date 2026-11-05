@@ -72,7 +72,8 @@ function MiAsistencia() {
             {datos.limitePuntual && <> · eres puntual hasta las {hora12(datos.limitePuntual)}</>}
           </p>
 
-          <Aviso datos={datos} />
+          {/* Recién marcada, basta el aviso del resultado: el de «ya registrada» diría lo mismo */}
+          {!registrada && <Aviso datos={datos} />}
           {registrada && (
             <p className={registrada.estado === 'PUNTUAL' ? 'alerta alerta-ok' : 'alerta'} role="status">
               Asistencia registrada a las {registrada.horaRegistro ? horaDeInstante(registrada.horaRegistro) : '—'}:{' '}

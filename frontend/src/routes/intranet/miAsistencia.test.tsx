@@ -73,7 +73,9 @@ describe('Mi asistencia (UC-07, RF-18 a RF-20)', () => {
     expect(await marcaciones[0]!.text()).toBe('')
     // Tras registrar, la pantalla se actualiza: ya no se puede marcar otra vez
     await waitFor(() => expect(screen.getByRole('button', { name: 'Registrar asistencia' })).toBeDisabled())
-    expect(await screen.findByText(/Hoy quedó registrada tu asistencia a las 7:44 a\. m\./)).toBeInTheDocument()
+    // El resultado se dice una sola vez: no se repite como «Hoy quedó registrada…»
+    expect(screen.getAllByText(/7:44 a\. m\./).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/Hoy quedó registrada tu asistencia/)).not.toBeInTheDocument()
   })
 
   it('FA-1: si ya estaba registrada muestra el estado existente y no deja marcar', async () => {

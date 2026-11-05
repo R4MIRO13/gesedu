@@ -38,6 +38,7 @@ function AsistenciaDocenteDelDia() {
           Fecha
           <input
             type="date"
+            name="fecha"
             value={datos.data?.fecha ?? (hoy ? '' : fecha)}
             max={hoy ? datos.data?.fecha : undefined}
             onChange={(e) => {

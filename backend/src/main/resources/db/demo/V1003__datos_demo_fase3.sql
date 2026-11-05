@@ -66,9 +66,9 @@ FROM (VALUES
 JOIN seguridad.docente d ON d.codigo_docente = c.codigo
 WHERE v.docente_id = d.id;
 
--- Periodo de registro de disponibilidad abierto (relativo a la fecha en que se carga la demo)
+-- Periodo de registro de disponibilidad abierto hasta el 30/06/2027: la demo corre con el reloj de 2027 (RelojDemoConfig)
 INSERT INTO horarios.periodo_registro_disponibilidad (id, anio_escolar_id, fecha_hora_inicio, fecha_hora_fin, estado)
-SELECT uuidv7()::text, a.id, now() - INTERVAL '7 days', now() + INTERVAL '90 days', 'HABILITADO'
+SELECT uuidv7()::text, a.id, now() - INTERVAL '7 days', TIMESTAMPTZ '2027-06-30 23:59:00-05', 'HABILITADO'
 FROM academico.anio_escolar a WHERE a.anio = 2027;
 
 -- Borrador 2027 casi completo (UC-22): 8 secciones con sus 22 horas, 3° A con 19 (faltan 1 h de Inglés y 2 h de

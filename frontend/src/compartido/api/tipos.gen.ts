@@ -282,6 +282,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/secciones/{codigo}/asistencia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Los alumnos de la sección con su asistencia de hoy, en orden alfabético y con los totales
+         * @description `{codigo}` es el grado y la letra, por ejemplo `3A`. `estado` nulo = sin registro (no es falta). Con la jornada cerrada `registroHabilitado` es falso y la pantalla queda en consulta. 403 FUERA_DE_ALCANCE si no soy el tutor de la sección; 422 DIA_NO_LECTIVO.
+         */
+        get: operations["consultar_1"];
+        put?: never;
+        /**
+         * Pasa lista: guarda el estado inicial de todos los alumnos pendientes en un solo lote atómico
+         * @description Cada estado es PUNTUAL, TARDANZA o FALTA (lo decide el tutor, sin umbral automático). 400 con `errores[]` si faltan alumnos o alguno no es de la sección (no se guarda nada, FA-1); 409 ASISTENCIA_YA_REGISTRADA con los registros vigentes en `registro` si algún alumno ya tenía asistencia (no se sobrescribe ni se guarda nada del lote, FA-2 y FA-5); 422 JORNADA_CERRADA o DIA_NO_LECTIVO (FA-4); 422 SECCION_SIN_ALUMNOS (FA-3). La fecha y la hora son las del servidor.
+         */
+        post: operations["registrar_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/obligaciones/{obligacionId}/comprobantes": {
         parameters: {
             query?: never;
@@ -524,6 +548,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/asistencia-docente/marcaciones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marca mi llegada: PUNTUAL si es a más tardar el inicio de mi primera clase más la tolerancia, si no TARDANZA
+         * @description No recibe cuerpo: el instante, la fecha y el estado los decide el servidor. 409 ASISTENCIA_YA_REGISTRADA con el registro existente en `registro` (no se sobrescribe, FA-1); 422 SIN_CLASES_PROGRAMADAS (sin clases hoy o sin horario publicado, FA-2); 422 DIA_NO_LECTIVO o JORNADA_CERRADA (FA-3).
+         */
+        post: operations["marcar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/anios-escolares": {
         parameters: {
             query?: never;
@@ -676,6 +720,26 @@ export interface paths {
         patch: operations["cambiarSeccion"];
         trace?: never;
     };
+    "/api/v1/asistencia-alumnos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Cambia de FALTA a TARDANZA la asistencia de hoy de un alumno que se incorporó tarde
+         * @description Solo `estado: TARDANZA`. Se modifica el mismo registro (sin historial en el módulo; el cambio queda en la auditoría). 200 con `modificado: false` si ya estaba en TARDANZA (FA-2); 400 si el registro no es de hoy o ya es PUNTUAL (FA-2); 403 FUERA_DE_ALCANCE si el alumno no es de la sección del tutor (FA-3); 422 PLAZO_TARDANZA_EXCEDIDO si la hora del servidor pasó el límite o la jornada cerró (FA-1).
+         */
+        patch: operations["cambiarEstado"];
+        trace?: never;
+    };
     "/api/v1/usuarios": {
         parameters: {
             query?: never;
@@ -753,6 +817,26 @@ export interface paths {
         };
         /** Mis solicitudes: estado de cada trámite del apoderado, de la más reciente a la más antigua */
         get: operations["mias"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reportes/asistencia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reporte mensual de asistencia de alumnos o de docentes, en JSON, Excel o PDF
+         * @description Se calcula al pedirlo a partir de los registros diarios; no se guarda ningún consolidado. `mes` y `anio` van juntos; sin ninguno de los dos es el mes actual del servidor. `ambito` ALUMNOS (el tutor, solo su sección; el administrador, cualquiera o todas) o DOCENTES (solo el administrador). % = 100 × (puntual + tardanza) / días registrados, con 2 decimales; `porcentaje` nulo = «No disponible». Los días esperados sin registro van en `noRegistrados` y no son faltas. El periodo en curso es parcial (`parcial`, `fechaCorte`): el día actual solo entra con la jornada cerrada. 403 FUERA_DE_ALCANCE (sección ajena o ámbito no permitido, FA-3); 422 PERIODO_INVALIDO (periodo futuro, FA-3); 422 SIN_REGISTROS_ASISTENCIA (sin asistencias en el alcance y el periodo: no se genera el archivo, FA-2); 422 CALENDARIO_NO_DISPONIBLE (sin año activo o, en docentes, sin horario publicado: no se inventan faltas, FA-4).
+         */
+        get: operations["reporte"];
         put?: never;
         post?: never;
         delete?: never;
@@ -991,6 +1075,83 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/asistencia-docente": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Asistencia de los docentes en un día: quién tenía clases, cómo marcó y las faltas del cierre
+         * @description `fecha` (AAAA-MM-DD) es opcional: por omisión, hoy según el servidor; no admite fechas futuras (400). Un docente programado sin registro figura con `estado` nulo (no es falta). `generadaAlCierre` marca las FALTA que creó el cierre diario, sin hora de marcación. `cierre` dice si el cierre procesó la fecha (PROCESADO), falló y se reintenta (FALLIDO) o aún no corrió (PENDIENTE).
+         */
+        get: operations["delDia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/asistencia-docente/mias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mi historial de asistencia, del más reciente al más antiguo (por omisión, los últimos 30 días) */
+        get: operations["mias_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/asistencia-docente/hoy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mi asistencia de hoy: hora del servidor, primera clase, límite puntual y si puedo marcar
+         * @description La hora es la del servidor en la zona institucional; la del dispositivo no se usa nunca. `motivo` trae el código que daría marcar ahora (DIA_NO_LECTIVO, JORNADA_CERRADA, SIN_CLASES_PROGRAMADAS o ASISTENCIA_YA_REGISTRADA) y es nulo si puedo marcar.
+         */
+        get: operations["hoy"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/asistencia-alumnos/mi-seccion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * La sección que tengo a cargo como tutor (código, nombre y alumnos)
+         * @description 403 FUERA_DE_ALCANCE si no soy tutor de ninguna sección (UC-08 FA-3); 422 DIA_NO_LECTIVO si hoy no es lectivo.
+         */
+        get: operations["miSeccion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/anios-escolares/{anio}": {
         parameters: {
             query?: never;
@@ -1034,6 +1195,26 @@ export interface paths {
         };
         /** Grados del año con sus secciones (capacidad, matriculados, vacantes y tutor) y los docentes que pueden ser tutores */
         get: operations["listar_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{id}/asistencia/resumen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resumen de asistencia del alumno en un mes: conteos, días no registrados y porcentaje
+         * @description Solo el propio alumno (403 FUERA_DE_ALCANCE con otro id). `mes` es AAAA-MM; por omisión, el mes actual del servidor. Se calcula al pedirlo con las reglas de UC-11: `porcentaje` nulo = «No disponible» y los días sin registro no son faltas. 422 PERIODO_INVALIDO con un mes futuro; 422 CALENDARIO_NO_DISPONIBLE sin año escolar activo.
+         */
+        get: operations["resumen"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1633,6 +1814,48 @@ export interface components {
                 [key: string]: string;
             };
         };
+        ItemAsistenciaRequest: {
+            alumnoId: string;
+            /** @enum {string} */
+            estado: "PUNTUAL" | "TARDANZA" | "FALTA";
+        };
+        RegistroSeccionRequest: {
+            asistencias: components["schemas"]["ItemAsistenciaRequest"][];
+        };
+        AlumnoAsistenciaDto: {
+            alumnoId?: string;
+            codigo?: string;
+            apellidos?: string;
+            nombres?: string;
+            registroId?: string;
+            /** @enum {string} */
+            estado?: "PUNTUAL" | "TARDANZA" | "FALTA";
+        };
+        AsistenciaSeccionDto: {
+            codigo?: string;
+            nombre?: string;
+            /** Format: date */
+            fecha?: string;
+            /** Format: date-time */
+            horaServidor?: string;
+            registroHabilitado?: boolean;
+            mensaje?: string;
+            /** Format: time-local */
+            limiteTardanza?: string;
+            actualizacionTardanzaHabilitada?: boolean;
+            alumnos?: components["schemas"]["AlumnoAsistenciaDto"][];
+            totales?: components["schemas"]["TotalesAsistenciaDto"];
+        };
+        TotalesAsistenciaDto: {
+            /** Format: int32 */
+            puntual?: number;
+            /** Format: int32 */
+            tardanza?: number;
+            /** Format: int32 */
+            falta?: number;
+            /** Format: int32 */
+            pendientes?: number;
+        };
         ComprobanteRequest: {
             /** @example 00458712 */
             numeroOperacion: string;
@@ -1761,6 +1984,15 @@ export interface components {
              * @example Gesedu2027!
              */
             contrasena: string;
+        };
+        RegistroDto: {
+            id?: string;
+            /** Format: date */
+            fecha?: string;
+            /** Format: date-time */
+            horaRegistro?: string;
+            /** @enum {string} */
+            estado?: "PUNTUAL" | "TARDANZA" | "FALTA";
         };
         AnioRequest: {
             /**
@@ -1891,6 +2123,21 @@ export interface components {
             vacantesDestino?: number;
             sinCambios?: boolean;
         };
+        CambioEstadoRequest: {
+            /** @enum {string} */
+            estado: "PUNTUAL" | "TARDANZA" | "FALTA";
+        };
+        RegistroAlumnoDto: {
+            id?: string;
+            alumnoId?: string;
+            /** Format: date */
+            fecha?: string;
+            /** @enum {string} */
+            estado?: "PUNTUAL" | "TARDANZA" | "FALTA";
+            /** Format: date-time */
+            actualizadoEn?: string;
+            modificado?: boolean;
+        };
         PaginaUsuarioFila: {
             contenido?: components["schemas"]["UsuarioFila"][];
             /** Format: int32 */
@@ -1963,6 +2210,44 @@ export interface components {
             estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
             estadoVisible?: string;
             observacion?: string;
+        };
+        FilaReporteDto: {
+            id?: string;
+            codigo?: string;
+            nombre?: string;
+            seccion?: string;
+            /** Format: int32 */
+            puntual?: number;
+            /** Format: int32 */
+            tardanza?: number;
+            /** Format: int32 */
+            falta?: number;
+            /** Format: int32 */
+            registrados?: number;
+            /** Format: int32 */
+            diasEsperados?: number;
+            /** Format: int32 */
+            noRegistrados?: number;
+            porcentaje?: string;
+        };
+        ReporteAsistenciaDto: {
+            /** @enum {string} */
+            ambito?: "ALUMNOS" | "DOCENTES";
+            /** Format: int32 */
+            anio?: number;
+            /** Format: int32 */
+            mes?: number;
+            alcance?: string;
+            /** Format: date-time */
+            generadoEn?: string;
+            /** Format: date */
+            fechaCorte?: string;
+            parcial?: boolean;
+            /** Format: int32 */
+            diasLectivos?: number;
+            /** Format: int32 */
+            totalNoRegistrados?: number;
+            filas?: components["schemas"]["FilaReporteDto"][];
         };
         HijoMatricula: {
             alumnoId?: string;
@@ -2214,6 +2499,61 @@ export interface components {
             id?: string;
             nombre?: string;
         };
+        AsistenciaDocenteDiaDto: {
+            /** Format: date */
+            fecha?: string;
+            diaLectivo?: boolean;
+            /** @enum {string} */
+            cierre?: "PROCESADO" | "FALLIDO" | "PENDIENTE";
+            detalleCierre?: string;
+            totales?: components["schemas"]["TotalesDocentesDto"];
+            docentes?: components["schemas"]["FilaDocenteDto"][];
+        };
+        FilaDocenteDto: {
+            docenteId?: string;
+            nombre?: string;
+            /** Format: time-local */
+            primerBloque?: string;
+            /** Format: date-time */
+            horaRegistro?: string;
+            /** @enum {string} */
+            estado?: "PUNTUAL" | "TARDANZA" | "FALTA";
+            generadaAlCierre?: boolean;
+        };
+        TotalesDocentesDto: {
+            /** Format: int32 */
+            puntual?: number;
+            /** Format: int32 */
+            tardanza?: number;
+            /** Format: int32 */
+            falta?: number;
+            /** Format: int32 */
+            sinRegistrar?: number;
+        };
+        EstadoHoyDto: {
+            /** Format: date */
+            fecha?: string;
+            /** Format: date-time */
+            horaServidor?: string;
+            /** Format: time-local */
+            primerBloque?: string;
+            /** Format: time-local */
+            limitePuntual?: string;
+            /** Format: int32 */
+            toleranciaMinutos?: number;
+            /** Format: time-local */
+            cierreJornada?: string;
+            puedeMarcar?: boolean;
+            motivo?: string;
+            mensaje?: string;
+            registro?: components["schemas"]["RegistroDto"];
+        };
+        MiSeccionDto: {
+            codigo?: string;
+            nombre?: string;
+            /** Format: int32 */
+            alumnos?: number;
+        };
         AnioResumenDto: {
             id?: string;
             /** Format: int32 */
@@ -2268,6 +2608,29 @@ export interface components {
             horasLectivas?: number;
             competencias?: components["schemas"]["CompetenciaDto"][];
             yaExiste?: boolean;
+        };
+        ResumenAsistenciaAlumnoDto: {
+            alumnoId?: string;
+            /** Format: int32 */
+            anio?: number;
+            /** Format: int32 */
+            mes?: number;
+            /** Format: int32 */
+            puntual?: number;
+            /** Format: int32 */
+            tardanza?: number;
+            /** Format: int32 */
+            falta?: number;
+            /** Format: int32 */
+            registrados?: number;
+            /** Format: int32 */
+            diasEsperados?: number;
+            /** Format: int32 */
+            noRegistrados?: number;
+            porcentaje?: string;
+            parcial?: boolean;
+            /** Format: date */
+            fechaCorte?: string;
         };
         BoletaDto: {
             numero?: string;
@@ -3047,6 +3410,54 @@ export interface operations {
             };
         };
     };
+    consultar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AsistenciaSeccionDto"];
+                };
+            };
+        };
+    };
+    registrar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                codigo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistroSeccionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AsistenciaSeccionDto"];
+                };
+            };
+        };
+    };
     presentar: {
         parameters: {
             query?: never;
@@ -3411,6 +3822,26 @@ export interface operations {
             };
         };
     };
+    marcar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegistroDto"];
+                };
+            };
+        };
+    };
     listar_1: {
         parameters: {
             query?: never;
@@ -3697,6 +4128,32 @@ export interface operations {
             };
         };
     };
+    cambiarEstado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CambioEstadoRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegistroAlumnoDto"];
+                };
+            };
+        };
+    };
     listar_4: {
         parameters: {
             query?: {
@@ -3807,6 +4264,34 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SolicitudPropia"][];
+                };
+            };
+        };
+    };
+    reporte: {
+        parameters: {
+            query: {
+                ambito: "ALUMNOS" | "DOCENTES";
+                mes?: number;
+                anio?: number;
+                seccion?: string;
+                formato?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description El reporte: JSON con `formato=json`; archivo con `xlsx` o `pdf` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReporteAsistenciaDto"];
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                    "application/pdf": string;
                 };
             };
         };
@@ -4122,6 +4607,91 @@ export interface operations {
             };
         };
     };
+    delDia: {
+        parameters: {
+            query?: {
+                fecha?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AsistenciaDocenteDiaDto"];
+                };
+            };
+        };
+    };
+    mias_2: {
+        parameters: {
+            query?: {
+                desde?: string;
+                hasta?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegistroDto"][];
+                };
+            };
+        };
+    };
+    hoy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["EstadoHoyDto"];
+                };
+            };
+        };
+    };
+    miSeccion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MiSeccionDto"];
+                };
+            };
+        };
+    };
     obtener_4: {
         parameters: {
             query?: never;
@@ -4184,6 +4754,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GradosAnioDto"];
+                };
+            };
+        };
+    };
+    resumen: {
+        parameters: {
+            query?: {
+                mes?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ResumenAsistenciaAlumnoDto"];
                 };
             };
         };

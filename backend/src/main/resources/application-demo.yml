@@ -3,3 +3,9 @@
 spring:
   flyway:
     locations: classpath:db/migration,classpath:db/demo
+
+gesedu:
+  demo:
+    # El año de la semilla es 2027: la demo corre con un reloj que arranca aquí y avanza en tiempo real (RelojDemoConfig).
+    # Lunes 15/03/2027 a las 7:40; para el cierre diario (UC-12) usa p. ej. 2027-03-15T15:29:00-05:00.
+    reloj-inicio: ${GESEDU_DEMO_RELOJ_INICIO:2027-03-15T07:40:00-05:00}

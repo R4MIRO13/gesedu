@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { OPCIONES_MENU } from '../../compartido/menu'
 import { obtenerSesion, ROLES, tienePermiso } from '../../compartido/auth/sesion'
+import { ResumenAsistencia } from '../../modulos/asistencia/componentes/ResumenAsistencia'
 
 export const Route = createFileRoute('/intranet/inicio')({
   component: Inicio,
@@ -19,6 +20,8 @@ function Inicio() {
         Rol: <span className="etiqueta">{ROLES[usuario.rol] ?? usuario.rol}</span>
         {usuario.cargo && <> · {usuario.cargo}</>}
       </p>
+
+      {tienePermiso(sesion, 'ASISTENCIA_CONSULTAR_PROPIA') && <ResumenAsistencia />}
 
       <h2>Tus opciones</h2>
       <div className="rejilla">
