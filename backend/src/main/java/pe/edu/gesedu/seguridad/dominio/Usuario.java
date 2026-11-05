@@ -91,12 +91,13 @@ public class Usuario extends EntidadBase {
     }
 
     /**
-     * Define una contraseña nueva (recuperación, RF-52). Reinicia el contador de intentos fallidos; un bloqueo
-     * temporal vigente no se levanta: lo levanta el paso del tiempo o el administrador.
+     * Define una contraseña nueva (recuperación, RF-52). Reinicia el contador de intentos fallidos y levanta el
+     * bloqueo temporal: quien demostró controlar el correo de la cuenta ya no necesita esperar.
      */
     public void cambiarContrasena(String nuevoHash) {
         this.hashContrasena = nuevoHash;
         this.intentosFallidos = 0;
+        this.bloqueadoHasta = null;
     }
 
     /** Levanta el bloqueo temporal y reinicia el contador de intentos (UC-24: el administrador desbloquea la cuenta). */

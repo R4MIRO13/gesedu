@@ -176,17 +176,37 @@ class RecuperacionContrasenaIT extends BaseIT {
     }
 
     @Test
-    void laContrasenaNuevaNoDesbloqueaUnaCuentaBloqueada() throws Exception {
+    void laContrasenaNuevaLevantaElBloqueoYReiniciaElContador() throws Exception {
         String correo = crearUsuario("DOCENTE", true);
         for (int i = 0; i < 5; i++) {
+            iniciarSesion(correo, "incorrecta");
+        }
+        assertThat(jdbc.queryForObject("SELECT bloqueado_hasta IS NOT NULL FROM seguridad.usuario WHERE correo = ?",
+                Boolean.class, correo)).isTrue();
+        String token = pedirEnlace(correo);
+
+        assertThat(confirmar(token, NUEVA).estado()).isEqualTo(204);
+
+        assertThat(jdbc.queryForObject("SELECT bloqueado_hasta IS NULL AND intentos_fallidos = 0 "
+                + "FROM seguridad.usuario WHERE correo = ?", Boolean.class, correo)).isTrue();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM auditoria.cambio_auditoria c "
+                + "JOIN auditoria.registro_auditoria r ON r.id = c.registro_auditoria_id "
+                + "WHERE r.id_entidad_afectada = ? AND c.campo = 'bloqueado_hasta' AND r.accion <> 'BLOQUEAR_CUENTA'",
+                Integer.class, idDe(correo))).isEqualTo(1);
+        assertThat(iniciarSesion(correo, NUEVA).estado()).isEqualTo(200);
+    }
+
+    @Test
+    void laContrasenaNuevaReiniciaElContadorDeUnaCuentaNoBloqueada() throws Exception {
+        String correo = crearUsuario("DOCENTE", true);
+        for (int i = 0; i < 3; i++) {
             iniciarSesion(correo, "incorrecta");
         }
         String token = pedirEnlace(correo);
 
         assertThat(confirmar(token, NUEVA).estado()).isEqualTo(204);
 
-        Respuesta r = iniciarSesion(correo, NUEVA);
-        assertThat(r.estado()).isEqualTo(401);
-        assertThat(r.cuerpo().get("codigo").asString()).isEqualTo("CUENTA_BLOQUEADA");
+        assertThat(jdbc.queryForObject("SELECT intentos_fallidos FROM seguridad.usuario WHERE correo = ?",
+                Integer.class, correo)).isZero();
     }
 }

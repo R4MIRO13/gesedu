@@ -104,7 +104,11 @@ public class RecuperacionContrasenaService {
 
         enlace.marcarUsado(ahora);
         tokens.anularPendientes(usuario.getId(), ahora);
+        Instant bloqueoAnterior = usuario.estaBloqueada(ahora) ? usuario.getBloqueadoHasta() : null;
         usuario.cambiarContrasena(codificador.encode(nuevaContrasena));
+        if (bloqueoAnterior != null) {
+            ContextoAuditoria.registrarCambio("bloqueado_hasta", bloqueoAnterior, null);
+        }
         tokensRefresco.revocarTodos(usuario.getId());
         cacheCuentas.invalidar(usuario.getId());
         // La contraseña nunca va a la auditoría, solo el hecho de que cambió

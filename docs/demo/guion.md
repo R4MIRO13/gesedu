@@ -236,7 +236,7 @@ ERROR:  Las tablas de auditoría son de solo inserción: DELETE no está permiti
 1. En `/login`, **¿Olvidaste tu contraseña?** → escribir `bloqueo@demo.gesedu.pe` → *Enviar enlace*. El mensaje es el mismo si se escribe un correo que no existe (probarlo con `nadie@demo.gesedu.pe`: no llega nada a Mailpit).
 2. Abrir Mailpit (`http://localhost:8025`): llegó «Restablece tu contraseña de GESEDU» con el enlace de un solo uso (30 minutos).
 3. Abrir el enlace, definir una contraseña nueva (8 a 72 caracteres, con una letra y un número, por ejemplo `NuevaClave2027`) → vuelve al login. Volver a abrir el **mismo enlace** y definir otra contraseña: «El enlace no es válido o ya venció», con el botón *Pedir otro enlace*.
-4. La cuenta seguirá **bloqueada** (la recuperación no levanta un bloqueo vigente). Con el administrador: menú **Usuarios** → filtrar por estado *Bloqueados* → Hugo Gonzales aparece como «Bloqueado · 5 intentos» → **Desbloquear**. Ahora `bloqueo@demo.gesedu.pe` entra con la contraseña nueva.
+4. Restablecer la contraseña **levanta el bloqueo y reinicia el contador**: `bloqueo@demo.gesedu.pe` ya entra con la contraseña nueva. Para mostrar el desbloqueo del administrador, antes del paso 3 (o volviendo a fallar 5 veces) abre, con el administrador, el menú **Usuarios** → filtrar por estado *Bloqueados* → Hugo Gonzales aparece como «Bloqueado · 5 intentos» → **Desbloquear**.
 5. En **Auditoría** aparecen `RESTABLECER_CONTRASENA` y `DESBLOQUEAR_CUENTA`.
 
 ### 8. Registrar matrícula (4 min) — UC-02 *(P2)*

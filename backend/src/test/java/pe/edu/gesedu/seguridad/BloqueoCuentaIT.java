@@ -91,6 +91,26 @@ class BloqueoCuentaIT extends BaseIT {
     }
 
     @Test
+    void alVencerElBloqueoElContadorEstaEnCeroYVuelvenCincoIntentos() throws Exception {
+        String correo = crearUsuario("DOCENTE", true);
+        for (int i = 0; i < 5; i++) {
+            iniciarSesion(correo, "incorrecta");
+        }
+        assertThat(intentos(correo)).as("el contador vuelve a 0 al bloquear").isZero();
+
+        jdbc.update("UPDATE seguridad.usuario SET bloqueado_hasta = now() - interval '1 minute' WHERE correo = ?",
+                correo);
+        assertThat(intentos(correo)).as("y sigue en 0 al vencer el bloqueo").isZero();
+
+        for (int i = 1; i <= 4; i++) {
+            assertThat(iniciarSesion(correo, "incorrecta").cuerpo().get("codigo").asString())
+                    .isEqualTo("CREDENCIALES_INVALIDAS");
+        }
+        assertThat(iniciarSesion(correo, "incorrecta").cuerpo().get("codigo").asString())
+                .isEqualTo("CUENTA_BLOQUEADA");
+    }
+
+    @Test
     void elInicioDeSesionDevuelveTokenPermisosYCargo() throws Exception {
         String correo = crearUsuario("ADMINISTRADOR", true);
         jdbc.update("INSERT INTO seguridad.administrador (id, usuario_id, cargo) VALUES (?, ?, 'Dirección')",
