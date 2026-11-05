@@ -213,7 +213,8 @@ class DatosDemoFase3IT extends BaseIT {
         assertThat(r.estado()).isEqualTo(201);
         assertThat(r.cuerpo().get("numeroVersion").asInt()).isEqualTo(1);
         assertThat(r.cuerpo().get("clases").asInt()).isEqualTo(220);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM evaluacion.asignacion_docente", Long.class)).isEqualTo(60);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM evaluacion.asignacion_docente a JOIN academico.seccion s ON s.id = a.seccion_id "
+                + "JOIN academico.anio_escolar ae ON ae.id = s.anio_escolar_id WHERE ae.anio = 2027", Long.class)).isEqualTo(60);
     }
 
     /** Agrega una clase en el primer bloque donde la sección y el docente tienen libre el horario y él está disponible. */

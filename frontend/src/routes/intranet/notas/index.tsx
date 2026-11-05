@@ -1,11 +1,18 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { exigirPermiso } from '../../../compartido/auth/guardias'
+import { exigirAlgunPermiso } from '../../../compartido/auth/guardias'
+import { obtenerSesion, tienePermiso } from '../../../compartido/auth/sesion'
+import { MisNotas } from '../../../modulos/evaluacion/componentes/MisNotas'
 import { NOMBRE_REGLA, useMisAsignaciones } from '../../../modulos/evaluacion/api'
 
 export const Route = createFileRoute('/intranet/notas/')({
-  beforeLoad: () => exigirPermiso('NOTA_REGISTRAR'),
-  component: MisCursos,
+  beforeLoad: () => exigirAlgunPermiso('NOTA_REGISTRAR', 'NOTA_CONSULTAR_PROPIA'),
+  component: Notas,
 })
+
+/** El docente registra notas (RF-31); el alumno y el apoderado las consultan (UC-19). */
+function Notas() {
+  return tienePermiso(obtenerSesion(), 'NOTA_REGISTRAR') ? <MisCursos /> : <MisNotas />
+}
 
 /** RF-31: la lista consolidada de los cursos y secciones que el docente imparte, con acceso al registro de notas. */
 function MisCursos() {

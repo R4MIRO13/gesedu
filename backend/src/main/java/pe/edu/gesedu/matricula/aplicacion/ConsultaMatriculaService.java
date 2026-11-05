@@ -118,6 +118,13 @@ public class ConsultaMatriculaService {
                 .sorted(Comparator.comparing(SeccionDeAlumno::alumno)).toList();
     }
 
+    /** La sección en la que el alumno tuvo matrícula confirmada en el año indicado (puede ser un año ya cerrado). */
+    @Transactional(readOnly = true)
+    public java.util.Optional<String> seccionDeAlumnoEnAnio(String alumnoId, String anioEscolarId) {
+        return matriculas.findByAlumnoIdAndAnioEscolarIdAndEstado(alumnoId, anioEscolarId, EstadoMatricula.CONFIRMADA).stream()
+                .map(Matricula::getSeccionId).findFirst();
+    }
+
     /**
      * Los alumnos con matrícula confirmada en la sección, en orden alfabético de apellidos y nombres. No aplica alcance:
      * lo decide quien llama (por ejemplo, el tutor de la sección).

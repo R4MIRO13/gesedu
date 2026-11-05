@@ -87,6 +87,12 @@ export const OPCIONES_MENU = [
     permiso: 'NOTA_REGISTRAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/notas' }),
+    titulo: 'Notas y libreta',
+    descripcion: 'Consulta tus cursos, las notas por competencia y descarga el informe de progreso o la libreta.',
+    permiso: 'NOTA_CONSULTAR_PROPIA',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/academico/consolidar-notas', search: { bimestre: 1 } }),
     titulo: 'Consolidar notas',
     descripcion: 'Revisa el avance de las notas por curso y sección y consolida el bimestre en la libreta de cada alumno.',

@@ -9,4 +9,6 @@ import pe.edu.gesedu.evaluacion.dominio.Libreta;
 public interface LibretaRepository extends JpaRepository<Libreta, String> {
 
     List<Libreta> findByAnioEscolarId(String anioEscolarId);
+
+    List<Libreta> findByAlumnoId(String alumnoId);
 }

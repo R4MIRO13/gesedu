@@ -10,6 +10,9 @@ public interface NotaConsolidadaRepository extends JpaRepository<NotaConsolidada
 
     List<NotaConsolidada> findByAsignacionIdAndTipo(String asignacionId, String tipo);
 
+    /** Todas las notas de un alumno en un año (bimestrales y anuales). */
+    List<NotaConsolidada> findByAlumnoIdAndAnioEscolarId(String alumnoId, String anioEscolarId);
+
     /** Las notas de un bimestre en el año, de todas las asignaciones. */
     List<NotaConsolidada> findByAnioEscolarIdAndBimestreId(String anioEscolarId, String bimestreId);
 }

@@ -102,15 +102,16 @@ class DatosDemoIT extends BaseIT {
 
     @Test
     void elAnio2027TieneCuatroBimestresDiezSeccionesSeisCursosYSusBloques() {
-        assertThat(contar("academico.bimestre")).isEqualTo(4);
+        assertThat(contar("academico.bimestre WHERE anio_escolar_id = " + ANIO_2027)).isEqualTo(4);
         assertThat(contar("academico.grado WHERE anio_escolar_id = " + ANIO_2027)).isEqualTo(5);
         assertThat(contar("academico.seccion WHERE anio_escolar_id = " + ANIO_2027)).isEqualTo(10);
-        assertThat(contar("academico.curso")).isEqualTo(6);
-        assertThat(jdbc.queryForObject("SELECT sum(horas_lectivas) FROM academico.curso", Long.class)).isEqualTo(22);
+        assertThat(contar("academico.curso WHERE anio_escolar_id = " + ANIO_2027)).isEqualTo(6);
+        assertThat(jdbc.queryForObject("SELECT sum(horas_lectivas) FROM academico.curso WHERE anio_escolar_id = " + ANIO_2027, Long.class)).isEqualTo(22);
         assertThat(contar("horarios.bloque_horario")).isEqualTo(45);
-        assertThat(contar("academico.competencia")).isEqualTo(18);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM academico.competencia c JOIN academico.curso cu ON cu.id = c.curso_id "
+                + "WHERE cu.anio_escolar_id = " + ANIO_2027, Long.class)).isEqualTo(18);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM academico.competencia c JOIN academico.curso cu ON "
-                + "cu.id = c.curso_id WHERE cu.slug = 'matematica'", Long.class)).isEqualTo(4);
+                + "cu.id = c.curso_id WHERE cu.slug = 'matematica' AND cu.anio_escolar_id = " + ANIO_2027, Long.class)).isEqualTo(4);
         assertThat(contar("horarios.carga_horaria_curso")).isEqualTo(30);
     }
 
@@ -248,7 +249,7 @@ class DatosDemoIT extends BaseIT {
         String seccion3A = id("SELECT s.id FROM academico.seccion s JOIN academico.grado g ON g.id = s.grado_id "
                 + "WHERE g.numero_nivel = 3 AND s.letra = 'A' AND g.anio_escolar_id = " + ANIO_2027);
         String martes915 = id("SELECT id FROM horarios.bloque_horario WHERE dia_semana = 'MARTES' AND hora_inicio = TIME '09:15'");
-        String matematica = id("SELECT id FROM academico.curso WHERE slug = 'matematica'");
+        String matematica = id("SELECT id FROM academico.curso WHERE slug = 'matematica' AND anio_escolar_id = " + ANIO_2027);
         String rosa = id("SELECT id FROM seguridad.docente WHERE codigo_docente = 'DOC-001'");
         String carlos = id("SELECT id FROM seguridad.docente WHERE codigo_docente = 'DOC-003'");
         String fernando = id("SELECT id FROM seguridad.docente WHERE codigo_docente = 'DOC-002'");

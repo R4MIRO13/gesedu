@@ -15,4 +15,6 @@ public interface MatriculaRepository extends JpaRepository<Matricula, String> {
     List<Matricula> findByAlumnoIdInAndEstado(Collection<String> alumnoIds, EstadoMatricula estado);
 
     List<Matricula> findBySeccionIdAndEstado(String seccionId, EstadoMatricula estado);
+
+    List<Matricula> findByAlumnoIdAndAnioEscolarIdAndEstado(String alumnoId, String anioEscolarId, EstadoMatricula estado);
 }

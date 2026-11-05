@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../compartido/api/cliente'
+import { api, descargar, type ArchivoDescargado } from '../../compartido/api/cliente'
 
 // ---- UC-15: registro de logros por competencia ----
 
@@ -313,4 +313,99 @@ export function useConsolidarBimestre(anio: number, bimestre: number) {
     // También tras un error: el avance pudo cambiar (un docente completó o editó notas) y la pantalla debe mostrarlo
     onSettled: () => cliente.invalidateQueries({ queryKey: ['consolidacion', anio] }),
   })
+}
+
+// ---- UC-19: consulta de notas y libreta (alumno y apoderado) ----
+
+/** Un alumno que puedo consultar: yo mismo o uno de mis hijos. */
+export interface AlumnoNotas {
+  alumnoId: string
+  codigo: string
+  nombre: string
+  seccion: string | null
+  anio: number | null
+}
+
+export interface NotaCompetencia {
+  competenciaId: string
+  codigo: string
+  nombre: string
+  nivelEsperado: string | null
+  /** Nivel consolidado de cada bimestre, por número. */
+  bimestres: Record<string, NivelLogro>
+  anual: NivelLogro | null
+}
+
+export interface CursoNotas {
+  cursoId: string
+  curso: string
+  docente: string
+  competencias: NotaCompetencia[]
+}
+
+export interface CursosAlumno {
+  alumnoId: string
+  alumno: string
+  codigo: string
+  anio: number | null
+  seccion: string | null
+  /** Años con libreta o matrícula, del más reciente al más antiguo. */
+  anios: number[]
+  bimestres: { numero: number; consolidado: boolean }[]
+  /** El bimestre que se muestra (por omisión, el último consolidado). */
+  bimestre: number
+  libreta: 'PARCIAL' | 'FINAL' | null
+  cursos: CursoNotas[]
+}
+
+export interface Libreta {
+  alumnoId: string
+  alumno: string
+  codigo: string
+  seccion: string
+  anio: number
+  estado: 'PARCIAL' | 'FINAL'
+  fechaActualizacion: string
+  hastaBimestre: number | null
+  bimestres: number[]
+  cursos: CursoNotas[]
+}
+
+export function useMisAlumnos() {
+  return useQuery({
+    queryKey: ['notas', 'alumnos'],
+    queryFn: () => api<AlumnoNotas[]>('/apoderados/yo/alumnos'),
+  })
+}
+
+/** `anio` y `bimestre` nulos = el año de la matrícula vigente y el último bimestre consolidado. */
+export function useCursosAlumno(alumnoId: string | undefined, anio: number | null, bimestre: number | null) {
+  const parametros = new URLSearchParams()
+  if (anio !== null) parametros.set('anio', String(anio))
+  if (bimestre !== null) parametros.set('bimestre', String(bimestre))
+  const consulta = parametros.size > 0 ? `?${parametros}` : ''
+  return useQuery({
+    queryKey: ['notas', 'cursos', alumnoId, anio, bimestre],
+    queryFn: () => api<CursosAlumno>(`/alumnos/${alumnoId}/cursos${consulta}`),
+    enabled: alumnoId !== undefined,
+    retry: false,
+  })
+}
+
+/** La libreta completa del año (FA-2); solo se pide cuando el usuario la abre. */
+export function useLibreta(alumnoId: string | undefined, anio: number | null, activa: boolean) {
+  return useQuery({
+    queryKey: ['notas', 'libreta', alumnoId, anio],
+    queryFn: () => api<Libreta>(`/alumnos/${alumnoId}/libreta${anio === null ? '' : `?anio=${anio}`}`),
+    enabled: alumnoId !== undefined && activa,
+    retry: false,
+  })
+}
+
+/** El PDF del informe de progreso de un bimestre o, sin `bimestre`, de la libreta completa (RF-36). */
+export function descargarLibretaPdf(alumnoId: string, anio: number | null, bimestre: number | null): Promise<ArchivoDescargado> {
+  const parametros = new URLSearchParams({ formato: 'pdf' })
+  if (anio !== null) parametros.set('anio', String(anio))
+  if (bimestre !== null) parametros.set('bimestre', String(bimestre))
+  return descargar(`/alumnos/${alumnoId}/libreta?${parametros}`, bimestre === null ? 'libreta.pdf' : `informe-progreso-b${bimestre}.pdf`)
 }

@@ -68,7 +68,9 @@ public class OpenApiConfig {
     @Bean
     GroupedOpenApi grupoEvaluacion() {
         return GroupedOpenApi.builder().group("8-evaluacion").displayName("Evaluación")
-                .pathsToMatch("/api/v1/asignaciones-docentes/**", "/api/v1/anios-escolares/*/bimestres/**").build();
+                .pathsToMatch("/api/v1/asignaciones-docentes/**", "/api/v1/anios-escolares/*/bimestres/**",
+                        "/api/v1/apoderados/yo/alumnos", "/api/v1/alumnos/*/cursos/**", "/api/v1/alumnos/*/libreta",
+                        "/api/v1/alumnos/*/libretas").build();
     }
 
     @Bean
