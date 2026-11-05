@@ -125,3 +125,71 @@ export const NUMERO_ROMANO = ['', 'I', 'II', 'III', 'IV'] as const
 export function romano(numero: number): string {
   return NUMERO_ROMANO[numero] ?? String(numero)
 }
+
+// ---- UC-16: regla de consolidación y pesos por bimestre ----
+
+export type TipoRegla = 'PROMEDIO_PONDERADO' | 'MODA' | 'ULTIMO_REGISTRO'
+
+export const NOMBRE_REGLA: Record<TipoRegla, string> = {
+  PROMEDIO_PONDERADO: 'Promedio ponderado',
+  MODA: 'Moda',
+  ULTIMO_REGISTRO: 'Último registro',
+}
+
+export interface ReglaConsolidacion {
+  tipo: TipoRegla
+  nombre: string
+  descripcion: string
+  porDefecto: boolean
+  /** Lo calcula el servidor con el motor real: bimestres I a IV con estos niveles dan este resultado. */
+  ejemplo: { niveles: NivelLogro[]; resultado: NivelLogro }
+}
+
+export interface PesoBimestre {
+  bimestre: number
+  /** Texto decimal, por ejemplo «1.00». */
+  peso: string
+  personalizado: boolean
+}
+
+export interface ConfiguracionCurso {
+  asignacionId: string
+  curso: string
+  seccion: string
+  anio: number
+  regla: TipoRegla
+  reglas: ReglaConsolidacion[]
+  pesos: PesoBimestre[]
+  competencias: CompetenciaCurso[]
+  /** Falso con el año cerrado. */
+  editable: boolean
+  cambios: number
+}
+
+export interface GuardarConfiguracion {
+  regla: TipoRegla
+  /** El conjunto completo de pesos; los bimestres omitidos pesan 1. Sin él no se tocan. */
+  pesos?: { bimestre: number; peso: string }[]
+}
+
+export function useConfiguracionCurso(asignacionId: string | undefined) {
+  return useQuery({
+    queryKey: ['asignaciones-docentes', asignacionId, 'configuracion'],
+    queryFn: () => api<ConfiguracionCurso>(`/asignaciones-docentes/${asignacionId}/configuracion`),
+    enabled: asignacionId !== undefined,
+    retry: false,
+  })
+}
+
+export function useGuardarConfiguracion(asignacionId: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (cuerpo: GuardarConfiguracion) =>
+      api<ConfiguracionCurso>(`/asignaciones-docentes/${asignacionId}/configuracion`, { method: 'PUT', cuerpo }),
+    onSuccess: (configuracion) => {
+      cliente.setQueryData(['asignaciones-docentes', asignacionId, 'configuracion'], configuracion)
+      // La lista de «mis cursos» muestra la regla de cada curso
+      return cliente.invalidateQueries({ queryKey: ['asignaciones-docentes', 'mias'] })
+    },
+  })
+}

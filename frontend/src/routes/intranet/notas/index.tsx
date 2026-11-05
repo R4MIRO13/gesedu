@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { exigirPermiso } from '../../../compartido/auth/guardias'
-import { useMisAsignaciones } from '../../../modulos/evaluacion/api'
+import { NOMBRE_REGLA, useMisAsignaciones } from '../../../modulos/evaluacion/api'
 
 export const Route = createFileRoute('/intranet/notas/')({
   beforeLoad: () => exigirPermiso('NOTA_REGISTRAR'),
@@ -39,6 +39,7 @@ function MisCursos() {
                   <th scope="col">Sección</th>
                   <th scope="col">Alumnos</th>
                   <th scope="col">Competencias</th>
+                  <th scope="col">Regla</th>
                   <th scope="col">Acciones</th>
                 </tr>
               </thead>
@@ -49,6 +50,7 @@ function MisCursos() {
                     <td>{a.seccion}</td>
                     <td>{a.alumnos}</td>
                     <td>{a.competencias}</td>
+                    <td>{NOMBRE_REGLA[a.regla]}</td>
                     <td>
                       <Link
                         className="btn"
@@ -57,6 +59,14 @@ function MisCursos() {
                         aria-label={`Registrar notas de ${a.curso} en ${a.seccion}`}
                       >
                         Registrar notas
+                      </Link>{' '}
+                      <Link
+                        className="btn"
+                        to="/intranet/cursos/$cursoSeccion/configuracion"
+                        params={{ cursoSeccion: `${a.cursoSlug}-${a.seccionCodigo}` }}
+                        aria-label={`Configurar la regla de ${a.curso} en ${a.seccion}`}
+                      >
+                        Regla de consolidación
                       </Link>
                     </td>
                   </tr>

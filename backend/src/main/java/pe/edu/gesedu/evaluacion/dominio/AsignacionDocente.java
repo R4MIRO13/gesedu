@@ -58,4 +58,22 @@ public class AsignacionDocente extends EntidadBase {
     public String getReglaConsolidacion() {
         return reglaConsolidacion;
     }
+
+    /** La regla como tipo; un valor desconocido en la base se trata como la regla por defecto. */
+    public TipoRegla tipoRegla() {
+        try {
+            return TipoRegla.valueOf(reglaConsolidacion);
+        } catch (IllegalArgumentException e) {
+            return TipoRegla.POR_DEFECTO;
+        }
+    }
+
+    /** Cambia la regla de consolidación (UC-16); devuelve {@code false} si ya era esa. */
+    public boolean cambiarRegla(TipoRegla nueva) {
+        if (nueva.name().equals(reglaConsolidacion)) {
+            return false;
+        }
+        this.reglaConsolidacion = nueva.name();
+        return true;
+    }
 }
