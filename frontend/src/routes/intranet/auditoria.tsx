@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Fragment, useState } from 'react'
 import { exigirPermiso } from '../../compartido/auth/guardias'
 import { usePermiso } from '../../compartido/auth/usePermiso'
+import { guardarArchivo } from '../../compartido/guardarArchivo'
 import {
   exportarAuditoria,
   FILTROS_VACIOS,
@@ -22,18 +23,6 @@ const formatoFecha = new Intl.DateTimeFormat('es-PE', {
   timeStyle: 'medium',
   timeZone: 'America/Lima',
 })
-
-/** Guarda el archivo que mandó el servidor, como lo haría un enlace de descarga. */
-function guardarArchivo(blob: Blob, nombre: string) {
-  const url = URL.createObjectURL(blob)
-  const enlace = document.createElement('a')
-  enlace.href = url
-  enlace.download = nombre
-  document.body.appendChild(enlace)
-  enlace.click()
-  enlace.remove()
-  URL.revokeObjectURL(url)
-}
 
 function Auditoria() {
   const [borrador, setBorrador] = useState<FiltrosAuditoria>(FILTROS_VACIOS)

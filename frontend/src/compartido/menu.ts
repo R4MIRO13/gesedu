@@ -69,6 +69,18 @@ export const OPCIONES_MENU = [
     permiso: 'ASISTENCIA_DOCENTE_CONSULTAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/asistencia/reportes' }),
+    titulo: 'Reporte de asistencia de mi sección',
+    descripcion: 'Resumen mensual de asistencia de tus alumnos, en pantalla, Excel o PDF.',
+    permiso: 'ASISTENCIA_REPORTE_SECCION',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/asistencia/reportes' }),
+    titulo: 'Reportes de asistencia',
+    descripcion: 'Resumen mensual de asistencia de alumnos y docentes, en pantalla, Excel o PDF.',
+    permiso: 'ASISTENCIA_REPORTE_GENERAL',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../../compartido/api/cliente'
+import { api, descargar, type ArchivoDescargado } from '../../compartido/api/cliente'
 
 // ---- UC-07: asistencia del docente ----
 
@@ -194,4 +194,67 @@ export function useAsistenciaDocentesDia(fecha: string | null) {
     queryFn: () => api<AsistenciaDocentesDia>(fecha ? `/asistencia-docente?fecha=${encodeURIComponent(fecha)}` : '/asistencia-docente'),
     retry: false,
   })
+}
+
+// ---- UC-10 y UC-11: reportes mensuales ----
+
+export type AmbitoReporte = 'ALUMNOS' | 'DOCENTES'
+export type FormatoReporte = 'xlsx' | 'pdf'
+
+export interface FiltrosReporte {
+  ambito: AmbitoReporte
+  mes: number
+  anio: number
+  /** Código de sección («3A»); vacío = la del tutor, o todas para el administrador. */
+  seccion: string
+}
+
+export interface FilaReporte {
+  id: string
+  codigo: string | null
+  nombre: string
+  seccion: string | null
+  puntual: number
+  tardanza: number
+  falta: number
+  registrados: number
+  diasEsperados: number
+  noRegistrados: number
+  /** Decimal con 2 decimales en texto; nulo = «No disponible» (sin días registrados). */
+  porcentaje: string | null
+}
+
+export interface ReporteAsistencia {
+  ambito: AmbitoReporte
+  anio: number
+  mes: number
+  alcance: string
+  generadoEn: string
+  fechaCorte: string
+  parcial: boolean
+  diasLectivos: number
+  totalNoRegistrados: number
+  filas: FilaReporte[]
+}
+
+function parametrosReporte(f: FiltrosReporte, formato: string): string {
+  const p = new URLSearchParams({ ambito: f.ambito, mes: String(f.mes), anio: String(f.anio), formato })
+  if (f.seccion) p.set('seccion', f.seccion)
+  return p.toString()
+}
+
+/** El reporte en pantalla; se calcula en el servidor al pedirlo (`filtros` nulo = todavía no se pidió). */
+export function useReporteAsistencia(filtros: FiltrosReporte | null) {
+  return useQuery({
+    queryKey: ['reporte-asistencia', filtros],
+    enabled: filtros !== null,
+    retry: false,
+    staleTime: 0,
+    queryFn: () => api<ReporteAsistencia>(`/reportes/asistencia?${parametrosReporte(filtros!, 'json')}`),
+  })
+}
+
+/** Descarga el reporte como Excel o PDF; el nombre lo propone el servidor. */
+export function descargarReporteAsistencia(filtros: FiltrosReporte, formato: FormatoReporte): Promise<ArchivoDescargado> {
+  return descargar(`/reportes/asistencia?${parametrosReporte(filtros, formato)}`, `asistencia.${formato}`)
 }

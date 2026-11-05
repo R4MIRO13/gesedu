@@ -21,6 +21,7 @@ import { Route as IntranetMiAsistenciaRouteImport } from './routes/intranet/mi-a
 import { Route as IntranetUsuariosRouteImport } from './routes/intranet/usuarios'
 import { Route as IntranetAcademicoAniosRouteImport } from './routes/intranet/academico/anios'
 import { Route as IntranetAsistenciaIndexRouteImport } from './routes/intranet/asistencia/index'
+import { Route as IntranetAsistenciaReportesRouteImport } from './routes/intranet/asistencia/reportes'
 import { Route as IntranetDisponibilidadAnioRouteImport } from './routes/intranet/disponibilidad/$anio'
 import { Route as IntranetEstudiantesIndexRouteImport } from './routes/intranet/estudiantes/index'
 import { Route as IntranetEstudiantesIdRouteImport } from './routes/intranet/estudiantes/$id'
@@ -105,6 +106,12 @@ const IntranetAsistenciaIndexRoute = IntranetAsistenciaIndexRouteImport.update({
   path: '/asistencia/',
   getParentRoute: () => IntranetRoute,
 } as any)
+const IntranetAsistenciaReportesRoute =
+  IntranetAsistenciaReportesRouteImport.update({
+    id: '/asistencia/reportes',
+    path: '/asistencia/reportes',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetDisponibilidadAnioRoute =
   IntranetDisponibilidadAnioRouteImport.update({
     id: '/disponibilidad/$anio',
@@ -251,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/intranet/mi-asistencia': typeof IntranetMiAsistenciaRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
+  '/intranet/asistencia/reportes': typeof IntranetAsistenciaReportesRoute
   '/intranet/disponibilidad/$anio': typeof IntranetDisponibilidadAnioRoute
   '/intranet/estudiantes/$id': typeof IntranetEstudiantesIdRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
@@ -288,6 +296,7 @@ export interface FileRoutesByTo {
   '/intranet/mi-asistencia': typeof IntranetMiAsistenciaRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
+  '/intranet/asistencia/reportes': typeof IntranetAsistenciaReportesRoute
   '/intranet/disponibilidad/$anio': typeof IntranetDisponibilidadAnioRoute
   '/intranet/estudiantes/$id': typeof IntranetEstudiantesIdRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
@@ -326,6 +335,7 @@ export interface FileRoutesById {
   '/intranet/mi-asistencia': typeof IntranetMiAsistenciaRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
+  '/intranet/asistencia/reportes': typeof IntranetAsistenciaReportesRoute
   '/intranet/disponibilidad/$anio': typeof IntranetDisponibilidadAnioRoute
   '/intranet/estudiantes/$id': typeof IntranetEstudiantesIdRoute
   '/intranet/horarios/bloques': typeof IntranetHorariosBloquesRoute
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/intranet/mi-asistencia'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
+    | '/intranet/asistencia/reportes'
     | '/intranet/disponibilidad/$anio'
     | '/intranet/estudiantes/$id'
     | '/intranet/horarios/bloques'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/intranet/mi-asistencia'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
+    | '/intranet/asistencia/reportes'
     | '/intranet/disponibilidad/$anio'
     | '/intranet/estudiantes/$id'
     | '/intranet/horarios/bloques'
@@ -439,6 +451,7 @@ export interface FileRouteTypes {
     | '/intranet/mi-asistencia'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
+    | '/intranet/asistencia/reportes'
     | '/intranet/disponibilidad/$anio'
     | '/intranet/estudiantes/$id'
     | '/intranet/horarios/bloques'
@@ -557,6 +570,13 @@ declare module '@tanstack/react-router' {
       path: '/asistencia'
       fullPath: '/intranet/asistencia/'
       preLoaderRoute: typeof IntranetAsistenciaIndexRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/asistencia/reportes': {
+      id: '/intranet/asistencia/reportes'
+      path: '/asistencia/reportes'
+      fullPath: '/intranet/asistencia/reportes'
+      preLoaderRoute: typeof IntranetAsistenciaReportesRouteImport
       parentRoute: typeof IntranetRoute
     }
     '/intranet/disponibilidad/$anio': {
@@ -730,6 +750,7 @@ interface IntranetRouteChildren {
   IntranetMiAsistenciaRoute: typeof IntranetMiAsistenciaRoute
   IntranetUsuariosRoute: typeof IntranetUsuariosRoute
   IntranetAcademicoAniosRoute: typeof IntranetAcademicoAniosRoute
+  IntranetAsistenciaReportesRoute: typeof IntranetAsistenciaReportesRoute
   IntranetDisponibilidadAnioRoute: typeof IntranetDisponibilidadAnioRoute
   IntranetEstudiantesIdRoute: typeof IntranetEstudiantesIdRoute
   IntranetHorariosBloquesRoute: typeof IntranetHorariosBloquesRoute
@@ -763,6 +784,7 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetMiAsistenciaRoute: IntranetMiAsistenciaRoute,
   IntranetUsuariosRoute: IntranetUsuariosRoute,
   IntranetAcademicoAniosRoute: IntranetAcademicoAniosRoute,
+  IntranetAsistenciaReportesRoute: IntranetAsistenciaReportesRoute,
   IntranetDisponibilidadAnioRoute: IntranetDisponibilidadAnioRoute,
   IntranetEstudiantesIdRoute: IntranetEstudiantesIdRoute,
   IntranetHorariosBloquesRoute: IntranetHorariosBloquesRoute,

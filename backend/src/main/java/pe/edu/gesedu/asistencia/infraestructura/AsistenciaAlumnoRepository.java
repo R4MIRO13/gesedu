@@ -15,6 +15,8 @@ public interface AsistenciaAlumnoRepository extends JpaRepository<AsistenciaAlum
 
     List<AsistenciaAlumno> findByFechaAndAlumnoIdIn(LocalDate fecha, Collection<String> alumnoIds);
 
+    List<AsistenciaAlumno> findByFechaBetweenAndAlumnoIdIn(LocalDate desde, LocalDate hasta, Collection<String> alumnoIds);
+
     /**
      * Inserta la asistencia si el alumno aún no tiene una ese día y devuelve cuántas filas creó (1 o 0). Con dos
      * registros simultáneos de la misma sección gana uno solo: el otro recibe 0 sin que la transacción falle (UC-08 FA-5).

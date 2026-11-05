@@ -46,6 +46,14 @@ public class GeneradorExcel {
      * @param filas        valores por fila: texto, número, {@link BigDecimal}, {@link Dinero}, fechas, booleanos o nulos
      */
     public byte[] generar(String hoja, List<String> encabezados, List<? extends List<?>> filas) {
+        return generar(hoja, List.of(), encabezados, filas);
+    }
+
+    /**
+     * Igual que {@link #generar(String, List, List)}, con unas líneas de {@code resumen} (periodo, alcance, fecha de
+     * generación…) sobre la tabla, separadas de ella por una fila en blanco.
+     */
+    public byte[] generar(String hoja, List<String> resumen, List<String> encabezados, List<? extends List<?>> filas) {
         try (XSSFWorkbook libro = new XSSFWorkbook(); ByteArrayOutputStream salida = new ByteArrayOutputStream()) {
             Sheet pagina = libro.createSheet(nombreSeguro(hoja));
             CreationHelper ayuda = libro.getCreationHelper();
@@ -62,14 +70,18 @@ public class GeneradorExcel {
             estiloMonto.setDataFormat(ayuda.createDataFormat().getFormat("#,##0.00"));
 
             int[] anchos = new int[encabezados.size()];
-            Row cabecera = pagina.createRow(0);
+            int filaCabecera = resumen.isEmpty() ? 0 : resumen.size() + 1;
+            for (int i = 0; i < resumen.size(); i++) {
+                pagina.createRow(i).createCell(0).setCellValue(resumen.get(i));
+            }
+            Row cabecera = pagina.createRow(filaCabecera);
             for (int c = 0; c < encabezados.size(); c++) {
                 Cell celda = cabecera.createCell(c);
                 celda.setCellValue(encabezados.get(c));
                 celda.setCellStyle(estiloEncabezado);
                 anchos[c] = encabezados.get(c).length();
             }
-            int numeroFila = 1;
+            int numeroFila = filaCabecera + 1;
             for (List<?> fila : filas) {
                 Row row = pagina.createRow(numeroFila++);
                 for (int c = 0; c < fila.size() && c < anchos.length; c++) {
@@ -81,7 +93,7 @@ public class GeneradorExcel {
                 // Ancho calculado sin AWT (autoSizeColumn necesita fuentes del sistema, que un servidor puede no tener)
                 pagina.setColumnWidth(c, (Math.min(ANCHO_MAXIMO, anchos[c]) + 2) * 256);
             }
-            pagina.createFreezePane(0, 1);
+            pagina.createFreezePane(0, filaCabecera + 1);
             libro.write(salida);
             return salida.toByteArray();
         } catch (IOException e) {

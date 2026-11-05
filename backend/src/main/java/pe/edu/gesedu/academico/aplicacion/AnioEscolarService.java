@@ -49,6 +49,13 @@ public class AnioEscolarService {
                 .map(a -> new AnioEscolarResumen(a.getId(), a.getAnio(), a.getEstado()));
     }
 
+    /** El año escolar ACTIVO, si lo hay (solo puede haber uno). */
+    @Transactional(readOnly = true)
+    public java.util.Optional<AnioEscolarResumen> anioActivo() {
+        return anios.findByEstado("ACTIVO").stream().findFirst()
+                .map(a -> new AnioEscolarResumen(a.getId(), a.getAnio(), a.getEstado()));
+    }
+
     /** Hay un año escolar ACTIVO: sin él no existe calendario sobre el cual decidir qué días son lectivos. */
     @Transactional(readOnly = true)
     public boolean existeAnioActivo() {

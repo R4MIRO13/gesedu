@@ -18,6 +18,8 @@ public interface AsistenciaDocenteRepository extends JpaRepository<AsistenciaDoc
 
     List<AsistenciaDocente> findByFecha(LocalDate fecha);
 
+    List<AsistenciaDocente> findByFechaBetween(LocalDate desde, LocalDate hasta);
+
     List<AsistenciaDocente> findByDocenteIdAndFechaBetweenOrderByFechaDesc(String docenteId, LocalDate desde, LocalDate hasta);
 
     /**

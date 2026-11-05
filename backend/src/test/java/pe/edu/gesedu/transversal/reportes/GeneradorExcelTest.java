@@ -30,6 +30,22 @@ class GeneradorExcelTest {
     }
 
     @Test
+    void laOverloadConResumenPonePrimeroLasLineasYLuegoLaTabla() throws Exception {
+        byte[] excel = generador.generar("Asistencia", List.of("Alcance: 3° A", "Periodo: marzo 2027"), List.of("Código", "% de asistencia"),
+                List.of(Arrays.asList("2027-0001", new BigDecimal("95.24")), Arrays.asList("2027-0002", "No disponible")));
+
+        Sheet hoja = leer(excel);
+
+        assertThat(hoja.getRow(0).getCell(0).getStringCellValue()).isEqualTo("Alcance: 3° A");
+        assertThat(hoja.getRow(1).getCell(0).getStringCellValue()).isEqualTo("Periodo: marzo 2027");
+        assertThat(hoja.getRow(2)).as("fila en blanco entre el resumen y la tabla").isNull();
+        assertThat(hoja.getRow(3).getCell(0).getStringCellValue()).isEqualTo("Código");
+        assertThat(hoja.getRow(4).getCell(1).getNumericCellValue()).isEqualTo(95.24);
+        assertThat(hoja.getRow(5).getCell(1).getStringCellValue()).isEqualTo("No disponible");
+        assertThat((int) hoja.getPaneInformation().getHorizontalSplitPosition()).as("el encabezado queda fijo").isEqualTo(4);
+    }
+
+    @Test
     void generaEncabezadosYFilasConSusTipos() throws Exception {
         byte[] excel = generador.generar("Auditoría", List.of("Fecha y hora", "Usuario", "Monto", "Cantidad", "Activo", "Día"),
                 List.of(
