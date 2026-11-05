@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.AsignacionDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.AsignacionCursoDto;
 import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.ItemLogro;
 import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.RejillaDto;
 import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosService;
@@ -43,7 +43,7 @@ class RegistroLogrosController {
             description = "Las asignaciones del docente en el año ACTIVO, con su regla de consolidación (RF-31).")
     @GetMapping("/mias")
     @PreAuthorize("hasAuthority('NOTA_REGISTRAR')")
-    List<AsignacionDto> mias() {
+    List<AsignacionCursoDto> mias() {
         return logros.misAsignaciones();
     }
 

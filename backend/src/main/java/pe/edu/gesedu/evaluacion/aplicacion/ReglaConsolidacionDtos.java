@@ -3,7 +3,7 @@ package pe.edu.gesedu.evaluacion.aplicacion;
 import java.util.List;
 
 import pe.edu.gesedu.compartido.dominio.NivelLogro;
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaCursoDto;
 import pe.edu.gesedu.evaluacion.dominio.TipoRegla;
 
 /** DTO de UC-16 (regla de consolidación y pesos por bimestre). */
@@ -30,7 +30,7 @@ public final class ReglaConsolidacionDtos {
      * guardado que produjo la respuesta.
      */
     public record ConfiguracionDto(String asignacionId, String curso, String seccion, int anio, TipoRegla regla,
-                                   List<ReglaDto> reglas, List<PesoDto> pesos, List<CompetenciaDto> competencias,
+                                   List<ReglaDto> reglas, List<PesoDto> pesos, List<CompetenciaCursoDto> competencias,
                                    boolean editable, int cambios) {
     }
 

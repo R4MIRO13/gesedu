@@ -28,7 +28,7 @@ import pe.edu.gesedu.evaluacion.aplicacion.NotasFinalesDtos.CalculoDto;
 import pe.edu.gesedu.evaluacion.aplicacion.NotasFinalesDtos.CeldaNotaDto;
 import pe.edu.gesedu.evaluacion.aplicacion.NotasFinalesDtos.FilaNotasDto;
 import pe.edu.gesedu.evaluacion.aplicacion.NotasFinalesDtos.NotasFinalesDto;
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaCursoDto;
 import pe.edu.gesedu.evaluacion.dominio.AsignacionDocente;
 import pe.edu.gesedu.evaluacion.dominio.NotaConsolidada;
 import pe.edu.gesedu.evaluacion.dominio.PesoBimestre;
@@ -172,7 +172,7 @@ public class NotasFinalesService {
         }
         return new NotasFinalesDto(asignacion.getId(), catalogo.curso(asignacion.getCursoId()).nombre(), seccion.nombre(),
                 anio.anio(), asignacion.tipoRegla(), bimestres.stream().map(BimestreResumen::numero).toList(),
-                competencias.stream().map(c -> new CompetenciaDto(c.id(), c.codigo(), c.nombre(), c.nivelEsperado())).toList(),
+                competencias.stream().map(c -> new CompetenciaCursoDto(c.id(), c.codigo(), c.nombre(), c.nivelEsperado())).toList(),
                 filas, !anuales.isEmpty(), desactualizada, !"CERRADO".equals(anio.estado()), sinNota, calculo);
     }
 

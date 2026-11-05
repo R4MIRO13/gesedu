@@ -30,9 +30,9 @@ import pe.edu.gesedu.compartido.auditoria.ContextoAuditoria;
 import pe.edu.gesedu.compartido.dominio.NivelLogro;
 import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.AsignacionDto;
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.BimestreDto;
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.AsignacionCursoDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.BimestreLogrosDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaCursoDto;
 import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.FilaAlumnoDto;
 import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.IncompletoDto;
 import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.ItemLogro;
@@ -92,7 +92,7 @@ public class RegistroLogrosService {
 
     /** RF-31: los cursos y secciones que el docente imparte este año (el año ACTIVO). */
     @Transactional(readOnly = true)
-    public List<AsignacionDto> misAsignaciones() {
+    public List<AsignacionCursoDto> misAsignaciones() {
         DocenteResumen docente = docenteActual();
         Optional<AnioEscolarResumen> activo = anios.anioActivo();
         if (activo.isEmpty()) {
@@ -112,11 +112,11 @@ public class RegistroLogrosService {
         return propias.stream().map(a -> {
             SeccionResumen s = secciones.get(a.getSeccionId());
             CursoResumen curso = cursos.get(a.getCursoId());
-            return new AsignacionDto(a.getId(), a.getCursoId(), curso.nombre(), curso.slug(), s.id(), s.nombre(),
+            return new AsignacionCursoDto(a.getId(), a.getCursoId(), curso.nombre(), curso.slug(), s.id(), s.nombre(),
                     s.numeroGrado() + s.letra(), activo.get().anio(), a.getReglaConsolidacion(),
                     matriculas.alumnosDeSeccion(s.id()).size(), competencias.getOrDefault(a.getCursoId(), List.of()).size(),
                     vigente);
-        }).sorted(Comparator.comparing(AsignacionDto::curso).thenComparing(AsignacionDto::seccion)).toList();
+        }).sorted(Comparator.comparing(AsignacionCursoDto::curso).thenComparing(AsignacionCursoDto::seccion)).toList();
     }
 
     /** Pasos 1 y 2: la rejilla de la asignación en el bimestre pedido (por omisión, el vigente). */
@@ -320,12 +320,12 @@ public class RegistroLogrosService {
         String aviso = incompletos.isEmpty() || c.alumnos().isEmpty() ? null
                 : "Hay " + incompletos.size() + (incompletos.size() == 1 ? " alumno" : " alumnos")
                         + " con competencias sin calificar";
-        List<BimestreDto> lista = c.bimestres().stream()
-                .map(b -> new BimestreDto(b.numero(), b.fechaInicio(), b.fechaFin(), b.vigenteEn(c.hoy()))).toList();
+        List<BimestreLogrosDto> lista = c.bimestres().stream()
+                .map(b -> new BimestreLogrosDto(b.numero(), b.fechaInicio(), b.fechaFin(), b.vigenteEn(c.hoy()))).toList();
         return new RejillaDto(c.asignacion().getId(), c.curso(), c.seccion().nombre(), c.anio().anio(),
-                new BimestreDto(bimestre.numero(), bimestre.fechaInicio(), bimestre.fechaFin(), editable), lista, editable,
+                new BimestreLogrosDto(bimestre.numero(), bimestre.fechaInicio(), bimestre.fechaFin(), editable), lista, editable,
                 mensaje, estado, avisoConsolidacion,
-                c.competencias().stream().map(x -> new CompetenciaDto(x.id(), x.codigo(), x.nombre(), x.nivelEsperado())).toList(),
+                c.competencias().stream().map(x -> new CompetenciaCursoDto(x.id(), x.codigo(), x.nombre(), x.nivelEsperado())).toList(),
                 filas, c.alumnos().size() * c.competencias().size(), completas, incompletos, aviso, cambios);
     }
 

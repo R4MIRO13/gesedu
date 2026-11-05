@@ -24,7 +24,7 @@ import pe.edu.gesedu.compartido.auditoria.ContextoAuditoria;
 import pe.edu.gesedu.compartido.dominio.NivelLogro;
 import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaCursoDto;
 import pe.edu.gesedu.evaluacion.aplicacion.ReglaConsolidacionDtos.ConfiguracionDto;
 import pe.edu.gesedu.evaluacion.aplicacion.ReglaConsolidacionDtos.EjemploDto;
 import pe.edu.gesedu.evaluacion.aplicacion.ReglaConsolidacionDtos.PesoDto;
@@ -226,7 +226,7 @@ public class ReglaConsolidacionService {
                 .getOrDefault(asignacion.getCursoId(), List.of());
         return new ConfiguracionDto(asignacion.getId(), catalogo.curso(asignacion.getCursoId()).nombre(), seccion.nombre(),
                 anio.anio(), asignacion.tipoRegla(), reglas(), listaPesos,
-                competencias.stream().map(c -> new CompetenciaDto(c.id(), c.codigo(), c.nombre(), c.nivelEsperado())).toList(),
+                competencias.stream().map(c -> new CompetenciaCursoDto(c.id(), c.codigo(), c.nombre(), c.nivelEsperado())).toList(),
                 !"CERRADO".equals(anio.estado()), cambios);
     }
 

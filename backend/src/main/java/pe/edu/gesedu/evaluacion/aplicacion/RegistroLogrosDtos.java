@@ -16,15 +16,15 @@ public final class RegistroLogrosDtos {
      * Un curso en una sección que el docente tiene a cargo (RF-31). {@code bimestreVigente} es el número del bimestre en
      * curso hoy, o nulo si no hay ninguno.
      */
-    public record AsignacionDto(String id, String cursoId, String curso, String cursoSlug, String seccionId, String seccion,
+    public record AsignacionCursoDto(String id, String cursoId, String curso, String cursoSlug, String seccionId, String seccion,
                                 String seccionCodigo, int anio, String regla, int alumnos, int competencias,
                                 Integer bimestreVigente) {
     }
 
-    public record BimestreDto(int numero, LocalDate fechaInicio, LocalDate fechaFin, boolean vigente) {
+    public record BimestreLogrosDto(int numero, LocalDate fechaInicio, LocalDate fechaFin, boolean vigente) {
     }
 
-    public record CompetenciaDto(String id, String codigo, String nombre, String nivelEsperado) {
+    public record CompetenciaCursoDto(String id, String codigo, String nombre, String nivelEsperado) {
     }
 
     /** Fila de la rejilla: {@code logros} va por id de competencia y solo trae las celdas ya calificadas. */
@@ -41,9 +41,9 @@ public final class RegistroLogrosDtos {
      * {@code consolidacion} es nulo (sin consolidar), COMPLETADA o DESACTUALIZADA; {@code cambios} cuenta las celdas
      * que modificó el guardado que la produjo.
      */
-    public record RejillaDto(String asignacionId, String curso, String seccion, int anio, BimestreDto bimestre,
-                             List<BimestreDto> bimestres, boolean editable, String mensaje, String consolidacion,
-                             String avisoConsolidacion, List<CompetenciaDto> competencias, List<FilaAlumnoDto> alumnos,
+    public record RejillaDto(String asignacionId, String curso, String seccion, int anio, BimestreLogrosDto bimestre,
+                             List<BimestreLogrosDto> bimestres, boolean editable, String mensaje, String consolidacion,
+                             String avisoConsolidacion, List<CompetenciaCursoDto> competencias, List<FilaAlumnoDto> alumnos,
                              int celdasTotales, int celdasCompletas, List<IncompletoDto> incompletos, String aviso,
                              int cambios) {
     }

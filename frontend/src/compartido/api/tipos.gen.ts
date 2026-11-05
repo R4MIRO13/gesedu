@@ -79,6 +79,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/asignaciones-docentes/{id}/registros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * La rejilla alumnos x competencias de un bimestre
+         * @description `bimestre` es el número (1 a 4); por omisión, el vigente. `editable` es verdadero solo con el bimestre vigente. `logros` va por id de competencia y solo trae las celdas ya calificadas. 403 FUERA_DE_ALCANCE si la asignación no es mía.
+         */
+        get: operations["rejilla"];
+        /**
+         * Guarda las celdas indicadas de la rejilla (upsert, atómico)
+         * @description Cada `nivel` debe ser AD, A, B o C: si no, 422 NIVEL_LOGRO_INVALIDO con `errores[]` y no se guarda nada (FA-1). Alumno o competencia ajenos, o celda repetida: 400. Solo el bimestre vigente: 422 BIMESTRE_NO_VIGENTE. Si el registro queda incompleto se guarda igual y la respuesta trae `aviso` e `incompletos` (FA-2). Editar un bimestre ya consolidado marca la consolidación como DESACTUALIZADA.
+         */
+        put: operations["guardar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/asignaciones-docentes/{id}/configuracion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * La regla de consolidación vigente, las tres opciones con su ejemplo y los pesos por bimestre
+         * @description Sin haber elegido nunca, la regla es PROMEDIO_PONDERADO (FA-2). Los pesos son texto decimal (`1.00`); `personalizado` indica que el docente lo ajustó. 403 FUERA_DE_ALCANCE si la asignación no es mía.
+         */
+        get: operations["consultar"];
+        /**
+         * Define o cambia la regla de consolidación y, si se envían, los pesos de cada bimestre
+         * @description `regla`: PROMEDIO_PONDERADO, MODA o ULTIMO_REGISTRO. `pesos` es el conjunto completo (los bimestres omitidos pesan 1; sin `pesos` no se tocan). Regla desconocida o peso inválido (cero, negativo, más de dos decimales, mayor que 100, bimestre inexistente o repetido): 400 con `errores[]` y no se guarda nada. Año cerrado: 422 ANIO_CERRADO.
+         */
+        put: operations["guardar_1"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/apoderados/{id}": {
         parameters: {
             query?: never;
@@ -146,7 +194,7 @@ export interface paths {
          * Mi disponibilidad del año: la matriz de bloques, lo último que confirmé y el estado del periodo
          * @description 422 VINCULO_ACADEMICO_INEXISTENTE no aplica aquí: si el docente no está habilitado, `vinculado` es falso.
          */
-        get: operations["consultar"];
+        get: operations["consultar_1"];
         /**
          * Confirma mi disponibilidad: queda como la última versión confirmada (FA-1)
          * @description 422 PERIODO_DISPONIBILIDAD_CERRADO si el periodo no está abierto (FE-1: se conserva la anterior). La advertencia de insuficiencia no impide confirmar. Queda auditado.
@@ -169,7 +217,7 @@ export interface paths {
         /** Cronograma de cobros y porcentaje de penalidad del año */
         get: operations["obtener_2"];
         /** Guarda el cronograma completo (reemplaza al anterior) y la penalidad, y actualiza el monto y el vencimiento de las obligaciones PENDIENTES del año (RF-07): las pagadas y las vencidas no cambian y las líneas nuevas no crean obligaciones retroactivas. `obligacionesActualizadas` dice cuántas cambiaron. Queda auditado */
-        put: operations["guardar"];
+        put: operations["guardar_2"];
         post?: never;
         delete?: never;
         options?: never;
@@ -293,7 +341,7 @@ export interface paths {
          * Los alumnos de la sección con su asistencia de hoy, en orden alfabético y con los totales
          * @description `{codigo}` es el grado y la letra, por ejemplo `3A`. `estado` nulo = sin registro (no es falta). Con la jornada cerrada `registroHabilitado` es falso y la pantalla queda en consulta. 403 FUERA_DE_ALCANCE si no soy el tutor de la sección; 422 DIA_NO_LECTIVO.
          */
-        get: operations["consultar_1"];
+        get: operations["consultar_2"];
         put?: never;
         /**
          * Pasa lista: guarda el estado inicial de todos los alumnos pendientes en un solo lote atómico
@@ -568,6 +616,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/asignaciones-docentes/{id}/notas-finales/calculo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Calcula la nota anual de cada competencia con la regla del curso (idempotente)
+         * @description Repetirlo no duplica ni cambia nada si los datos son iguales; si cambiaron, reemplaza la nota anterior. `calculo` cuenta las notas creadas, actualizadas, sin cambios y las celdas sin ningún logro. 422 SIN_LOGROS_REGISTRADOS si el curso no tiene ningún logro; 422 ANIO_CERRADO.
+         */
+        post: operations["calcular"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/anios-escolares": {
         parameters: {
             query?: never;
@@ -660,6 +728,26 @@ export interface paths {
         put?: never;
         /** Crea un bloque horario (solo Administrador). 409 si se superpone con otro del mismo día */
         post: operations["crear_4"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/bimestres/{numero}/consolidacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Consolida el bimestre: pasa las notas bimestrales a la libreta de cada alumno
+         * @description Con cursos incompletos: 422 BIMESTRE_INCOMPLETO con `pendientes[]` y `docentes[]` (FA-2). En el último bimestre calcula además las notas anuales de todos los cursos y deja la libreta FINAL (FA-1); exige los anteriores consolidados y al día (422 BIMESTRES_ANTERIORES_PENDIENTES). Reconsolidar reemplaza las notas del bimestre. No exige que el bimestre siga vigente. 422 ANIO_CERRADO.
+         */
+        post: operations["consolidar"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1152,6 +1240,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/asignaciones-docentes/{id}/notas-finales": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Los alumnos con el logro de cada bimestre y la nota anual de cada competencia
+         * @description `desactualizada` es verdadero si lo registrado después del último cálculo (logros, regla o pesos) daría otras notas. 403 FUERA_DE_ALCANCE si la asignación no es mía.
+         */
+        get: operations["consultar_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/asignaciones-docentes/mias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mis cursos y secciones del año (lista consolidada de lo que imparto)
+         * @description Las asignaciones del docente en el año ACTIVO, con su regla de consolidación (RF-31).
+         */
+        get: operations["mias_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/apoderados/yo/alumnos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Los alumnos que puedo consultar: yo mismo (alumno) o mis hijos (apoderado)
+         * @description Con más de un hijo el apoderado elige uno (FA-1). Trae la sección vigente de cada uno, si la tiene.
+         */
+        get: operations["misAlumnos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/anios-escolares/{anio}": {
         parameters: {
             query?: never;
@@ -1195,6 +1343,26 @@ export interface paths {
         };
         /** Grados del año con sus secciones (capacidad, matriculados, vacantes y tutor) y los docentes que pueden ser tutores */
         get: operations["listar_7"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/{anio}/bimestres/{numero}/avance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * El avance de las notas del bimestre por curso y sección, y si ya se puede consolidar
+         * @description `cursos` trae, por curso en una sección, las celdas alumno x competencia con logro sobre el total y su porcentaje; los incompletos van primero. `puedeConsolidar` es verdadero cuando todos están al 100 % (y, en el último bimestre, los anteriores están consolidados y al día); si no, `motivo` y `docentesPendientes` lo explican.
+         */
+        get: operations["avance"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1249,6 +1417,80 @@ export interface paths {
         };
         /** Obligaciones de un hijo del apoderado en los años no cerrados: concepto, periodo, importe base, penalidad, total, vencimiento y estado, con su boleta y el estado del último comprobante. 403 si el estudiante no está a cargo del apoderado */
         get: operations["obligaciones"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{alumnoId}/libretas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Las libretas del alumno por año escolar (PARCIAL o FINAL) */
+        get: operations["libretas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{alumnoId}/libreta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * La libreta de notas del año o el informe de progreso de un bimestre, en JSON o PDF
+         * @description Sin `bimestre` es la libreta completa (con la nota final si ya existe, FA-2); con `bimestre`, el informe de progreso hasta ese periodo. `formato` json (por omisión) o pdf. Sin notas consolidadas: 422 SIN_NOTAS_CONSOLIDADAS.
+         */
+        get: operations["libreta"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{alumnoId}/cursos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Los cursos de la sección del alumno con sus competencias y las notas consolidadas por bimestre
+         * @description `anio` nulo = el de la matrícula vigente o el de la última libreta; `bimestre` nulo = el último consolidado. Solo trae notas ya consolidadas. 403 FUERA_DE_ALCANCE si el alumno no es el propio ni un hijo.
+         */
+        get: operations["cursos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alumnos/{alumnoId}/cursos/{cursoId}/notas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** El detalle de un curso: competencias con su nivel esperado y las notas de cada bimestre */
+        get: operations["curso"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1478,6 +1720,109 @@ export interface components {
             horasLectivas?: number;
             habilitado?: boolean;
             competencias?: components["schemas"]["CompetenciaDto"][];
+        };
+        GuardarLogrosRequest: {
+            logros: components["schemas"]["ItemLogroRequest"][];
+        };
+        ItemLogroRequest: {
+            alumnoId?: string;
+            competenciaId?: string;
+            nivel?: string;
+        };
+        BimestreLogrosDto: {
+            /** Format: int32 */
+            numero?: number;
+            /** Format: date */
+            fechaInicio?: string;
+            /** Format: date */
+            fechaFin?: string;
+            vigente?: boolean;
+        };
+        CompetenciaCursoDto: {
+            id?: string;
+            codigo?: string;
+            nombre?: string;
+            nivelEsperado?: string;
+        };
+        FilaAlumnoDto: {
+            alumnoId?: string;
+            codigo?: string;
+            apellidos?: string;
+            nombres?: string;
+            logros?: {
+                [key: string]: "C" | "B" | "A" | "AD";
+            };
+        };
+        IncompletoDto: {
+            alumnoId?: string;
+            alumno?: string;
+            competencias?: string[];
+        };
+        RejillaDto: {
+            asignacionId?: string;
+            curso?: string;
+            seccion?: string;
+            /** Format: int32 */
+            anio?: number;
+            bimestre?: components["schemas"]["BimestreLogrosDto"];
+            bimestres?: components["schemas"]["BimestreLogrosDto"][];
+            editable?: boolean;
+            mensaje?: string;
+            consolidacion?: string;
+            avisoConsolidacion?: string;
+            competencias?: components["schemas"]["CompetenciaCursoDto"][];
+            alumnos?: components["schemas"]["FilaAlumnoDto"][];
+            /** Format: int32 */
+            celdasTotales?: number;
+            /** Format: int32 */
+            celdasCompletas?: number;
+            incompletos?: components["schemas"]["IncompletoDto"][];
+            aviso?: string;
+            /** Format: int32 */
+            cambios?: number;
+        };
+        ConfiguracionRequest: {
+            regla: string;
+            pesos?: components["schemas"]["PesoRequest"][];
+        };
+        PesoRequest: {
+            /** Format: int32 */
+            bimestre?: number;
+            peso?: string;
+        };
+        ConfiguracionDto: {
+            asignacionId?: string;
+            curso?: string;
+            seccion?: string;
+            /** Format: int32 */
+            anio?: number;
+            /** @enum {string} */
+            regla?: "PROMEDIO_PONDERADO" | "MODA" | "ULTIMO_REGISTRO";
+            reglas?: components["schemas"]["ReglaDto"][];
+            pesos?: components["schemas"]["PesoDto"][];
+            competencias?: components["schemas"]["CompetenciaCursoDto"][];
+            editable?: boolean;
+            /** Format: int32 */
+            cambios?: number;
+        };
+        EjemploDto: {
+            niveles?: ("C" | "B" | "A" | "AD")[];
+            /** @enum {string} */
+            resultado?: "C" | "B" | "A" | "AD";
+        };
+        PesoDto: {
+            /** Format: int32 */
+            bimestre?: number;
+            peso?: string;
+            personalizado?: boolean;
+        };
+        ReglaDto: {
+            /** @enum {string} */
+            tipo?: "PROMEDIO_PONDERADO" | "MODA" | "ULTIMO_REGISTRO";
+            nombre?: string;
+            descripcion?: string;
+            porDefecto?: boolean;
+            ejemplo?: components["schemas"]["EjemploDto"];
         };
         ApoderadoRequest: {
             /** @example Marcos */
@@ -1994,6 +2339,50 @@ export interface components {
             /** @enum {string} */
             estado?: "PUNTUAL" | "TARDANZA" | "FALTA";
         };
+        CalculoDto: {
+            /** Format: int32 */
+            creadas?: number;
+            /** Format: int32 */
+            actualizadas?: number;
+            /** Format: int32 */
+            sinCambios?: number;
+            /** Format: int32 */
+            sinNota?: number;
+        };
+        CeldaNotaDto: {
+            bimestres?: {
+                [key: string]: "C" | "B" | "A" | "AD";
+            };
+            /** @enum {string} */
+            anual?: "C" | "B" | "A" | "AD";
+        };
+        FilaNotasDto: {
+            alumnoId?: string;
+            codigo?: string;
+            apellidos?: string;
+            nombres?: string;
+            competencias?: {
+                [key: string]: components["schemas"]["CeldaNotaDto"];
+            };
+        };
+        NotasFinalesDto: {
+            asignacionId?: string;
+            curso?: string;
+            seccion?: string;
+            /** Format: int32 */
+            anio?: number;
+            /** @enum {string} */
+            regla?: "PROMEDIO_PONDERADO" | "MODA" | "ULTIMO_REGISTRO";
+            bimestres?: number[];
+            competencias?: components["schemas"]["CompetenciaCursoDto"][];
+            alumnos?: components["schemas"]["FilaNotasDto"][];
+            calculadas?: boolean;
+            desactualizada?: boolean;
+            editable?: boolean;
+            /** Format: int32 */
+            celdasSinNota?: number;
+            calculo?: components["schemas"]["CalculoDto"];
+        };
         AnioRequest: {
             /**
              * Format: date
@@ -2064,6 +2453,69 @@ export interface components {
             horaInicio: string;
             /** Format: time-local */
             horaFin: string;
+        };
+        AvanceDto: {
+            /** Format: int32 */
+            anio?: number;
+            bimestre?: components["schemas"]["BimestreAvanceDto"];
+            bimestres?: components["schemas"]["EstadoBimestreDto"][];
+            estado?: string;
+            /** Format: date-time */
+            fechaConsolidacion?: string;
+            totales?: components["schemas"]["TotalesAvanceDto"];
+            cursos?: components["schemas"]["CursoAvanceDto"][];
+            puedeConsolidar?: boolean;
+            motivo?: string;
+            docentesPendientes?: string[];
+            editable?: boolean;
+            resultado?: components["schemas"]["ResultadoDto"];
+        };
+        BimestreAvanceDto: {
+            /** Format: int32 */
+            numero?: number;
+            /** Format: date */
+            fechaInicio?: string;
+            /** Format: date */
+            fechaFin?: string;
+            ultimo?: boolean;
+        };
+        CursoAvanceDto: {
+            asignacionId?: string;
+            curso?: string;
+            seccion?: string;
+            docente?: string;
+            /** Format: int32 */
+            celdasTotales?: number;
+            /** Format: int32 */
+            celdasCompletas?: number;
+            /** Format: int32 */
+            porcentaje?: number;
+            completo?: boolean;
+        };
+        EstadoBimestreDto: {
+            /** Format: int32 */
+            numero?: number;
+            estado?: string;
+        };
+        ResultadoDto: {
+            /** Format: int32 */
+            creadas?: number;
+            /** Format: int32 */
+            actualizadas?: number;
+            /** Format: int32 */
+            sinCambios?: number;
+            /** Format: int32 */
+            libretas?: number;
+            finalizada?: boolean;
+            notasAnuales?: components["schemas"]["CalculoDto"];
+        };
+        TotalesAvanceDto: {
+            /** Format: int32 */
+            cursos?: number;
+            /** Format: int32 */
+            completos?: number;
+            /** Format: int32 */
+            incompletos?: number;
         };
         ValidacionRequest: {
             /** Format: date */
@@ -2554,6 +3006,32 @@ export interface components {
             /** Format: int32 */
             alumnos?: number;
         };
+        AsignacionCursoDto: {
+            id?: string;
+            cursoId?: string;
+            curso?: string;
+            cursoSlug?: string;
+            seccionId?: string;
+            seccion?: string;
+            seccionCodigo?: string;
+            /** Format: int32 */
+            anio?: number;
+            regla?: string;
+            /** Format: int32 */
+            alumnos?: number;
+            /** Format: int32 */
+            competencias?: number;
+            /** Format: int32 */
+            bimestreVigente?: number;
+        };
+        AlumnoNotasDto: {
+            alumnoId?: string;
+            codigo?: string;
+            nombre?: string;
+            seccion?: string;
+            /** Format: int32 */
+            anio?: number;
+        };
         AnioResumenDto: {
             id?: string;
             /** Format: int32 */
@@ -2747,6 +3225,64 @@ export interface components {
             /** Format: int32 */
             vencidas?: number;
             proximoVencimiento?: components["schemas"]["ProximoVencimiento"];
+        };
+        LibretaResumenDto: {
+            /** Format: int32 */
+            anio?: number;
+            estado?: string;
+            /** Format: date-time */
+            fechaActualizacion?: string;
+        };
+        CursoNotasDto: {
+            cursoId?: string;
+            curso?: string;
+            docente?: string;
+            competencias?: components["schemas"]["NotaCompetenciaDto"][];
+        };
+        LibretaDto: {
+            alumnoId?: string;
+            alumno?: string;
+            codigo?: string;
+            seccion?: string;
+            /** Format: int32 */
+            anio?: number;
+            estado?: string;
+            /** Format: date-time */
+            fechaActualizacion?: string;
+            /** Format: int32 */
+            hastaBimestre?: number;
+            bimestres?: number[];
+            cursos?: components["schemas"]["CursoNotasDto"][];
+        };
+        NotaCompetenciaDto: {
+            competenciaId?: string;
+            codigo?: string;
+            nombre?: string;
+            nivelEsperado?: string;
+            bimestres?: {
+                [key: string]: "C" | "B" | "A" | "AD";
+            };
+            /** @enum {string} */
+            anual?: "C" | "B" | "A" | "AD";
+        };
+        BimestreConsolidadoDto: {
+            /** Format: int32 */
+            numero?: number;
+            consolidado?: boolean;
+        };
+        CursosAlumnoDto: {
+            alumnoId?: string;
+            alumno?: string;
+            codigo?: string;
+            /** Format: int32 */
+            anio?: number;
+            seccion?: string;
+            anios?: number[];
+            bimestres?: components["schemas"]["BimestreConsolidadoDto"][];
+            /** Format: int32 */
+            bimestre?: number;
+            libreta?: string;
+            cursos?: components["schemas"]["CursoNotasDto"][];
         };
         AlumnoBusqueda: {
             id?: string;
@@ -2961,6 +3497,106 @@ export interface operations {
             };
         };
     };
+    rejilla: {
+        parameters: {
+            query?: {
+                bimestre?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RejillaDto"];
+                };
+            };
+        };
+    };
+    guardar: {
+        parameters: {
+            query?: {
+                bimestre?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuardarLogrosRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RejillaDto"];
+                };
+            };
+        };
+    };
+    consultar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConfiguracionDto"];
+                };
+            };
+        };
+    };
+    guardar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfiguracionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ConfiguracionDto"];
+                };
+            };
+        };
+    };
     apoderado: {
         parameters: {
             query?: never;
@@ -3086,7 +3722,7 @@ export interface operations {
             };
         };
     };
-    consultar: {
+    consultar_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3156,7 +3792,7 @@ export interface operations {
             };
         };
     };
-    guardar: {
+    guardar_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3410,7 +4046,7 @@ export interface operations {
             };
         };
     };
-    consultar_1: {
+    consultar_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3842,6 +4478,28 @@ export interface operations {
             };
         };
     };
+    calcular: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotasFinalesDto"];
+                };
+            };
+        };
+    };
     listar_1: {
         parameters: {
             query?: never;
@@ -4052,6 +4710,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["BloqueHorarioDto"];
+                };
+            };
+        };
+    };
+    consolidar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+                numero: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AvanceDto"];
                 };
             };
         };
@@ -4692,6 +5373,68 @@ export interface operations {
             };
         };
     };
+    consultar_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["NotasFinalesDto"];
+                };
+            };
+        };
+    };
+    mias_3: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AsignacionCursoDto"][];
+                };
+            };
+        };
+    };
+    misAlumnos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AlumnoNotasDto"][];
+                };
+            };
+        };
+    };
     obtener_4: {
         parameters: {
             query?: never;
@@ -4754,6 +5497,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["GradosAnioDto"];
+                };
+            };
+        };
+    };
+    avance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anio: number;
+                numero: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AvanceDto"];
                 };
             };
         };
@@ -4822,6 +5588,105 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ObligacionesAlumno"];
+                };
+            };
+        };
+    };
+    libretas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alumnoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LibretaResumenDto"][];
+                };
+            };
+        };
+    };
+    libreta: {
+        parameters: {
+            query?: {
+                anio?: number;
+                bimestre?: number;
+                formato?: string;
+            };
+            header?: never;
+            path: {
+                alumnoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description JSON con `formato=json`; PDF con `formato=pdf` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibretaDto"];
+                    "application/pdf": string;
+                };
+            };
+        };
+    };
+    cursos: {
+        parameters: {
+            query?: {
+                anio?: number;
+                bimestre?: number;
+            };
+            header?: never;
+            path: {
+                alumnoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursosAlumnoDto"];
+                };
+            };
+        };
+    };
+    curso: {
+        parameters: {
+            query?: {
+                anio?: number;
+            };
+            header?: never;
+            path: {
+                alumnoId: string;
+                cursoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CursoNotasDto"];
                 };
             };
         };

@@ -110,6 +110,29 @@ import type {
   TotalesAsistencia,
   TotalesDocentes,
 } from '../../modulos/asistencia/api'
+import type {
+  Asignacion as AsignacionDocente,
+  AlumnoIncompleto,
+  AlumnoNotas,
+  AvanceBimestre,
+  BimestreInfo,
+  CeldaNota,
+  CompetenciaCurso,
+  ConfiguracionCurso,
+  CursoAvance,
+  CursoNotas,
+  CursosAlumno,
+  FilaAlumno,
+  FilaNotas,
+  Libreta,
+  NotaCompetencia,
+  NotasFinales,
+  PesoBimestre,
+  ReglaConsolidacion,
+  Rejilla,
+  ResultadoCalculo,
+  ResultadoConsolidacion,
+} from '../../modulos/evaluacion/api'
 import type { components } from './tipos.gen'
 
 type Esquemas = components['schemas']
@@ -311,5 +334,48 @@ describe('contrato de la asistencia (UC-07 a UC-12, RF-16)', () => {
     expectTypeOf<keyof ReporteAsistencia>().toEqualTypeOf<keyof Esquemas['ReporteAsistenciaDto']>()
     expectTypeOf<keyof FilaReporte>().toEqualTypeOf<keyof Esquemas['FilaReporteDto']>()
     expectTypeOf<keyof ResumenAsistenciaAlumno>().toEqualTypeOf<keyof Esquemas['ResumenAsistenciaAlumnoDto']>()
+  })
+})
+
+describe('contrato de la evaluación (UC-15 a UC-19)', () => {
+  it('mis cursos y la rejilla de logros tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof AsignacionDocente>().toEqualTypeOf<keyof Esquemas['AsignacionCursoDto']>()
+    expectTypeOf<keyof Rejilla>().toEqualTypeOf<keyof Esquemas['RejillaDto']>()
+    expectTypeOf<keyof BimestreInfo>().toEqualTypeOf<keyof Esquemas['BimestreLogrosDto']>()
+    expectTypeOf<keyof CompetenciaCurso>().toEqualTypeOf<keyof Esquemas['CompetenciaCursoDto']>()
+    expectTypeOf<keyof FilaAlumno>().toEqualTypeOf<keyof Esquemas['FilaAlumnoDto']>()
+    expectTypeOf<keyof AlumnoIncompleto>().toEqualTypeOf<keyof Esquemas['IncompletoDto']>()
+  })
+
+  it('la regla de consolidación y los pesos tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof ConfiguracionCurso>().toEqualTypeOf<keyof Esquemas['ConfiguracionDto']>()
+    expectTypeOf<keyof ReglaConsolidacion>().toEqualTypeOf<keyof Esquemas['ReglaDto']>()
+    expectTypeOf<keyof ReglaConsolidacion['ejemplo']>().toEqualTypeOf<keyof Esquemas['EjemploDto']>()
+    expectTypeOf<keyof PesoBimestre>().toEqualTypeOf<keyof Esquemas['PesoDto']>()
+  })
+
+  it('las notas finales tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof NotasFinales>().toEqualTypeOf<keyof Esquemas['NotasFinalesDto']>()
+    expectTypeOf<keyof FilaNotas>().toEqualTypeOf<keyof Esquemas['FilaNotasDto']>()
+    expectTypeOf<keyof CeldaNota>().toEqualTypeOf<keyof Esquemas['CeldaNotaDto']>()
+    expectTypeOf<keyof ResultadoCalculo>().toEqualTypeOf<keyof Esquemas['CalculoDto']>()
+  })
+
+  it('la consolidación del bimestre tiene las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof AvanceBimestre>().toEqualTypeOf<keyof Esquemas['AvanceDto']>()
+    expectTypeOf<keyof CursoAvance>().toEqualTypeOf<keyof Esquemas['CursoAvanceDto']>()
+    expectTypeOf<keyof AvanceBimestre['bimestre']>().toEqualTypeOf<keyof Esquemas['BimestreAvanceDto']>()
+    expectTypeOf<keyof AvanceBimestre['totales']>().toEqualTypeOf<keyof Esquemas['TotalesAvanceDto']>()
+    expectTypeOf<keyof AvanceBimestre['bimestres'][number]>().toEqualTypeOf<keyof Esquemas['EstadoBimestreDto']>()
+    expectTypeOf<keyof ResultadoConsolidacion>().toEqualTypeOf<keyof Esquemas['ResultadoDto']>()
+  })
+
+  it('las notas y la libreta del alumno tienen las mismas propiedades que el backend', () => {
+    expectTypeOf<keyof AlumnoNotas>().toEqualTypeOf<keyof Esquemas['AlumnoNotasDto']>()
+    expectTypeOf<keyof CursosAlumno>().toEqualTypeOf<keyof Esquemas['CursosAlumnoDto']>()
+    expectTypeOf<keyof CursosAlumno['bimestres'][number]>().toEqualTypeOf<keyof Esquemas['BimestreConsolidadoDto']>()
+    expectTypeOf<keyof CursoNotas>().toEqualTypeOf<keyof Esquemas['CursoNotasDto']>()
+    expectTypeOf<keyof NotaCompetencia>().toEqualTypeOf<keyof Esquemas['NotaCompetenciaDto']>()
+    expectTypeOf<keyof Libreta>().toEqualTypeOf<keyof Esquemas['LibretaDto']>()
   })
 })

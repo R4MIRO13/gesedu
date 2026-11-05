@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import pe.edu.gesedu.compartido.dominio.NivelLogro;
-import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaDto;
+import pe.edu.gesedu.evaluacion.aplicacion.RegistroLogrosDtos.CompetenciaCursoDto;
 import pe.edu.gesedu.evaluacion.dominio.TipoRegla;
 
 /** DTO de UC-17 (notas finales del curso). */
@@ -33,7 +33,7 @@ public final class NotasFinalesDtos {
      * respuesta del cálculo.
      */
     public record NotasFinalesDto(String asignacionId, String curso, String seccion, int anio, TipoRegla regla,
-                                  List<Integer> bimestres, List<CompetenciaDto> competencias, List<FilaNotasDto> alumnos,
+                                  List<Integer> bimestres, List<CompetenciaCursoDto> competencias, List<FilaNotasDto> alumnos,
                                   boolean calculadas, boolean desactualizada, boolean editable, int celdasSinNota,
                                   CalculoDto calculo) {
     }
