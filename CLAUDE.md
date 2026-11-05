@@ -4,7 +4,7 @@ Sistema web de gestión integral de un colegio de secundaria (PUCP, Ingeniería 
 El plan vigente está en `docs/PLAN.md`: fases, modelo de datos, contrato de la API, contradicciones (C-xx), supuestos (S-xx) y preguntas (P-xx). **Léelo antes de implementar cualquier fase.**
 
 ## Prioridad de documentos
-`docs/arquitectura.pdf` (v1.0) > `docs/ers.pdf` (v3) > `docs/catalogo_requisitos.pdf` (v4) > `docs/wireframes.pdf` > el resto (modelo conceptual, visión, procesos, matriz).
+`docs/arquitectura.pdf` (v2.0) > `docs/ers.pdf` (v3) > `docs/catalogo_requisitos.pdf` (v4) > `docs/wireframes.pdf` > el resto (modelo conceptual, visión, procesos, matriz).
 - Cita siempre RF, RNF, UC y DA con la **numeración del Catálogo v4** (RF-12 = correo de matrícula; RF-52 = inicio de sesión y recuperación).
 - Si encuentras una contradicción, no la resuelvas en silencio: anótala en `docs/PLAN.md` § 13.
 - Fuera de alcance: SIAGIE, pasarela de pagos, generación automática de horarios, **gestión de aulas (no existe la entidad Aula)**, app móvil, validación de IP o red en la marcación docente, consolidación mensual guardada.
