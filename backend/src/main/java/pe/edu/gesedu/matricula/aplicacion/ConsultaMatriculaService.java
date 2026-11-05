@@ -43,6 +43,10 @@ public class ConsultaMatriculaService {
     public record SeccionDeAlumno(String alumnoId, String alumno, String seccionId, String seccion) {
     }
 
+    /** Un alumno con matrícula confirmada en una sección (asistencia, UC-08). */
+    public record AlumnoDeSeccion(String alumnoId, String codigo, String apellidos, String nombres) {
+    }
+
     private final MatriculaRepository matriculas;
     private final AnioEscolarService anios;
     private final CatalogoAcademicoService catalogo;
@@ -112,6 +116,21 @@ public class ConsultaMatriculaService {
                 .map(a -> new SeccionDeAlumno(a.id(), a.nombreCompleto(), porAlumno.get(a.id()).getSeccionId(),
                         catalogo.seccion(porAlumno.get(a.id()).getSeccionId()).nombre()))
                 .sorted(Comparator.comparing(SeccionDeAlumno::alumno)).toList();
+    }
+
+    /**
+     * Los alumnos con matrícula confirmada en la sección, en orden alfabético de apellidos y nombres. No aplica alcance:
+     * lo decide quien llama (por ejemplo, el tutor de la sección).
+     */
+    @Transactional(readOnly = true)
+    public List<AlumnoDeSeccion> alumnosDeSeccion(String seccionId) {
+        List<String> ids = matriculas.findBySeccionIdAndEstado(seccionId, EstadoMatricula.CONFIRMADA).stream()
+                .map(Matricula::getAlumnoId).distinct().toList();
+        return familias.nombresDeAlumnos(ids).values().stream()
+                .map(n -> new AlumnoDeSeccion(n.id(), n.codigo(), n.apellidos(), n.nombres()))
+                .sorted(Comparator.comparing(AlumnoDeSeccion::apellidos, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(AlumnoDeSeccion::nombres, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     private MatriculaVigente aVigente(Matricula m) {

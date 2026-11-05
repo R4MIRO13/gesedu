@@ -80,6 +80,12 @@ public class ClasesDocenteService {
         return new ClasesEnDia(true, true, primero);
     }
 
+    /** El año tiene bloques configurados ese día de la semana, es decir, hay jornada escolar (S-57). */
+    @Transactional(readOnly = true)
+    public boolean hayJornada(int anio, DayOfWeek dia) {
+        return !bloques.findByAnioEscolarIdAndDiaSemana(anios.obtenerPorAnio(anio).id(), aDiaSemana(dia)).isEmpty();
+    }
+
     static DiaSemana aDiaSemana(DayOfWeek dia) {
         return switch (dia) {
             case MONDAY -> DiaSemana.LUNES;

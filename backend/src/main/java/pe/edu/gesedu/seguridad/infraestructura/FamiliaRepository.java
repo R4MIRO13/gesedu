@@ -29,6 +29,17 @@ public interface FamiliaRepository extends JpaRepository<Alumno, String> {
         String getApoderadoId();
     }
 
+    /** Apellidos y nombres por separado, para listar en orden alfabético (asistencia, UC-08). */
+    interface NombreAlumnoFila {
+        String getId();
+
+        String getCodigo();
+
+        String getApellidos();
+
+        String getNombres();
+    }
+
     interface ApoderadoFila {
         String getId();
 
@@ -49,6 +60,13 @@ public interface FamiliaRepository extends JpaRepository<Alumno, String> {
             WHERE al.id IN (:ids)
             """, nativeQuery = true)
     List<AlumnoFila> alumnos(@Param("ids") Collection<String> ids);
+
+    @Query(value = """
+            SELECT al.id AS id, al.codigo_alumno AS codigo, u.apellidos AS apellidos, u.nombres AS nombres
+            FROM seguridad.alumno al JOIN seguridad.usuario u ON u.id = al.usuario_id
+            WHERE al.id IN (:ids)
+            """, nativeQuery = true)
+    List<NombreAlumnoFila> nombresDeAlumnos(@Param("ids") Collection<String> ids);
 
     @Query(value = """
             SELECT ap.id AS id, u.nombres || ' ' || u.apellidos AS nombreCompleto,

@@ -63,6 +63,7 @@ public enum CodigoError {
     DIA_NO_LECTIVO(HttpStatus.UNPROCESSABLE_ENTITY, "La fecha no es un día lectivo"),
     JORNADA_CERRADA(HttpStatus.UNPROCESSABLE_ENTITY, "La jornada escolar ya cerró"),
     SIN_CLASES_PROGRAMADAS(HttpStatus.UNPROCESSABLE_ENTITY, "No hay clases programadas para la fecha"),
+    SECCION_SIN_ALUMNOS(HttpStatus.UNPROCESSABLE_ENTITY, "La sección no tiene alumnos matriculados"),
     PLAZO_TARDANZA_EXCEDIDO(HttpStatus.UNPROCESSABLE_ENTITY, "El plazo para cambiar a tardanza venció"),
     RANGO_ANIO_INVALIDO(HttpStatus.UNPROCESSABLE_ENTITY, "El año escolar debe durar entre 10 y 12 meses"),
     BIMESTRES_SUPERPUESTOS(HttpStatus.UNPROCESSABLE_ENTITY, "Los bimestres se superponen o salen del año escolar"),

@@ -23,6 +23,10 @@ public class DirectorioFamilias {
                                 LocalDate fechaNacimiento, String parentescoApoderado, String apoderadoId) {
     }
 
+    /** Un alumno con apellidos y nombres separados (para ordenar y mostrar «Apellidos, Nombres»). */
+    public record NombreAlumno(String id, String codigo, String apellidos, String nombres) {
+    }
+
     public record ApoderadoResumen(String id, String nombreCompleto, String documento, String correo,
                                    String telefono) {
     }
@@ -41,6 +45,17 @@ public class DirectorioFamilias {
         }
         return familias.alumnos(ids).stream().map(DirectorioFamilias::aResumen)
                 .collect(Collectors.toMap(AlumnoResumen::id, Function.identity()));
+    }
+
+    /** Id → nombre del alumno. Los ids que no existen no aparecen. */
+    @Transactional(readOnly = true)
+    public Map<String, NombreAlumno> nombresDeAlumnos(Collection<String> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        return familias.nombresDeAlumnos(ids).stream()
+                .map(f -> new NombreAlumno(f.getId(), f.getCodigo(), f.getApellidos(), f.getNombres()))
+                .collect(Collectors.toMap(NombreAlumno::id, Function.identity()));
     }
 
     /** Id → apoderado. Los ids que no existen no aparecen. */

@@ -20,6 +20,7 @@ import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetMiAsistenciaRouteImport } from './routes/intranet/mi-asistencia'
 import { Route as IntranetUsuariosRouteImport } from './routes/intranet/usuarios'
 import { Route as IntranetAcademicoAniosRouteImport } from './routes/intranet/academico/anios'
+import { Route as IntranetAsistenciaIndexRouteImport } from './routes/intranet/asistencia/index'
 import { Route as IntranetDisponibilidadAnioRouteImport } from './routes/intranet/disponibilidad/$anio'
 import { Route as IntranetEstudiantesIndexRouteImport } from './routes/intranet/estudiantes/index'
 import { Route as IntranetEstudiantesIdRouteImport } from './routes/intranet/estudiantes/$id'
@@ -35,6 +36,7 @@ import { Route as IntranetPagosValidarRouteImport } from './routes/intranet/pago
 import { Route as IntranetAcademicoAnioCursosRouteImport } from './routes/intranet/academico/$anio/cursos'
 import { Route as IntranetAcademicoAnioSeccionesRouteImport } from './routes/intranet/academico/$anio/secciones'
 import { Route as IntranetAcademicoAnioEscolarNuevoRouteImport } from './routes/intranet/academico/anio-escolar/nuevo'
+import { Route as IntranetAsistenciaSeccionRegistrarRouteImport } from './routes/intranet/asistencia/$seccion/registrar'
 import { Route as IntranetHorariosAnioConfiguracionRouteImport } from './routes/intranet/horarios/$anio/configuracion'
 import { Route as IntranetHorariosAnioElaborarRouteImport } from './routes/intranet/horarios/$anio/elaborar'
 import { Route as IntranetHorariosAnioPublicarRouteImport } from './routes/intranet/horarios/$anio/publicar'
@@ -94,6 +96,11 @@ const IntranetUsuariosRoute = IntranetUsuariosRouteImport.update({
 const IntranetAcademicoAniosRoute = IntranetAcademicoAniosRouteImport.update({
   id: '/academico/anios',
   path: '/academico/anios',
+  getParentRoute: () => IntranetRoute,
+} as any)
+const IntranetAsistenciaIndexRoute = IntranetAsistenciaIndexRouteImport.update({
+  id: '/asistencia/',
+  path: '/asistencia/',
   getParentRoute: () => IntranetRoute,
 } as any)
 const IntranetDisponibilidadAnioRoute =
@@ -181,6 +188,12 @@ const IntranetAcademicoAnioEscolarNuevoRoute =
     path: '/academico/anio-escolar/nuevo',
     getParentRoute: () => IntranetRoute,
   } as any)
+const IntranetAsistenciaSeccionRegistrarRoute =
+  IntranetAsistenciaSeccionRegistrarRouteImport.update({
+    id: '/asistencia/$seccion/registrar',
+    path: '/asistencia/$seccion/registrar',
+    getParentRoute: () => IntranetRoute,
+  } as any)
 const IntranetHorariosAnioConfiguracionRoute =
   IntranetHorariosAnioConfiguracionRouteImport.update({
     id: '/horarios/$anio/configuracion',
@@ -233,12 +246,14 @@ export interface FileRoutesByFullPath {
   '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
+  '/intranet/asistencia/': typeof IntranetAsistenciaIndexRoute
   '/intranet/estudiantes/': typeof IntranetEstudiantesIndexRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
+  '/intranet/asistencia/$seccion/registrar': typeof IntranetAsistenciaSeccionRegistrarRoute
   '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/horarios/$anio/publicar': typeof IntranetHorariosAnioPublicarRoute
@@ -266,12 +281,14 @@ export interface FileRoutesByTo {
   '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
+  '/intranet/asistencia': typeof IntranetAsistenciaIndexRoute
   '/intranet/estudiantes': typeof IntranetEstudiantesIndexRoute
   '/intranet/matriculas': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos': typeof IntranetPagosIndexRoute
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
+  '/intranet/asistencia/$seccion/registrar': typeof IntranetAsistenciaSeccionRegistrarRoute
   '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/horarios/$anio/publicar': typeof IntranetHorariosAnioPublicarRoute
@@ -300,12 +317,14 @@ export interface FileRoutesById {
   '/intranet/pagos/comprobante': typeof IntranetPagosComprobanteRoute
   '/intranet/pagos/configuracion': typeof IntranetPagosConfiguracionRoute
   '/intranet/pagos/validar': typeof IntranetPagosValidarRoute
+  '/intranet/asistencia/': typeof IntranetAsistenciaIndexRoute
   '/intranet/estudiantes/': typeof IntranetEstudiantesIndexRoute
   '/intranet/matriculas/': typeof IntranetMatriculasIndexRoute
   '/intranet/pagos/': typeof IntranetPagosIndexRoute
   '/intranet/academico/$anio/cursos': typeof IntranetAcademicoAnioCursosRoute
   '/intranet/academico/$anio/secciones': typeof IntranetAcademicoAnioSeccionesRoute
   '/intranet/academico/anio-escolar/nuevo': typeof IntranetAcademicoAnioEscolarNuevoRoute
+  '/intranet/asistencia/$seccion/registrar': typeof IntranetAsistenciaSeccionRegistrarRoute
   '/intranet/horarios/$anio/configuracion': typeof IntranetHorariosAnioConfiguracionRoute
   '/intranet/horarios/$anio/elaborar': typeof IntranetHorariosAnioElaborarRoute
   '/intranet/horarios/$anio/publicar': typeof IntranetHorariosAnioPublicarRoute
@@ -335,12 +354,14 @@ export interface FileRouteTypes {
     | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
     | '/intranet/pagos/validar'
+    | '/intranet/asistencia/'
     | '/intranet/estudiantes/'
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
     | '/intranet/academico/$anio/cursos'
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
+    | '/intranet/asistencia/$seccion/registrar'
     | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/horarios/$anio/publicar'
@@ -368,12 +389,14 @@ export interface FileRouteTypes {
     | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
     | '/intranet/pagos/validar'
+    | '/intranet/asistencia'
     | '/intranet/estudiantes'
     | '/intranet/matriculas'
     | '/intranet/pagos'
     | '/intranet/academico/$anio/cursos'
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
+    | '/intranet/asistencia/$seccion/registrar'
     | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/horarios/$anio/publicar'
@@ -401,12 +424,14 @@ export interface FileRouteTypes {
     | '/intranet/pagos/comprobante'
     | '/intranet/pagos/configuracion'
     | '/intranet/pagos/validar'
+    | '/intranet/asistencia/'
     | '/intranet/estudiantes/'
     | '/intranet/matriculas/'
     | '/intranet/pagos/'
     | '/intranet/academico/$anio/cursos'
     | '/intranet/academico/$anio/secciones'
     | '/intranet/academico/anio-escolar/nuevo'
+    | '/intranet/asistencia/$seccion/registrar'
     | '/intranet/horarios/$anio/configuracion'
     | '/intranet/horarios/$anio/elaborar'
     | '/intranet/horarios/$anio/publicar'
@@ -499,6 +524,13 @@ declare module '@tanstack/react-router' {
       path: '/academico/anios'
       fullPath: '/intranet/academico/anios'
       preLoaderRoute: typeof IntranetAcademicoAniosRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/asistencia/': {
+      id: '/intranet/asistencia/'
+      path: '/asistencia'
+      fullPath: '/intranet/asistencia/'
+      preLoaderRoute: typeof IntranetAsistenciaIndexRouteImport
       parentRoute: typeof IntranetRoute
     }
     '/intranet/disponibilidad/$anio': {
@@ -606,6 +638,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IntranetAcademicoAnioEscolarNuevoRouteImport
       parentRoute: typeof IntranetRoute
     }
+    '/intranet/asistencia/$seccion/registrar': {
+      id: '/intranet/asistencia/$seccion/registrar'
+      path: '/asistencia/$seccion/registrar'
+      fullPath: '/intranet/asistencia/$seccion/registrar'
+      preLoaderRoute: typeof IntranetAsistenciaSeccionRegistrarRouteImport
+      parentRoute: typeof IntranetRoute
+    }
     '/intranet/horarios/$anio/configuracion': {
       id: '/intranet/horarios/$anio/configuracion'
       path: '/horarios/$anio/configuracion'
@@ -660,12 +699,14 @@ interface IntranetRouteChildren {
   IntranetPagosComprobanteRoute: typeof IntranetPagosComprobanteRoute
   IntranetPagosConfiguracionRoute: typeof IntranetPagosConfiguracionRoute
   IntranetPagosValidarRoute: typeof IntranetPagosValidarRoute
+  IntranetAsistenciaIndexRoute: typeof IntranetAsistenciaIndexRoute
   IntranetEstudiantesIndexRoute: typeof IntranetEstudiantesIndexRoute
   IntranetMatriculasIndexRoute: typeof IntranetMatriculasIndexRoute
   IntranetPagosIndexRoute: typeof IntranetPagosIndexRoute
   IntranetAcademicoAnioCursosRoute: typeof IntranetAcademicoAnioCursosRoute
   IntranetAcademicoAnioSeccionesRoute: typeof IntranetAcademicoAnioSeccionesRoute
   IntranetAcademicoAnioEscolarNuevoRoute: typeof IntranetAcademicoAnioEscolarNuevoRoute
+  IntranetAsistenciaSeccionRegistrarRoute: typeof IntranetAsistenciaSeccionRegistrarRoute
   IntranetHorariosAnioConfiguracionRoute: typeof IntranetHorariosAnioConfiguracionRoute
   IntranetHorariosAnioElaborarRoute: typeof IntranetHorariosAnioElaborarRoute
   IntranetHorariosAnioPublicarRoute: typeof IntranetHorariosAnioPublicarRoute
@@ -689,6 +730,7 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetPagosComprobanteRoute: IntranetPagosComprobanteRoute,
   IntranetPagosConfiguracionRoute: IntranetPagosConfiguracionRoute,
   IntranetPagosValidarRoute: IntranetPagosValidarRoute,
+  IntranetAsistenciaIndexRoute: IntranetAsistenciaIndexRoute,
   IntranetEstudiantesIndexRoute: IntranetEstudiantesIndexRoute,
   IntranetMatriculasIndexRoute: IntranetMatriculasIndexRoute,
   IntranetPagosIndexRoute: IntranetPagosIndexRoute,
@@ -696,6 +738,8 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetAcademicoAnioSeccionesRoute: IntranetAcademicoAnioSeccionesRoute,
   IntranetAcademicoAnioEscolarNuevoRoute:
     IntranetAcademicoAnioEscolarNuevoRoute,
+  IntranetAsistenciaSeccionRegistrarRoute:
+    IntranetAsistenciaSeccionRegistrarRoute,
   IntranetHorariosAnioConfiguracionRoute:
     IntranetHorariosAnioConfiguracionRoute,
   IntranetHorariosAnioElaborarRoute: IntranetHorariosAnioElaborarRoute,

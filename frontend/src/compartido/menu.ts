@@ -57,6 +57,12 @@ export const OPCIONES_MENU = [
     permiso: 'ASISTENCIA_DOCENTE_MARCAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/asistencia' }),
+    titulo: 'Asistencia de mi sección',
+    descripcion: 'Pasa lista a los alumnos de tu sección: puntual, tardanza o falta.',
+    permiso: 'ASISTENCIA_ALUMNO_REGISTRAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',

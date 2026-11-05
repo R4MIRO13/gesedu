@@ -63,3 +63,73 @@ export function useMarcarAsistencia() {
     onSettled: () => cliente.invalidateQueries({ queryKey: ['asistencia-docente'] }),
   })
 }
+
+// ---- UC-08: asistencia de alumnos de la sección del tutor ----
+
+export interface AlumnoAsistencia {
+  alumnoId: string
+  codigo: string
+  apellidos: string
+  nombres: string
+  registroId: string | null
+  /** Nulo = sin registro: no equivale a FALTA. */
+  estado: EstadoAsistencia | null
+}
+
+export interface TotalesAsistencia {
+  puntual: number
+  tardanza: number
+  falta: number
+  pendientes: number
+}
+
+export interface AsistenciaSeccion {
+  codigo: string
+  nombre: string
+  fecha: string
+  horaServidor: string
+  /** Falso con la jornada cerrada: la pantalla queda en consulta. */
+  registroHabilitado: boolean
+  mensaje: string | null
+  limiteTardanza: string
+  alumnos: AlumnoAsistencia[]
+  totales: TotalesAsistencia
+}
+
+export interface MiSeccion {
+  codigo: string
+  nombre: string
+  alumnos: number
+}
+
+export interface ItemPaseLista {
+  alumnoId: string
+  estado: EstadoAsistencia
+}
+
+export function useMiSeccion() {
+  return useQuery({
+    queryKey: ['asistencia-alumnos', 'mi-seccion'],
+    queryFn: () => api<MiSeccion>('/asistencia-alumnos/mi-seccion'),
+    retry: false,
+  })
+}
+
+export function useAsistenciaSeccion(codigo: string) {
+  return useQuery({
+    queryKey: ['asistencia-alumnos', 'seccion', codigo],
+    queryFn: () => api<AsistenciaSeccion>(`/secciones/${encodeURIComponent(codigo)}/asistencia`),
+    retry: false,
+  })
+}
+
+/** Guarda el pase de lista completo en un solo lote atómico; la fecha y la hora las pone el servidor. */
+export function useRegistrarAsistenciaSeccion(codigo: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (asistencias: ItemPaseLista[]) =>
+      api<AsistenciaSeccion>(`/secciones/${encodeURIComponent(codigo)}/asistencia`, { method: 'POST', cuerpo: { asistencias } }),
+    // También tras un 409: otra solicitud ya registró y la pantalla debe mostrar lo vigente
+    onSettled: () => cliente.invalidateQueries({ queryKey: ['asistencia-alumnos'] }),
+  })
+}
