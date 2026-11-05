@@ -51,6 +51,12 @@ export const OPCIONES_MENU = [
     permiso: 'DISPONIBILIDAD_REGISTRAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/mi-asistencia' }),
+    titulo: 'Mi asistencia',
+    descripcion: 'Marca tu llegada: el servidor pone la hora y la compara con tu primera clase del día.',
+    permiso: 'ASISTENCIA_DOCENTE_MARCAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',

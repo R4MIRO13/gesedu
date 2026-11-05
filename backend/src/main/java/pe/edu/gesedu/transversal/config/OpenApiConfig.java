@@ -52,6 +52,16 @@ public class OpenApiConfig {
                         "/api/v1/anios-escolares/*/cursos/**", "/api/v1/anios-escolares/*/grados/**",
                         "/api/v1/anios-escolares/*/docentes", "/api/v1/cursos/**", "/api/v1/grados/**",
                         "/api/v1/secciones/**")
+                .pathsToExclude("/api/v1/secciones/*/asistencia")
+                .build();
+    }
+
+    @Bean
+    GroupedOpenApi grupoAsistencia() {
+        return GroupedOpenApi.builder().group("7-asistencia").displayName("Asistencia")
+                .pathsToMatch("/api/v1/asistencia-docente/**", "/api/v1/asistencia-alumnos/**",
+                        "/api/v1/secciones/*/asistencia", "/api/v1/reportes/asistencia",
+                        "/api/v1/alumnos/*/asistencia/**")
                 .build();
     }
 

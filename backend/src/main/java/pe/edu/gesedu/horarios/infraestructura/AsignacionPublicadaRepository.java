@@ -11,4 +11,6 @@ public interface AsignacionPublicadaRepository extends JpaRepository<AsignacionP
     List<AsignacionPublicada> findByHorarioPublicadoId(String horarioPublicadoId);
 
     long countByHorarioPublicadoId(String horarioPublicadoId);
+
+    List<AsignacionPublicada> findByHorarioPublicadoIdAndDocenteId(String horarioPublicadoId, String docenteId);
 }

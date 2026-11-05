@@ -774,3 +774,13 @@ dd {
   margin: 0;
   font-weight: 600;
 }
+
+/* Mi asistencia (UC-07): la hora del servidor en grande */
+.reloj-servidor {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+}
+.reloj-servidor .muted {
+  font-size: 1rem;
+}

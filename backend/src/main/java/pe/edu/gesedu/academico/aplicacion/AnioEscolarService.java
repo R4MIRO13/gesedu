@@ -39,6 +39,16 @@ public class AnioEscolarService {
                         "No existe el año escolar"));
     }
 
+    /**
+     * El año ACTIVO con un bimestre en curso en la fecha, o vacío si la fecha cae fuera de todo bimestre (vacaciones,
+     * antes de empezar o después de terminar). No hay feriados: el modelo no tiene esa entidad (S-07, P-04).
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<AnioEscolarResumen> anioLectivoEn(java.time.LocalDate fecha) {
+        return anios.findActivosConBimestreEn(fecha).stream().findFirst()
+                .map(a -> new AnioEscolarResumen(a.getId(), a.getAnio(), a.getEstado()));
+    }
+
     /** Ids de los años escolares anteriores al indicado (para las deudas de años pasados, UC-02 FA-3). */
     @Transactional(readOnly = true)
     public List<String> idsAnterioresA(int anio) {
