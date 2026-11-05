@@ -85,6 +85,18 @@ public class NotaConsolidada extends EntidadBase {
         return true;
     }
 
+    /** Vincula la nota a la libreta del alumno (UC-18); un valor nulo no cambia nada. */
+    public void vincularLibreta(String libretaId) {
+        if (libretaId != null) {
+            this.libretaId = libretaId;
+        }
+    }
+
+    public static NotaConsolidada bimestral(String alumnoId, String competenciaId, String asignacionId, String anioEscolarId,
+                                            String bimestreId, NivelLogro nivel, Instant ahora) {
+        return new NotaConsolidada(alumnoId, competenciaId, asignacionId, anioEscolarId, bimestreId, BIMESTRAL, nivel, ahora);
+    }
+
     public String getAlumnoId() {
         return alumnoId;
     }

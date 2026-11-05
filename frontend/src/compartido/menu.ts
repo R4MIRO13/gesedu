@@ -87,6 +87,12 @@ export const OPCIONES_MENU = [
     permiso: 'NOTA_REGISTRAR',
   },
   {
+    enlace: linkOptions({ to: '/intranet/academico/consolidar-notas', search: { bimestre: 1 } }),
+    titulo: 'Consolidar notas',
+    descripcion: 'Revisa el avance de las notas por curso y sección y consolida el bimestre en la libreta de cada alumno.',
+    permiso: 'NOTA_CONSOLIDAR',
+  },
+  {
     enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',

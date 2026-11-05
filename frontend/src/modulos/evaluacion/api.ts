@@ -254,3 +254,63 @@ export function useCalcularNotasFinales(asignacionId: string) {
     onSuccess: (notas) => cliente.setQueryData(['asignaciones-docentes', asignacionId, 'notas-finales'], notas),
   })
 }
+
+// ---- UC-18: consolidar las notas de un bimestre (administrador) ----
+
+export type EstadoConsolidacionBimestre = 'SIN_CONSOLIDAR' | 'COMPLETADA' | 'DESACTUALIZADA'
+
+export interface CursoAvance {
+  asignacionId: string
+  curso: string
+  seccion: string
+  docente: string
+  celdasTotales: number
+  celdasCompletas: number
+  porcentaje: number
+  completo: boolean
+}
+
+export interface ResultadoConsolidacion {
+  creadas: number
+  actualizadas: number
+  sinCambios: number
+  libretas: number
+  finalizada: boolean
+  notasAnuales: ResultadoCalculo | null
+}
+
+export interface AvanceBimestre {
+  anio: number
+  bimestre: { numero: number; fechaInicio: string; fechaFin: string; ultimo: boolean }
+  bimestres: { numero: number; estado: EstadoConsolidacionBimestre }[]
+  estado: EstadoConsolidacionBimestre
+  fechaConsolidacion: string | null
+  totales: { cursos: number; completos: number; incompletos: number }
+  cursos: CursoAvance[]
+  puedeConsolidar: boolean
+  motivo: string | null
+  docentesPendientes: string[]
+  /** Falso con el año cerrado. */
+  editable: boolean
+  /** Solo viene en la respuesta de consolidar. */
+  resultado: ResultadoConsolidacion | null
+}
+
+export function useAvanceBimestre(anio: number, bimestre: number) {
+  return useQuery({
+    queryKey: ['consolidacion', anio, bimestre],
+    queryFn: () => api<AvanceBimestre>(`/anios-escolares/${anio}/bimestres/${bimestre}/avance`),
+    retry: false,
+  })
+}
+
+/** Consolida el bimestre; repetirlo reemplaza las notas del bimestre, no las duplica. */
+export function useConsolidarBimestre(anio: number, bimestre: number) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: () => api<AvanceBimestre>(`/anios-escolares/${anio}/bimestres/${bimestre}/consolidacion`, { method: 'POST' }),
+    onSuccess: (avance) => cliente.setQueryData(['consolidacion', anio, bimestre], avance),
+    // También tras un error: el avance pudo cambiar (un docente completó o editó notas) y la pantalla debe mostrarlo
+    onSettled: () => cliente.invalidateQueries({ queryKey: ['consolidacion', anio] }),
+  })
+}

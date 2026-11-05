@@ -57,6 +57,7 @@ public class NotasFinalesService {
     private final NotaConsolidadaRepository notas;
     private final PesoBimestreRepository pesos;
     private final CalculadorNotaAnual calculador;
+    private final RegistroNotasAnuales registroAnual;
     private final AnioEscolarService anios;
     private final CatalogoAcademicoService catalogo;
     private final ConsultaMatriculaService matriculas;
@@ -65,7 +66,7 @@ public class NotasFinalesService {
     private final Clock reloj;
 
     NotasFinalesService(AsignacionDocenteRepository asignaciones, RegistroLogroRepository registros, NotaConsolidadaRepository notas,
-                        PesoBimestreRepository pesos, CalculadorNotaAnual calculador, AnioEscolarService anios,
+                        PesoBimestreRepository pesos, CalculadorNotaAnual calculador, RegistroNotasAnuales registroAnual, AnioEscolarService anios,
                         CatalogoAcademicoService catalogo, ConsultaMatriculaService matriculas, DirectorioDocentes directorio,
                         ContextoUsuario contexto, Clock reloj) {
         this.asignaciones = asignaciones;
@@ -73,6 +74,7 @@ public class NotasFinalesService {
         this.notas = notas;
         this.pesos = pesos;
         this.calculador = calculador;
+        this.registroAnual = registroAnual;
         this.anios = anios;
         this.catalogo = catalogo;
         this.matriculas = matriculas;
@@ -113,44 +115,10 @@ public class NotasFinalesService {
         Map<String, BigDecimal> pesosPorBimestre = pesosDe(asignacionId);
         Map<String, NivelLogro> esperadas = calculador.calcular(asignacion.tipoRegla(), logros, numeroPorId(bimestres), pesosPorBimestre);
 
-        Map<String, AlumnoDeSeccion> alumnos = matriculas.alumnosDeSeccion(asignacion.getSeccionId()).stream()
-                .collect(Collectors.toMap(AlumnoDeSeccion::alumnoId, Function.identity()));
-        Map<String, CompetenciaResumen> competencias = competenciasDe(asignacion).stream()
-                .collect(Collectors.toMap(CompetenciaResumen::id, Function.identity()));
-        Map<String, NotaConsolidada> existentes = notas.findByAsignacionIdAndTipo(asignacionId, NotaConsolidada.ANUAL).stream()
-                .collect(Collectors.toMap(n -> CalculadorNotaAnual.clave(n.getAlumnoId(), n.getCompetenciaId()), Function.identity()));
-        var ahora = reloj.instant();
-        int creadas = 0;
-        int actualizadas = 0;
-        int sinCambios = 0;
-        // Solo los alumnos matriculados hoy en la sección y las competencias vigentes del curso reciben nota
-        for (AlumnoDeSeccion alumno : alumnos.values()) {
-            for (CompetenciaResumen competencia : competencias.values()) {
-                String celda = CalculadorNotaAnual.clave(alumno.alumnoId(), competencia.id());
-                NivelLogro nivel = esperadas.get(celda);
-                if (nivel == null) {
-                    continue;
-                }
-                NotaConsolidada existente = existentes.get(celda);
-                String campo = "anual " + alumno.codigo() + " " + competencia.codigo();
-                if (existente == null) {
-                    notas.save(NotaConsolidada.anual(alumno.alumnoId(), competencia.id(), asignacionId, anioId, nivel, ahora));
-                    ContextoAuditoria.registrarCambio(campo, null, nivel);
-                    creadas++;
-                } else {
-                    NivelLogro anterior = existente.getNivelLogro();
-                    if (existente.reemplazar(nivel, ahora)) {
-                        ContextoAuditoria.registrarCambio(campo, anterior, nivel);
-                        actualizadas++;
-                    } else {
-                        sinCambios++;
-                    }
-                }
-            }
-        }
-        int sinNota = alumnos.size() * competencias.size() - creadas - actualizadas - sinCambios;
+        CalculoDto calculo = registroAnual.guardar(asignacion, anioId, matriculas.alumnosDeSeccion(asignacion.getSeccionId()),
+                competenciasDe(asignacion), esperadas, Map.of(), reloj.instant());
         notas.flush();
-        return armar(asignacion, new CalculoDto(creadas, actualizadas, sinCambios, sinNota));
+        return armar(asignacion, calculo);
     }
 
     // ---- armado y alcance ----

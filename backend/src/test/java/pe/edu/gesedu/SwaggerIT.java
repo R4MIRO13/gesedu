@@ -40,7 +40,8 @@ class SwaggerIT extends BaseIT {
                 "/api/v1/auditoria/catalogos");
         assertThat(paths(grupo("8-evaluacion"))).contains("/api/v1/asignaciones-docentes/mias", "/api/v1/asignaciones-docentes/{id}/configuracion",
                 "/api/v1/asignaciones-docentes/{id}/registros", "/api/v1/asignaciones-docentes/{id}/notas-finales",
-                "/api/v1/asignaciones-docentes/{id}/notas-finales/calculo");
+                "/api/v1/asignaciones-docentes/{id}/notas-finales/calculo", "/api/v1/anios-escolares/{anio}/bimestres/{numero}/avance",
+                "/api/v1/anios-escolares/{anio}/bimestres/{numero}/consolidacion");
     }
 
     @Test

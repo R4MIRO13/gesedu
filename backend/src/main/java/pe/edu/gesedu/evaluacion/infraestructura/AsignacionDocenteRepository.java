@@ -19,6 +19,11 @@ public interface AsignacionDocenteRepository extends JpaRepository<AsignacionDoc
 
     List<AsignacionDocente> findByDocenteId(String docenteId);
 
+    /** Bloquea las asignaciones indicadas, en orden de id (así dos consolidaciones nunca se interbloquean). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from AsignacionDocente a where a.id in :ids order by a.id")
+    List<AsignacionDocente> bloquearTodas(@Param("ids") Collection<String> ids);
+
     /** Bloquea la asignación (SELECT … FOR UPDATE): serializa los guardados de la misma rejilla. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from AsignacionDocente a where a.id = :id")
