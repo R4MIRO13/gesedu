@@ -1,6 +1,8 @@
 # Prueba de carga de UC-01 con k6 (RNF-12, RNF-03)
 
-**Resultado (medición local del 06/11/2026, no de QA): sigue sin cumplir p95 < 2 s, pero mejoró de 2,5 a 2,7 veces tras quitar el candado global del alta de alumnos (S-86, migración V13).** 0 % de errores y todas las solicitudes quedaron registradas (201) en todas las corridas.
+**Resultado aceptado como medición local (06/11/2026), no como medición válida de RNF-12.** La **solicitud de matrícula cumple** el umbral en el pico de 200 apoderados (p95 de 1,59 s). El **p95 sostenido es de 2,53 s**, medido en una máquina que comparte CPU entre k6, backend, base de datos y Docker, así que no es representativo. Tras quitar el candado global del alta de alumnos (S-86, migración V13) el rendimiento mejoró de 2,5 a 2,7 veces. 0 % de errores y todas las solicitudes quedaron registradas (201) en todas las corridas.
+
+**Pendiente:** la medición válida de RNF-12 se repite en QA, con la infraestructura de AWS y k6 fuera del backend. No se harán más optimizaciones antes de esa medición.
 
 ## Qué mide
 `uc01.js` simula apoderados que recorren el asistente de «Solicitar matrícula» con un alumno nuevo: `GET /solicitudes-matricula/opciones` → `POST /solicitudes-matricula/archivos` → `PUT` de la URL prefirmada (disco local) → `POST /solicitudes-matricula`. Cada apoderado usa su propia cuenta (`carga001@carga.gesedu.pe` … `carga200@…`, contraseña de la demo). Umbrales: p95 < 2 s en total y por paso, errores < 1 %.
@@ -26,7 +28,7 @@ Salidas completas: `resultado-k6-pico.txt`, `resultado-k6-sostenida.txt` (despu�
 ## Qué se cambió y qué queda
 - **Causa original (verificada):** `pg_advisory_xact_lock(7311001)` en el alta de alumnos, mantenido hasta el commit de toda la solicitud, atendía las altas de una en una (28 de 30 conexiones esperando el candado según `pg_stat_activity`). Se reemplazó por una secuencia de PostgreSQL y un candado solo por documento (S-86). Con eso la solicitud pasa de 7,3 s a 1,6 s en el pico (ya bajo el umbral) y el rendimiento sostenido se multiplica por 2,6.
 - **Lo que sigue por encima de 2 s:** los pasos de lectura (`opciones`, URL de subida) y el pico inicial. El volcado de hilos durante la carga muestra ~190 de 200 hilos esperando una conexión del pool (10 por omisión) y Postgres casi inactivo (esperando al cliente), es decir, la base ya no es el límite. Subir el pool a 30 **no** lo mejora (2,43 s frente a 2,53 s), por eso no se cambió el valor por omisión. Lo más probable es que ahora limite la CPU de esta máquina, que comparte backend, base de datos, k6 y el IDE; **no lo he demostrado** (habría que medir CPU por proceso o repetir la prueba con k6 y backend en máquinas distintas, por ejemplo en QA).
-- **Conclusión para RNF-12:** en esta máquina el pico de 200 solicitudes simultáneas completa sin errores con p95 de 3,4 s; el umbral de 2 s queda **sin demostrar** hasta repetirla en QA o AWS.
+- **Conclusión para RNF-12:** en esta máquina el pico de 200 solicitudes simultáneas completa sin errores con p95 de 3,4 s; el umbral de 2 s queda **sin demostrar** hasta repetirla en QA o AWS. Decisión del 06/11/2026: se acepta este resultado como medición local y se detienen las optimizaciones.
 
 ## Cómo repetirla (PowerShell, desde la raíz; Docker Desktop encendido)
 ```powershell
