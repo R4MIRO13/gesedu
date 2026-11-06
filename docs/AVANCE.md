@@ -17,7 +17,7 @@
 | 3 Académico y horarios | `feat/fase-3` | **terminada** (3.1–3.7, probada en el navegador) |
 | 4 Asistencia | `feat/fase-4` | **terminada** (4.1–4.6, probada en el navegador) |
 | 5 Evaluación | `feat/fase-5` | **terminada** (5.1–5.6, probada en el navegador) |
-| 6 Cierre | `feat/fase-6` | en curso (6.1–6.6 hechas; quedan de la fase 6 del plan la prueba k6, el repaso responsive/accesibilidad, `docs/despliegue` y el manual) |
+| 6 Cierre | `feat/fase-6` | **casi terminada** (6.1–6.6 hechas). **Pendiente:** (1) revisión responsive y de accesibilidad con Chrome DevTools (necesita backend y frontend a la vez); (2) el hallazgo de rendimiento de UC-01 (p95 de 6 s frente al umbral de 2 s, `docs/despliegue/carga/README.md`) hasta decidir cómo resolver el candado del alta de alumnos; (3) verificación de arranque que rechace la clave JWT de desarrollo fuera de `local` (S-85). Hechos: `docs/despliegue` (local, QA, AWS, `rds-bootstrap.sql`) y `manual.md` |
 
 ## Tareas
 | Tarea | Descripción | Estado | Commit |
