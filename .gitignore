@@ -25,3 +25,6 @@ Thumbs.db
 # Archivos subidos en desarrollo local (GestorArchivosDisco)
 datos-archivos/
 backend/datos-archivos/
+
+# Registros de ejecuciones locales (verify, backend, k6)
+*.log
