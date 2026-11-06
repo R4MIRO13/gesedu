@@ -22,6 +22,9 @@ import pe.edu.gesedu.seguridad.infraestructura.PropiedadesSeguridad;
 @Component
 class BloqueoFicticio {
 
+    /** Tope de correos distintos que se recuerdan: probar millones de correos no hace crecer la memoria. */
+    static final int MAXIMO_CORREOS = 10_000;
+
     private record Estado(int intentos, Instant bloqueadoHasta) {
     }
 
@@ -34,8 +37,14 @@ class BloqueoFicticio {
         this.reloj = reloj;
         this.estados = Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofMinutes(propiedades.bloqueoMinutos()))
-                .maximumSize(50_000)
+                .maximumSize(MAXIMO_CORREOS)
                 .build();
+    }
+
+    /** Entradas guardadas (aplica antes las expulsiones pendientes); lo usan las pruebas. */
+    long tamano() {
+        estados.cleanUp();
+        return estados.estimatedSize();
     }
 
     /**
