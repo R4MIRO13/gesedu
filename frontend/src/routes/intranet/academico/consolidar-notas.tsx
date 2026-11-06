@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ApiError } from '../../../compartido/api/errores'
 import { exigirPermiso } from '../../../compartido/auth/guardias'
 import { fechaCorta } from '../../../compartido/formato'
-import { ANIO_TRABAJO } from '../../../compartido/menu'
+import { ConAnioActivo } from '../../../compartido/componentes/ConAnioActivo'
 import { romano, useAvanceBimestre, useConsolidarBimestre, type AvanceBimestre } from '../../../modulos/evaluacion/api'
 
 export const Route = createFileRoute('/intranet/academico/consolidar-notas')({
@@ -21,9 +21,13 @@ const NOMBRE_ESTADO = {
 } as const
 
 function ConsolidarNotas() {
+  return <ConAnioActivo>{(anio) => <ConsolidarNotasDe anio={anio} />}</ConAnioActivo>
+}
+
+function ConsolidarNotasDe({ anio }: { anio: number }) {
   const { bimestre } = Route.useSearch()
   const navegar = useNavigate({ from: Route.fullPath })
-  const avance = useAvanceBimestre(ANIO_TRABAJO, bimestre)
+  const avance = useAvanceBimestre(anio, bimestre)
 
   return (
     <>
@@ -37,7 +41,7 @@ function ConsolidarNotas() {
         <div className="dos-columnas">
           <div className="campo">
             <label htmlFor="anio-consolidar">Año escolar</label>
-            <input id="anio-consolidar" name="anio" value={ANIO_TRABAJO} readOnly />
+            <input id="anio-consolidar" name="anio" value={anio} readOnly />
           </div>
           <div className="campo">
             <label htmlFor="bimestre-consolidar">Bimestre</label>

@@ -127,6 +127,48 @@ public class ConfiguracionAnioService {
         return detalle(nuevo, creados);
     }
 
+    /** El año escolar ACTIVO, el que usa la SPA como año de trabajo (C-47); 404 si ninguno lo está. */
+    @Transactional(readOnly = true)
+    public AnioResumenDto activo() {
+        return anios.findByEstado("ACTIVO").stream().findFirst()
+                .map(a -> new AnioResumenDto(a.getId(), a.getAnio(), a.getFechaInicio(), a.getFechaFin(), a.getEstado()))
+                .orElseThrow(() -> new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO,
+                        "No hay un año escolar activo"));
+    }
+
+    /**
+     * Activa un año PLANIFICADO y cierra el ACTIVO anterior, todo en una sola transacción (C-47, extensión de UC-13).
+     * Un año CERRADO no se reabre (422 ANIO_CERRADO) y activar el que ya está activo es un error. El índice único
+     * de la base es la última defensa: dos activaciones simultáneas de años distintos dejan uno solo (la otra, 409).
+     */
+    @Transactional
+    @Auditable(accion = "ACTIVAR_ANIO_ESCOLAR", modulo = "ACADEMICO", tipoEntidad = "AnioEscolar", idEntidad = "#result.id()",
+            descripcion = "Activación del año escolar y cierre del anterior")
+    public AnioResumenDto activar(int anio) {
+        AnioEscolar nuevo = anios.findByAnio(anio).orElseThrow(() ->
+                new ExcepcionNegocio(CodigoError.RECURSO_NO_ENCONTRADO, "No existe el año escolar " + anio));
+        if ("CERRADO".equals(nuevo.getEstado())) {
+            throw new ExcepcionNegocio(CodigoError.ANIO_CERRADO, "El año escolar " + anio + " está cerrado y no se reactiva");
+        }
+        if ("ACTIVO".equals(nuevo.getEstado())) {
+            throw new ExcepcionNegocio(CodigoError.SOLICITUD_INVALIDA, "El año escolar " + anio + " ya está activo");
+        }
+        try {
+            for (AnioEscolar anterior : anios.findByEstado("ACTIVO")) {
+                anterior.cerrar();
+                anios.saveAndFlush(anterior);
+                ContextoAuditoria.registrarCambio("anio " + anterior.getAnio(), "ACTIVO", "CERRADO");
+            }
+            nuevo.activar();
+            anios.saveAndFlush(nuevo);
+        } catch (DataIntegrityViolationException e) {
+            throw new ExcepcionNegocio(CodigoError.CONFLICTO_CONCURRENCIA,
+                    "Otro administrador activó un año escolar al mismo tiempo; revisa el estado e inténtalo de nuevo");
+        }
+        ContextoAuditoria.registrarCambio("anio " + anio, "PLANIFICADO", "ACTIVO");
+        return new AnioResumenDto(nuevo.getId(), nuevo.getAnio(), nuevo.getFechaInicio(), nuevo.getFechaFin(), nuevo.getEstado());
+    }
+
     private List<Problema> problemas(LocalDate inicio, LocalDate fin, List<RangoBimestreSolicitud> pedidos) {
         List<Problema> problemas = new java.util.ArrayList<>();
         if (inicio.getYear() < ANIO_MINIMO || inicio.getYear() > ANIO_MAXIMO) {

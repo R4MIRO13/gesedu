@@ -5,7 +5,7 @@ import { ApiError } from '../../compartido/api/errores'
 import { exigirPermiso } from '../../compartido/auth/guardias'
 import { MatrizHorario } from '../../compartido/componentes/MatrizHorario'
 import { fechaCorta, hhmm } from '../../compartido/formato'
-import { ANIO_TRABAJO } from '../../compartido/menu'
+import { ConAnioActivo } from '../../compartido/componentes/ConAnioActivo'
 import {
   HORARIO_NO_PUBLICADO,
   NOMBRE_DIA,
@@ -30,16 +30,20 @@ export const Route = createFileRoute('/intranet/horario')({
 
 /** UC-23, Consultar horario: la última versión publicada, por sección o por docente según el alcance del rol. */
 function MiHorario() {
+  return <ConAnioActivo>{(anio) => <MiHorarioDe anio={anio} />}</ConAnioActivo>
+}
+
+function MiHorarioDe({ anio }: { anio: number }) {
   const { perspectiva, seccionId, docenteId } = Route.useSearch()
   const navegar = useNavigate({ from: Route.fullPath })
-  const horario = useHorarioVigente(ANIO_TRABAJO, perspectiva, seccionId, docenteId)
+  const horario = useHorarioVigente(anio, perspectiva, seccionId, docenteId)
 
   if (horario.isPending) return <p className="muted">Cargando…</p>
   if (horario.isError) {
     const sinPublicar = horario.error instanceof ApiError && horario.error.codigo === HORARIO_NO_PUBLICADO
     return (
       <>
-        <h1>Horario {ANIO_TRABAJO}</h1>
+        <h1>Horario {anio}</h1>
         <p className={sinPublicar ? 'alerta' : 'alerta alerta-error'} role={sinPublicar ? 'status' : 'alert'}>
           {sinPublicar ? 'El horario aún no se encuentra disponible. Cuando la administración lo publique, lo verás aquí.' : horario.error.message}
         </p>

@@ -17,9 +17,13 @@ const esquemaBusqueda = z.object({
   seccionId: z.string().optional().catch(undefined),
   docenteId: z.string().optional().catch(undefined),
 })
+import { resolverAnioActivo } from '../../../../modulos/academico/anioActivo'
 
 export const Route = createFileRoute('/intranet/horarios/$anio/elaborar')({
-  beforeLoad: () => exigirPermiso('HORARIO_GESTIONAR'),
+  beforeLoad: async ({ params, location }: { params: { anio: string }; location: { href: string } }) => {
+    exigirPermiso('HORARIO_GESTIONAR')
+    await resolverAnioActivo(params, location.href)
+  },
   validateSearch: (busqueda) => esquemaBusqueda.parse(busqueda),
   component: ElaborarHorario,
 })

@@ -10,9 +10,13 @@ import {
   type Publicacion,
   type SeccionCompletitud,
 } from '../../../../modulos/horarios/api'
+import { resolverAnioActivo } from '../../../../modulos/academico/anioActivo'
 
 export const Route = createFileRoute('/intranet/horarios/$anio/publicar')({
-  beforeLoad: () => exigirPermiso('HORARIO_GESTIONAR'),
+  beforeLoad: async ({ params, location }: { params: { anio: string }; location: { href: string } }) => {
+    exigirPermiso('HORARIO_GESTIONAR')
+    await resolverAnioActivo(params, location.href)
+  },
   component: PublicarHorario,
 })
 

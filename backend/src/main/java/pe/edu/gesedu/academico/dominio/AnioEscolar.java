@@ -50,4 +50,14 @@ public class AnioEscolar extends EntidadBase {
     public String getEstado() {
         return estado;
     }
+
+    /** Un año PLANIFICADO pasa a ACTIVO (C-47). */
+    public void activar() {
+        this.estado = "ACTIVO";
+    }
+
+    /** El año ACTIVO pasa a CERRADO cuando se activa el siguiente (C-47). */
+    public void cerrar() {
+        this.estado = "CERRADO";
+    }
 }

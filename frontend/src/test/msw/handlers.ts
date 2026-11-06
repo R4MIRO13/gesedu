@@ -36,4 +36,8 @@ export function problema(status: number, codigo: string, detail: string, extra: 
 export const handlersBase = [
   http.post('*/api/v1/auth/refresco', () => problema(401, 'SESION_EXPIRADA', 'La sesión expiró; inicia sesión de nuevo')),
   http.post('*/api/v1/auth/cierre-sesion', () => new HttpResponse(null, { status: 204 })),
+  // Año de trabajo de la SPA (C-47): el ACTIVO que informa el servidor
+  http.get('*/api/v1/anios-escolares/activo', () =>
+    HttpResponse.json({ id: 'anio-2027', anio: 2027, fechaInicio: '2027-03-01', fechaFin: '2027-12-20', estado: 'ACTIVO' }),
+  ),
 ]

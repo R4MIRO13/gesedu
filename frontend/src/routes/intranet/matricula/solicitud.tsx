@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { ApiError } from '../../../compartido/api/errores'
 import { exigirPermiso } from '../../../compartido/auth/guardias'
-import { ANIO_TRABAJO } from '../../../compartido/menu'
+import { ConAnioActivo } from '../../../compartido/componentes/ConAnioActivo'
 import {
   NOMBRE_DOCUMENTO,
   subirDocumento,
@@ -36,7 +36,11 @@ const PARENTESCOS = [
 const TIPOS: Record<TipoEstudiante, string> = { NUEVO_INGRESO: 'Nuevo ingreso', RECURRENTE: 'Recurrente' }
 
 function NuevaSolicitud() {
-  const opciones = useOpcionesSolicitud(ANIO_TRABAJO)
+  return <ConAnioActivo>{(anio) => <NuevaSolicitudDe anio={anio} />}</ConAnioActivo>
+}
+
+function NuevaSolicitudDe({ anio }: { anio: number }) {
+  const opciones = useOpcionesSolicitud(anio)
   const [registrada, setRegistrada] = useState<SolicitudRegistrada | null>(null)
 
   if (registrada) return <Constancia solicitud={registrada} />

@@ -10,9 +10,13 @@ import {
   type Disponibilidad,
 } from '../../../modulos/horarios/api'
 import { MatrizDisponibilidad } from '../../../modulos/horarios/componentes/MatrizDisponibilidad'
+import { resolverAnioActivo } from '../../../modulos/academico/anioActivo'
 
 export const Route = createFileRoute('/intranet/disponibilidad/$anio')({
-  beforeLoad: () => exigirPermiso('DISPONIBILIDAD_REGISTRAR'),
+  beforeLoad: async ({ params, location }: { params: { anio: string }; location: { href: string } }) => {
+    exigirPermiso('DISPONIBILIDAD_REGISTRAR')
+    await resolverAnioActivo(params, location.href)
+  },
   component: MiDisponibilidad,
 })
 

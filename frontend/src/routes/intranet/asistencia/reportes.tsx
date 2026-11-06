@@ -5,7 +5,7 @@ import { exigirAlgunPermiso } from '../../../compartido/auth/guardias'
 import { usePermiso } from '../../../compartido/auth/usePermiso'
 import { fechaCorta } from '../../../compartido/formato'
 import { guardarArchivo } from '../../../compartido/guardarArchivo'
-import { ANIO_TRABAJO } from '../../../compartido/menu'
+import { ConAnioActivo } from '../../../compartido/componentes/ConAnioActivo'
 import {
   descargarReporteAsistencia,
   useReporteAsistencia,
@@ -32,6 +32,10 @@ function filtrosIniciales(): FiltrosReporte {
 
 /** UC-10 y UC-11: reporte mensual de asistencia de alumnos o docentes, calculado al pedirlo, en pantalla, Excel o PDF. */
 function ReportesDeAsistencia() {
+  return <ConAnioActivo>{(anio) => <ReportesDeAsistenciaDe anio={anio} />}</ConAnioActivo>
+}
+
+function ReportesDeAsistenciaDe({ anio }: { anio: number }) {
   const esGeneral = usePermiso('ASISTENCIA_REPORTE_GENERAL')
   const [borrador, setBorrador] = useState<FiltrosReporte>(filtrosIniciales)
   const [pedido, setPedido] = useState<FiltrosReporte | null>(null)
@@ -39,7 +43,7 @@ function ReportesDeAsistencia() {
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null)
   const reporte = useReporteAsistencia(pedido)
   // Solo el administrador elige sección; si no puede leer las secciones del año, queda «todas»
-  const grados = useGrados(ANIO_TRABAJO, esGeneral)
+  const grados = useGrados(anio, esGeneral)
   const secciones = esGeneral && borrador.ambito === 'ALUMNOS' ? (grados.data?.grados ?? []).flatMap((g) => g.secciones) : []
 
   function cambiar<K extends keyof FiltrosReporte>(campo: K, valor: FiltrosReporte[K]) {
@@ -92,7 +96,7 @@ function ReportesDeAsistencia() {
             <select
               name="mes"
               value={borrador.mes ?? ''}
-              onChange={(e) => setBorrador((actual) => ({ ...actual, mes: e.target.value === '' ? null : Number(e.target.value), anio: e.target.value === '' ? null : actual.anio ?? ANIO_TRABAJO }))}
+              onChange={(e) => setBorrador((actual) => ({ ...actual, mes: e.target.value === '' ? null : Number(e.target.value), anio: e.target.value === '' ? null : actual.anio ?? anio }))}
             >
               <option value="">Mes actual</option>
               {MESES.map((nombre, i) => (

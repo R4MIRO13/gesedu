@@ -106,6 +106,19 @@ export function useCrearAnio() {
   })
 }
 
+/** C-47: activa un año PLANIFICADO y cierra el ACTIVO anterior; el año de trabajo de la SPA cambia con él. */
+export function useActivarAnio() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (anio: number) => api<AnioResumen>(`/anios-escolares/${anio}/activacion`, { method: 'PATCH' }),
+    onSuccess: () =>
+      Promise.all([
+        cliente.invalidateQueries({ queryKey: ['anios'] }),
+        cliente.invalidateQueries({ queryKey: ['anio-activo'] }),
+      ]),
+  })
+}
+
 // ---- UC-14: cursos y competencias ----
 
 export interface Competencia {

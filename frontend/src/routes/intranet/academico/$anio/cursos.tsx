@@ -16,9 +16,13 @@ import {
   type CursoCopiable,
 } from '../../../../modulos/academico/api'
 import { esquemaCurso, type DatosCurso } from '../../../../modulos/academico/esquemas'
+import { resolverAnioActivo } from '../../../../modulos/academico/anioActivo'
 
 export const Route = createFileRoute('/intranet/academico/$anio/cursos')({
-  beforeLoad: () => exigirPermiso('ACADEMICO_CONSULTAR'),
+  beforeLoad: async ({ params, location }: { params: { anio: string }; location: { href: string } }) => {
+    exigirPermiso('ACADEMICO_CONSULTAR')
+    await resolverAnioActivo(params, location.href)
+  },
   component: CursosYCompetencias,
 })
 

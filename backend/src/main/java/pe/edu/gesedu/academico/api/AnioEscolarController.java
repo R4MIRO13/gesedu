@@ -15,6 +15,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,6 +65,22 @@ class AnioEscolarController {
     @PreAuthorize("hasAuthority('ACADEMICO_CONSULTAR')")
     List<AnioResumenDto> listar() {
         return anios.listar();
+    }
+
+    @Operation(summary = "El año escolar ACTIVO (año de trabajo de la SPA, C-47). Cualquier usuario autenticado; 404 si no hay uno")
+    @GetMapping("/activo")
+    @PreAuthorize("isAuthenticated()")
+    AnioResumenDto activo() {
+        return anios.activo();
+    }
+
+    @Operation(summary = "Activa un año PLANIFICADO y cierra el ACTIVO anterior en una sola transacción (C-47, extensión de UC-13)",
+            description = "422 ANIO_CERRADO si el año está cerrado; 400 si ya está activo; 409 si otro administrador activó "
+                    + "otro año al mismo tiempo. Queda auditado.")
+    @PatchMapping("/{anio}/activacion")
+    @PreAuthorize("hasAuthority('ACADEMICO_CONFIGURAR')")
+    AnioResumenDto activar(@PathVariable int anio) {
+        return anios.activar(anio);
     }
 
     @Operation(summary = "Un año escolar con sus cuatro bimestres")

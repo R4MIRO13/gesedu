@@ -1,10 +1,5 @@
 import { linkOptions } from '@tanstack/react-router'
-
-/**
- * Año con el que trabaja la intranet hasta que exista la configuración del año escolar (UC-13): es el año de la
- * demo (docs/PLAN.md § 7.2). Cuando UC-13 esté lista saldrá del año ACTIVO.
- */
-export const ANIO_TRABAJO = 2027
+import { ANIO_ACTIVO } from '../modulos/academico/anioActivo'
 
 /** Opciones de la intranet; la SPA solo oculta, la autorización real la hace el backend. */
 export const OPCIONES_MENU = [
@@ -15,13 +10,13 @@ export const OPCIONES_MENU = [
     permiso: 'ACADEMICO_CONFIGURAR',
   },
   {
-    enlace: linkOptions({ to: '/intranet/academico/$anio/cursos', params: { anio: String(ANIO_TRABAJO) } }),
+    enlace: linkOptions({ to: '/intranet/academico/$anio/cursos', params: { anio: ANIO_ACTIVO } }),
     titulo: 'Cursos y competencias',
     descripcion: 'Cursos del año con sus horas y competencias; copia la configuración del año anterior.',
     permiso: 'ACADEMICO_CONFIGURAR',
   },
   {
-    enlace: linkOptions({ to: '/intranet/academico/$anio/secciones', params: { anio: String(ANIO_TRABAJO) } }),
+    enlace: linkOptions({ to: '/intranet/academico/$anio/secciones', params: { anio: ANIO_ACTIVO } }),
     titulo: 'Secciones y vacantes',
     descripcion: 'Secciones de cada grado: capacidad, vacantes y tutor.',
     permiso: 'ACADEMICO_CONFIGURAR',
@@ -39,13 +34,13 @@ export const OPCIONES_MENU = [
     permiso: 'HORARIO_CONSULTAR',
   },
   {
-    enlace: linkOptions({ to: '/intranet/horarios/$anio/configuracion', params: { anio: String(ANIO_TRABAJO) }, search: { seccion: 'periodo' } }),
+    enlace: linkOptions({ to: '/intranet/horarios/$anio/configuracion', params: { anio: ANIO_ACTIVO }, search: { seccion: 'periodo' } }),
     titulo: 'Configuración de horarios',
     descripcion: 'Periodo de disponibilidad, docentes con sus cursos y bloques semanales de cada curso.',
     permiso: 'HORARIO_CONFIGURAR',
   },
   {
-    enlace: linkOptions({ to: '/intranet/disponibilidad/$anio', params: { anio: String(ANIO_TRABAJO) } }),
+    enlace: linkOptions({ to: '/intranet/disponibilidad/$anio', params: { anio: ANIO_ACTIVO } }),
     titulo: 'Mi disponibilidad',
     descripcion: 'Marca los bloques en los que puedes dictar clases durante el periodo de registro.',
     permiso: 'DISPONIBILIDAD_REGISTRAR',
@@ -99,13 +94,13 @@ export const OPCIONES_MENU = [
     permiso: 'NOTA_CONSOLIDAR',
   },
   {
-    enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: String(ANIO_TRABAJO) }, search: { perspectiva: 'SECCION' } }),
+    enlace: linkOptions({ to: '/intranet/horarios/$anio/elaborar', params: { anio: ANIO_ACTIVO }, search: { perspectiva: 'SECCION' } }),
     titulo: 'Elaborar horario',
     descripcion: 'Arma el horario del año: secciones, cursos y docentes, sin cruces.',
     permiso: 'HORARIO_GESTIONAR',
   },
   {
-    enlace: linkOptions({ to: '/intranet/horarios/$anio/publicar', params: { anio: String(ANIO_TRABAJO) } }),
+    enlace: linkOptions({ to: '/intranet/horarios/$anio/publicar', params: { anio: ANIO_ACTIVO } }),
     titulo: 'Publicar horario',
     descripcion: 'Valida la carga de cada sección y publica la versión vigente del horario.',
     permiso: 'HORARIO_GESTIONAR',

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { ApiError } from '../../../compartido/api/errores'
 import { exigirPermiso } from '../../../compartido/auth/guardias'
-import { ANIO_TRABAJO } from '../../../compartido/menu'
+import { ConAnioActivo } from '../../../compartido/componentes/ConAnioActivo'
 import {
   CONCEPTOS,
   useConfiguracionCobros,
@@ -37,7 +37,11 @@ function valoresDe(c: ConfiguracionCobros): DatosCobros {
 }
 
 function ConfiguracionCobrosPagina() {
-  const cobros = useConfiguracionCobros(ANIO_TRABAJO)
+  return <ConAnioActivo>{(anio) => <ConfiguracionCobrosPaginaDe anio={anio} />}</ConAnioActivo>
+}
+
+function ConfiguracionCobrosPaginaDe({ anio }: { anio: number }) {
+  const cobros = useConfiguracionCobros(anio)
   if (cobros.isPending) return <p className="muted">Cargando…</p>
   if (cobros.isError) {
     return (

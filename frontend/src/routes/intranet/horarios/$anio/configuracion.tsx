@@ -26,9 +26,13 @@ const SECCIONES = [
 ] as const
 
 const esquemaBusqueda = z.object({ seccion: z.enum(['periodo', 'docentes', 'cargas']).catch('periodo') })
+import { resolverAnioActivo } from '../../../../modulos/academico/anioActivo'
 
 export const Route = createFileRoute('/intranet/horarios/$anio/configuracion')({
-  beforeLoad: () => exigirPermiso('HORARIO_CONFIGURAR'),
+  beforeLoad: async ({ params, location }: { params: { anio: string }; location: { href: string } }) => {
+    exigirPermiso('HORARIO_CONFIGURAR')
+    await resolverAnioActivo(params, location.href)
+  },
   validateSearch: (busqueda) => esquemaBusqueda.parse(busqueda),
   component: ConfiguracionHorarios,
 })
