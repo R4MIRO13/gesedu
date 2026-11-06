@@ -187,6 +187,42 @@ export function useReenviarInvitacion() {
   })
 }
 
+// ---- RF-48: roles y permisos ----
+
+export interface PermisoCatalogo {
+  codigo: string
+  modulo: string
+  accion: string
+  descripcion: string | null
+}
+
+export interface Rol {
+  id: string
+  codigo: string
+  nombre: string
+  descripcion: string | null
+  permisos: string[]
+}
+
+export interface CatalogoRoles {
+  roles: Rol[]
+  permisos: PermisoCatalogo[]
+}
+
+export function useRoles() {
+  return useQuery({ queryKey: ['roles'], queryFn: () => api<CatalogoRoles>('/roles'), staleTime: 0 })
+}
+
+/** Reemplaza el conjunto de permisos del rol; se aplica en el siguiente request de sus usuarios (RNF-07). */
+export function useGuardarPermisosRol() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, permisos }: { id: string; permisos: string[] }) =>
+      api<Rol>(`/roles/${id}/permisos`, { method: 'PUT', cuerpo: { permisos } }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['roles'] }),
+  })
+}
+
 // ---- RF-02: datos personales de estudiantes y apoderados ----
 
 export interface FichaAlumno {

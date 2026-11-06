@@ -156,8 +156,14 @@ export const OPCIONES_MENU = [
   {
     enlace: linkOptions({ to: '/intranet/usuarios' }),
     titulo: 'Usuarios',
-    descripcion: 'Cuentas del sistema: estado, bloqueos y desbloqueo.',
+    descripcion: 'Cuentas del sistema: alta con invitación, estado, bloqueos y desbloqueo.',
     permiso: 'USUARIO_CONSULTAR',
+  },
+  {
+    enlace: linkOptions({ to: '/intranet/roles' }),
+    titulo: 'Roles y permisos',
+    descripcion: 'Qué puede hacer cada rol; el cambio se aplica en el siguiente request de sus usuarios.',
+    permiso: 'ROL_GESTIONAR',
   },
   {
     enlace: linkOptions({ to: '/intranet/auditoria' }),

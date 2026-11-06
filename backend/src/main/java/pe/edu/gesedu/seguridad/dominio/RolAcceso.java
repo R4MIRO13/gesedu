@@ -27,6 +27,9 @@ public class RolAcceso {
     @Column(nullable = false, length = 80)
     private String nombre;
 
+    @Column(length = 255)
+    private String descripcion;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "rol_permiso", schema = "seguridad",
             joinColumns = @JoinColumn(name = "rol_acceso_id"),
@@ -48,7 +51,17 @@ public class RolAcceso {
         return nombre;
     }
 
+    public String getDescripcion() {
+        return descripcion;
+    }
+
     public Set<Permiso> getPermisos() {
         return Set.copyOf(permisos);
+    }
+
+    /** Reemplaza el conjunto completo de permisos del rol (RF-48). */
+    public void reemplazarPermisos(Set<Permiso> nuevos) {
+        permisos.retainAll(nuevos);
+        permisos.addAll(nuevos);
     }
 }

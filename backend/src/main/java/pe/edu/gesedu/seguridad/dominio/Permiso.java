@@ -17,7 +17,28 @@ public class Permiso {
     @Column(nullable = false, unique = true, length = 60)
     private String codigo;
 
+    @Column(nullable = false, length = 30)
+    private String modulo;
+
+    @Column(nullable = false, length = 30)
+    private String accion;
+
+    @Column(length = 255)
+    private String descripcion;
+
     protected Permiso() {
+    }
+
+    public String getModulo() {
+        return modulo;
+    }
+
+    public String getAccion() {
+        return accion;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
     }
 
     public String getId() {

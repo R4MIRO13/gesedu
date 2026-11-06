@@ -437,7 +437,7 @@ Asignación inicial: ADMINISTRADOR, todos los de gestión; DOCENTE, marcar asist
 | Mi horario (p. 31–33) | `/intranet/horario` | MatrizHorario (solo lectura), DetalleBloque, vista diaria en móvil, «aún no publicado» + «Ver horario 2026» | /horarios/{anio}/vigente | Alumno, Apoderado, Docente (perspectiva docente), Administrador (cualquiera) | 3 |
 | Usuarios (p. 34) | `/intranet/usuarios` | TablaUsuarios (filtros, paginación), DialogoNuevoUsuario (rol, vínculo con matrícula, permisos del rol), Desactivar/Activar/Desbloquear | /usuarios… | Administrador | 1 (lista + desbloquear) → 6 |
 | Auditoría (p. 35) | `/intranet/auditoria` | FiltrosAuditoria, TablaPaginada, Exportar ▾ (Excel/CSV), «no se pueden editar ni eliminar» | ★ /auditoria/… | Administrador | **1** |
-| *(sin wireframe, S-02)* | `/intranet/academico/$anio/secciones`, `/intranet/pagos/configuracion`, `/intranet/horarios/$anio/configuracion`, `/intranet/usuarios/roles` | Formularios simples | RF-03, RF-04, RF-06, RF-46, RF-47, RF-48 | Administrador | 2, 3, 6 |
+| *(sin wireframe, S-02)* | `/intranet/academico/$anio/secciones`, `/intranet/pagos/configuracion`, `/intranet/horarios/$anio/configuracion`, `/intranet/roles` | Formularios simples | RF-03, RF-04, RF-06, RF-46, RF-47, RF-48 | Administrador | 2, 3, 6 |
 
 El menú lateral (escritorio) y la barra inferior (móvil, p. 3, 8, 14, 27) se arman con los **permisos** de `/auth/yo`. Rutas: TanStack Router con `beforeLoad` exige sesión y permiso y redirige a `/login` o a `/intranet/inicio`. Esto solo oculta opciones: la decisión de acceso la toma siempre el backend (DA-05).
 

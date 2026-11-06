@@ -19,6 +19,7 @@ import { Route as IntranetAuditoriaRouteImport } from './routes/intranet/auditor
 import { Route as IntranetHorarioRouteImport } from './routes/intranet/horario'
 import { Route as IntranetInicioRouteImport } from './routes/intranet/inicio'
 import { Route as IntranetMiAsistenciaRouteImport } from './routes/intranet/mi-asistencia'
+import { Route as IntranetRolesRouteImport } from './routes/intranet/roles'
 import { Route as IntranetUsuariosRouteImport } from './routes/intranet/usuarios'
 import { Route as IntranetAcademicoAniosRouteImport } from './routes/intranet/academico/anios'
 import { Route as IntranetAcademicoConsolidarNotasRouteImport } from './routes/intranet/academico/consolidar-notas'
@@ -100,6 +101,11 @@ const IntranetInicioRoute = IntranetInicioRouteImport.update({
 const IntranetMiAsistenciaRoute = IntranetMiAsistenciaRouteImport.update({
   id: '/mi-asistencia',
   path: '/mi-asistencia',
+  getParentRoute: () => IntranetRoute,
+} as any)
+const IntranetRolesRoute = IntranetRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
   getParentRoute: () => IntranetRoute,
 } as any)
 const IntranetUsuariosRoute = IntranetUsuariosRouteImport.update({
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/intranet/horario': typeof IntranetHorarioRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/mi-asistencia': typeof IntranetMiAsistenciaRoute
+  '/intranet/roles': typeof IntranetRolesRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
   '/intranet/academico/consolidar-notas': typeof IntranetAcademicoConsolidarNotasRoute
@@ -341,6 +348,7 @@ export interface FileRoutesByTo {
   '/intranet/horario': typeof IntranetHorarioRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/mi-asistencia': typeof IntranetMiAsistenciaRoute
+  '/intranet/roles': typeof IntranetRolesRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
   '/intranet/academico/consolidar-notas': typeof IntranetAcademicoConsolidarNotasRoute
@@ -386,6 +394,7 @@ export interface FileRoutesById {
   '/intranet/horario': typeof IntranetHorarioRoute
   '/intranet/inicio': typeof IntranetInicioRoute
   '/intranet/mi-asistencia': typeof IntranetMiAsistenciaRoute
+  '/intranet/roles': typeof IntranetRolesRoute
   '/intranet/usuarios': typeof IntranetUsuariosRoute
   '/intranet/academico/anios': typeof IntranetAcademicoAniosRoute
   '/intranet/academico/consolidar-notas': typeof IntranetAcademicoConsolidarNotasRoute
@@ -432,6 +441,7 @@ export interface FileRouteTypes {
     | '/intranet/horario'
     | '/intranet/inicio'
     | '/intranet/mi-asistencia'
+    | '/intranet/roles'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
     | '/intranet/academico/consolidar-notas'
@@ -476,6 +486,7 @@ export interface FileRouteTypes {
     | '/intranet/horario'
     | '/intranet/inicio'
     | '/intranet/mi-asistencia'
+    | '/intranet/roles'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
     | '/intranet/academico/consolidar-notas'
@@ -520,6 +531,7 @@ export interface FileRouteTypes {
     | '/intranet/horario'
     | '/intranet/inicio'
     | '/intranet/mi-asistencia'
+    | '/intranet/roles'
     | '/intranet/usuarios'
     | '/intranet/academico/anios'
     | '/intranet/academico/consolidar-notas'
@@ -633,6 +645,13 @@ declare module '@tanstack/react-router' {
       path: '/mi-asistencia'
       fullPath: '/intranet/mi-asistencia'
       preLoaderRoute: typeof IntranetMiAsistenciaRouteImport
+      parentRoute: typeof IntranetRoute
+    }
+    '/intranet/roles': {
+      id: '/intranet/roles'
+      path: '/roles'
+      fullPath: '/intranet/roles'
+      preLoaderRoute: typeof IntranetRolesRouteImport
       parentRoute: typeof IntranetRoute
     }
     '/intranet/usuarios': {
@@ -867,6 +886,7 @@ interface IntranetRouteChildren {
   IntranetHorarioRoute: typeof IntranetHorarioRoute
   IntranetInicioRoute: typeof IntranetInicioRoute
   IntranetMiAsistenciaRoute: typeof IntranetMiAsistenciaRoute
+  IntranetRolesRoute: typeof IntranetRolesRoute
   IntranetUsuariosRoute: typeof IntranetUsuariosRoute
   IntranetAcademicoAniosRoute: typeof IntranetAcademicoAniosRoute
   IntranetAcademicoConsolidarNotasRoute: typeof IntranetAcademicoConsolidarNotasRoute
@@ -906,6 +926,7 @@ const IntranetRouteChildren: IntranetRouteChildren = {
   IntranetHorarioRoute: IntranetHorarioRoute,
   IntranetInicioRoute: IntranetInicioRoute,
   IntranetMiAsistenciaRoute: IntranetMiAsistenciaRoute,
+  IntranetRolesRoute: IntranetRolesRoute,
   IntranetUsuariosRoute: IntranetUsuariosRoute,
   IntranetAcademicoAniosRoute: IntranetAcademicoAniosRoute,
   IntranetAcademicoConsolidarNotasRoute: IntranetAcademicoConsolidarNotasRoute,
