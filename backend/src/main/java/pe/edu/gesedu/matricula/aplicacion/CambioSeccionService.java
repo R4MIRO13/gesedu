@@ -1,6 +1,8 @@
 package pe.edu.gesedu.matricula.aplicacion;
 
 import java.util.Comparator;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -16,7 +18,9 @@ import pe.edu.gesedu.compartido.auditoria.ContextoAuditoria;
 import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
 import pe.edu.gesedu.matricula.dominio.EstadoMatricula;
+import pe.edu.gesedu.matricula.dominio.HistorialSeccion;
 import pe.edu.gesedu.matricula.dominio.Matricula;
+import pe.edu.gesedu.matricula.infraestructura.HistorialSeccionRepository;
 import pe.edu.gesedu.matricula.infraestructura.MatriculaRepository;
 import pe.edu.gesedu.seguridad.aplicacion.DirectorioFamilias;
 import pe.edu.gesedu.seguridad.aplicacion.DirectorioFamilias.AlumnoResumen;
@@ -43,13 +47,17 @@ public class CambioSeccionService {
     private final AnioEscolarService anios;
     private final CatalogoAcademicoService catalogo;
     private final DirectorioFamilias familias;
+    private final HistorialSeccionRepository historial;
+    private final Clock reloj;
 
     CambioSeccionService(MatriculaRepository matriculas, AnioEscolarService anios, CatalogoAcademicoService catalogo,
-                         DirectorioFamilias familias) {
+                         DirectorioFamilias familias, HistorialSeccionRepository historial, Clock reloj) {
         this.matriculas = matriculas;
         this.anios = anios;
         this.catalogo = catalogo;
         this.familias = familias;
+        this.historial = historial;
+        this.reloj = reloj;
     }
 
     /** La matrícula vigente del estudiante y las secciones de su año con su cupo; 404 si no tiene una matrícula vigente. */
@@ -104,6 +112,12 @@ public class CambioSeccionService {
         }
         m.cambiarSeccion(seccionDestinoId);
         matriculas.saveAndFlush(m);
+        if (!historial.existsByMatriculaId(m.getId())) {
+            // Matrícula sin historial (creada antes de la migración V12): su sección anterior rigió desde la matrícula
+            historial.save(new HistorialSeccion(m.getId(), origenId, m.getFechaMatricula()));
+        }
+        // Desde hoy el alumno cuenta en la sección nueva: los reportes de días anteriores siguen en la anterior
+        historial.save(new HistorialSeccion(m.getId(), seccionDestinoId, LocalDate.now(reloj)));
 
         int vacantesOrigen = catalogo.vacantes(origenId);
         int vacantesDestino = catalogo.vacantes(seccionDestinoId);

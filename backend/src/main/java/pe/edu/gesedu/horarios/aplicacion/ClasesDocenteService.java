@@ -1,6 +1,9 @@
 package pe.edu.gesedu.horarios.aplicacion;
 
+import java.time.Clock;
 import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
@@ -48,13 +51,15 @@ public class ClasesDocenteService {
     private final BloqueHorarioRepository bloques;
     private final HorarioPublicadoRepository publicados;
     private final AsignacionPublicadaRepository publicadas;
+    private final Clock reloj;
 
     ClasesDocenteService(AnioEscolarService anios, BloqueHorarioRepository bloques, HorarioPublicadoRepository publicados,
-                         AsignacionPublicadaRepository publicadas) {
+                         AsignacionPublicadaRepository publicadas, Clock reloj) {
         this.anios = anios;
         this.bloques = bloques;
         this.publicados = publicados;
         this.publicadas = publicadas;
+        this.reloj = reloj;
     }
 
     /** Clases del docente el día de la semana indicado, según la versión vigente del horario del año. */
@@ -109,6 +114,46 @@ public class ClasesDocenteService {
             }
         }
         return new JornadaDelDia(true, true, primeros);
+    }
+
+    /**
+     * Las jornadas de varios días según la versión del horario que estaba vigente en cada fecha (UC-10, meses pasados):
+     * la última versión publicada hasta el final de ese día, en la zona institucional. Las versiones son inmutables, así
+     * que basta resolver «versión vigente el día D». Un día anterior a la primera publicación no tiene horario
+     * ({@code horarioPublicado = false}) y no aporta días esperados a ningún docente.
+     */
+    @Transactional(readOnly = true)
+    public Map<LocalDate, JornadaDelDia> jornadasDelPeriodo(int anio, List<LocalDate> dias) {
+        AnioEscolarResumen a = anios.obtenerPorAnio(anio);
+        List<HorarioPublicado> versiones = publicados.findByAnioEscolarIdOrderByNumeroVersionDesc(a.id());
+        Map<DiaSemana, List<BloqueHorario>> bloquesPorDia = bloques.findByAnioEscolarId(a.id()).stream()
+                .collect(Collectors.groupingBy(BloqueHorario::getDiaSemana));
+        Map<String, List<AsignacionPublicada>> asignaciones = new java.util.HashMap<>();
+        Map<LocalDate, JornadaDelDia> resultado = new java.util.LinkedHashMap<>();
+        for (LocalDate dia : dias) {
+            List<BloqueHorario> delDia = bloquesPorDia.getOrDefault(aDiaSemana(dia.getDayOfWeek()), List.of());
+            if (delDia.isEmpty()) {
+                resultado.put(dia, new JornadaDelDia(false, false, Map.of()));
+                continue;
+            }
+            Instant finDelDia = dia.plusDays(1).atStartOfDay(reloj.getZone()).toInstant();
+            Optional<HorarioPublicado> version = versiones.stream()
+                    .filter(v -> v.getFechaHoraPublicacion().isBefore(finDelDia)).findFirst();
+            if (version.isEmpty()) {
+                resultado.put(dia, new JornadaDelDia(true, false, Map.of()));
+                continue;
+            }
+            Map<String, BloqueHorario> porId = delDia.stream().collect(Collectors.toMap(BloqueHorario::getId, Function.identity()));
+            Map<String, LocalTime> primeros = new java.util.TreeMap<>();
+            for (AsignacionPublicada ap : asignaciones.computeIfAbsent(version.get().getId(), publicadas::findByHorarioPublicadoId)) {
+                BloqueHorario bloque = porId.get(ap.getBloqueId());
+                if (bloque != null) {
+                    primeros.merge(ap.getDocenteId(), bloque.getHoraInicio(), (x, y) -> x.isBefore(y) ? x : y);
+                }
+            }
+            resultado.put(dia, new JornadaDelDia(true, true, primeros));
+        }
+        return resultado;
     }
 
     /** El año tiene bloques configurados ese día de la semana, es decir, hay jornada escolar (S-57). */

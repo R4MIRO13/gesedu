@@ -17,7 +17,9 @@ import pe.edu.gesedu.academico.aplicacion.CatalogoAcademicoService.SeccionResume
 import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
 import pe.edu.gesedu.matricula.dominio.EstadoMatricula;
+import pe.edu.gesedu.matricula.dominio.HistorialSeccion;
 import pe.edu.gesedu.matricula.dominio.Matricula;
+import pe.edu.gesedu.matricula.infraestructura.HistorialSeccionRepository;
 import pe.edu.gesedu.matricula.infraestructura.MatriculaRepository;
 import pe.edu.gesedu.seguridad.aplicacion.ContextoUsuario;
 import pe.edu.gesedu.seguridad.aplicacion.DirectorioFamilias;
@@ -52,14 +54,16 @@ public class ConsultaMatriculaService {
     private final CatalogoAcademicoService catalogo;
     private final DirectorioFamilias familias;
     private final ContextoUsuario contexto;
+    private final HistorialSeccionRepository historial;
 
     ConsultaMatriculaService(MatriculaRepository matriculas, AnioEscolarService anios, CatalogoAcademicoService catalogo,
-                             DirectorioFamilias familias, ContextoUsuario contexto) {
+                             DirectorioFamilias familias, ContextoUsuario contexto, HistorialSeccionRepository historial) {
         this.matriculas = matriculas;
         this.anios = anios;
         this.catalogo = catalogo;
         this.familias = familias;
         this.contexto = contexto;
+        this.historial = historial;
     }
 
     /**
@@ -137,6 +141,50 @@ public class ConsultaMatriculaService {
                 .map(n -> new AlumnoDeSeccion(n.id(), n.codigo(), n.apellidos(), n.nombres()))
                 .sorted(Comparator.comparing(AlumnoDeSeccion::apellidos, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(AlumnoDeSeccion::nombres, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    /**
+     * Un alumno que estuvo en la sección y los días de la lista en que lo estuvo (UC-10/UC-11: reportes de meses
+     * pasados). La sección de cada día sale del historial de la matrícula; una matrícula sin historial (datos
+     * anteriores a la migración V12) cuenta con su sección actual desde siempre. Los días anteriores a la primera fila
+     * se atribuyen a la primera sección, para que ningún día quede sin sección.
+     */
+    public record AlumnoEnSeccion(AlumnoDeSeccion alumno, Set<LocalDate> dias) {
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlumnoEnSeccion> alumnosDeSeccionEnDias(String seccionId, List<LocalDate> dias) {
+        Set<String> candidatas = new java.util.HashSet<>(historial.matriculasQueEstuvieronEn(seccionId));
+        matriculas.findBySeccionIdAndEstado(seccionId, EstadoMatricula.CONFIRMADA).forEach(m -> candidatas.add(m.getId()));
+        if (candidatas.isEmpty()) {
+            return List.of();
+        }
+        Map<String, List<HistorialSeccion>> lineas = historial.lineaDeTiempo(candidatas).stream()
+                .collect(Collectors.groupingBy(HistorialSeccion::getMatriculaId));
+        Map<String, Set<LocalDate>> diasPorAlumno = new java.util.HashMap<>();
+        for (Matricula m : matriculas.findAllById(candidatas)) {
+            if (m.getEstado() != EstadoMatricula.CONFIRMADA) {
+                continue;
+            }
+            List<HistorialSeccion> linea = lineas.getOrDefault(m.getId(), List.of());
+            Set<LocalDate> enSeccion = new java.util.TreeSet<>();
+            for (LocalDate dia : dias) {
+                String seccionDelDia = linea.isEmpty() ? m.getSeccionId()
+                        : linea.stream().filter(h -> !h.getDesde().isAfter(dia)).reduce((x, y) -> y)
+                                .orElse(linea.getFirst()).getSeccionId();
+                if (seccionDelDia.equals(seccionId)) {
+                    enSeccion.add(dia);
+                }
+            }
+            if (!enSeccion.isEmpty()) {
+                diasPorAlumno.computeIfAbsent(m.getAlumnoId(), k -> new java.util.TreeSet<>()).addAll(enSeccion);
+            }
+        }
+        return familias.nombresDeAlumnos(diasPorAlumno.keySet()).values().stream()
+                .map(n -> new AlumnoEnSeccion(new AlumnoDeSeccion(n.id(), n.codigo(), n.apellidos(), n.nombres()), diasPorAlumno.get(n.id())))
+                .sorted(Comparator.comparing((AlumnoEnSeccion a) -> a.alumno().apellidos(), String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(a -> a.alumno().nombres(), String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 

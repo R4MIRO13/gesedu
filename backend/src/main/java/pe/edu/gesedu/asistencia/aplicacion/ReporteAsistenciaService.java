@@ -46,6 +46,7 @@ import pe.edu.gesedu.horarios.aplicacion.ClasesDocenteService;
 import pe.edu.gesedu.horarios.aplicacion.ClasesDocenteService.JornadaDelDia;
 import pe.edu.gesedu.matricula.aplicacion.ConsultaMatriculaService;
 import pe.edu.gesedu.matricula.aplicacion.ConsultaMatriculaService.AlumnoDeSeccion;
+import pe.edu.gesedu.matricula.aplicacion.ConsultaMatriculaService.AlumnoEnSeccion;
 import pe.edu.gesedu.seguridad.aplicacion.ContextoUsuario;
 import pe.edu.gesedu.seguridad.aplicacion.DirectorioDocentes;
 import pe.edu.gesedu.seguridad.aplicacion.DirectorioDocentes.DocenteResumen;
@@ -207,19 +208,23 @@ public class ReporteAsistenciaService {
         Set<LocalDate> dias = new HashSet<>(c.dias());
         List<FilaReporteDto> filas = new ArrayList<>();
         for (SeccionResumen seccion : visibles) {
-            List<AlumnoDeSeccion> deLaSeccion = matriculas.alumnosDeSeccion(seccion.id());
+            // Cada día cuenta en la sección que el alumno tenía entonces (historial de la matrícula, RF-05)
+            List<AlumnoEnSeccion> deLaSeccion = matriculas.alumnosDeSeccionEnDias(seccion.id(), c.dias());
             if (deLaSeccion.isEmpty()) {
                 continue;
             }
             Map<String, Map<EstadoAsistencia, Integer>> conteo = new HashMap<>();
+            Map<String, Set<LocalDate>> diasDelAlumno = new HashMap<>();
+            deLaSeccion.forEach(a -> diasDelAlumno.put(a.alumno().alumnoId(), a.dias()));
             for (AsistenciaAlumno a : alumnos.findByFechaBetweenAndAlumnoIdIn(c.periodo().atDay(1), c.corte(),
-                    deLaSeccion.stream().map(AlumnoDeSeccion::alumnoId).toList())) {
-                if (dias.contains(a.getFecha())) {
+                    deLaSeccion.stream().map(x -> x.alumno().alumnoId()).toList())) {
+                if (dias.contains(a.getFecha()) && diasDelAlumno.get(a.getAlumnoId()).contains(a.getFecha())) {
                     conteo.computeIfAbsent(a.getAlumnoId(), k -> new EnumMap<>(EstadoAsistencia.class)).merge(a.getEstado(), 1, Integer::sum);
                 }
             }
-            for (AlumnoDeSeccion alumno : deLaSeccion) {
-                Resumen resumen = resumenDe(conteo.get(alumno.alumnoId()), c.dias().size());
+            for (AlumnoEnSeccion enSeccion : deLaSeccion) {
+                AlumnoDeSeccion alumno = enSeccion.alumno();
+                Resumen resumen = resumenDe(conteo.get(alumno.alumnoId()), enSeccion.dias().size());
                 filas.add(fila(alumno.alumnoId(), alumno.codigo(), alumno.apellidos() + ", " + alumno.nombres(), seccion.nombre(), resumen));
             }
         }
@@ -231,18 +236,16 @@ public class ReporteAsistenciaService {
         if (!contexto.tienePermiso(REPORTE_GENERAL)) {
             throw new ExcepcionNegocio(CodigoError.FUERA_DE_ALCANCE, "Solo el administrador exporta reportes de docentes");
         }
-        // Qué docentes tenían clases cada día lectivo, según el horario publicado (FA-4: sin él no hay universo de días esperados)
-        Map<DayOfWeek, JornadaDelDia> jornadas = new HashMap<>();
-        for (LocalDate dia : c.dias()) {
-            jornadas.computeIfAbsent(dia.getDayOfWeek(), d -> clasesDocente.jornadaDelDia(c.anio().anio(), d));
-        }
-        if (jornadas.values().stream().anyMatch(j -> !j.horarioPublicado())) {
+        // Qué docentes tenían clases cada día lectivo, según la versión del horario vigente ese día (FA-4: sin ninguna
+        // versión publicada en el periodo no hay universo de días esperados)
+        Map<LocalDate, JornadaDelDia> jornadas = clasesDocente.jornadasDelPeriodo(c.anio().anio(), c.dias());
+        if (jornadas.values().stream().noneMatch(JornadaDelDia::horarioPublicado)) {
             throw new ExcepcionNegocio(CodigoError.CALENDARIO_NO_DISPONIBLE,
                     "No hay un horario publicado para el año " + c.anio().anio() + ": no puede determinarse el universo de días esperados de los docentes.");
         }
         Map<String, Integer> esperados = new HashMap<>();
         for (LocalDate dia : c.dias()) {
-            for (String docenteId : jornadas.get(dia.getDayOfWeek()).primerBloquePorDocente().keySet()) {
+            for (String docenteId : jornadas.get(dia).primerBloquePorDocente().keySet()) {
                 esperados.merge(docenteId, 1, Integer::sum);
             }
         }

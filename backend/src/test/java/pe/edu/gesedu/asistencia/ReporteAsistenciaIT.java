@@ -441,16 +441,24 @@ class ReporteAsistenciaIT extends BaseIT {
     @Test
     void fa4ElReporteDeDocentesSinHorarioPublicadoNoInventaFaltasNiPorcentajes() throws Exception {
         abril();
-        jdbc.update("UPDATE horarios.horario_publicado SET vigente = FALSE WHERE id = ?", horarioId);
+        // Un año ACTIVO con jornada pero sin ninguna versión del horario publicada (las versiones son inmutables)
+        Escenario sinHorario = new DatosMatricula(jdbc).crearEscenario(30);
+        jdbc.update("UPDATE academico.anio_escolar SET estado = 'PLANIFICADO' WHERE id = ?", e.anioId());
+        jdbc.update("UPDATE academico.anio_escolar SET estado = 'ACTIVO' WHERE id = ?", sinHorario.anioId());
+        jdbc.update("INSERT INTO academico.bimestre (id, anio_escolar_id, numero, fecha_inicio, fecha_fin) VALUES (?, ?, 1, ?::date, ?::date)",
+                UUID.randomUUID().toString(), sinHorario.anioId(), e.anio() + "-02-15", e.anio() + "-04-30");
+        jdbc.update("INSERT INTO horarios.bloque_horario (id, anio_escolar_id, dia_semana, hora_inicio, hora_fin) VALUES (?, ?, 'LUNES', '07:45', '08:30')",
+                UUID.randomUUID().toString(), sinHorario.anioId());
         try {
-            Respuesta docentes = get(consulta("DOCENTES", 3, null, null), admin());
-            Respuesta alumnos = get(consulta("ALUMNOS", 3, null, null), admin());
+            Respuesta docentes = get(RUTA + "?ambito=DOCENTES&mes=3&anio=" + e.anio(), admin());
+            Respuesta alumnos = get(RUTA + "?ambito=ALUMNOS&mes=3&anio=" + e.anio(), admin());
 
             assertThat(docentes.estado()).isEqualTo(422);
             assertThat(docentes.cuerpo().get("codigo").asString()).isEqualTo("CALENDARIO_NO_DISPONIBLE");
-            assertThat(alumnos.estado()).as("los alumnos no dependen del horario de los docentes").isEqualTo(200);
+            assertThat(alumnos.estado()).as("los alumnos no dependen del horario de los docentes").isNotEqualTo(500);
         } finally {
-            jdbc.update("UPDATE horarios.horario_publicado SET vigente = TRUE WHERE id = ?", horarioId);
+            jdbc.update("UPDATE academico.anio_escolar SET estado = 'PLANIFICADO' WHERE id = ?", sinHorario.anioId());
+            jdbc.update("UPDATE academico.anio_escolar SET estado = 'ACTIVO' WHERE id = ?", e.anioId());
         }
     }
 

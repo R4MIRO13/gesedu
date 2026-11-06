@@ -37,6 +37,7 @@ import pe.edu.gesedu.matricula.dominio.DocumentoSolicitud;
 import pe.edu.gesedu.matricula.dominio.EstadoAdmision;
 import pe.edu.gesedu.matricula.dominio.EstadoMatricula;
 import pe.edu.gesedu.matricula.dominio.EstadoSolicitud;
+import pe.edu.gesedu.matricula.dominio.HistorialSeccion;
 import pe.edu.gesedu.matricula.dominio.Matricula;
 import pe.edu.gesedu.matricula.dominio.MotivoRechazo;
 import pe.edu.gesedu.matricula.dominio.ReglasMatricula;
@@ -44,6 +45,7 @@ import pe.edu.gesedu.matricula.dominio.ReglasMatricula.Validacion;
 import pe.edu.gesedu.matricula.dominio.SolicitudMatricula;
 import pe.edu.gesedu.matricula.dominio.TipoEstudiante;
 import pe.edu.gesedu.matricula.infraestructura.DocumentoSolicitudRepository;
+import pe.edu.gesedu.matricula.infraestructura.HistorialSeccionRepository;
 import pe.edu.gesedu.matricula.infraestructura.MatriculaRepository;
 import pe.edu.gesedu.matricula.infraestructura.SolicitudMatriculaRepository;
 import pe.edu.gesedu.pagos.aplicacion.PlanDeCobros;
@@ -77,12 +79,13 @@ public class EvaluacionMatriculaService {
     private final GestorArchivos archivos;
     private final Notificaciones notificaciones;
     private final Clock reloj;
+    private final HistorialSeccionRepository historial;
 
     EvaluacionMatriculaService(SolicitudMatriculaRepository solicitudes, DocumentoSolicitudRepository documentos,
                                MatriculaRepository matriculas, CatalogoAcademicoService catalogo,
                                AnioEscolarService anios, PlanDeCobros cobros, DirectorioFamilias familias,
                                ContextoUsuario contexto, GestorArchivos archivos, Notificaciones notificaciones,
-                               Clock reloj) {
+                               Clock reloj, HistorialSeccionRepository historial) {
         this.solicitudes = solicitudes;
         this.documentos = documentos;
         this.matriculas = matriculas;
@@ -94,6 +97,7 @@ public class EvaluacionMatriculaService {
         this.archivos = archivos;
         this.notificaciones = notificaciones;
         this.reloj = reloj;
+        this.historial = historial;
     }
 
     // ---- Consulta ----------------------------------------------------------------------------------------
@@ -210,6 +214,7 @@ public class EvaluacionMatriculaService {
         } catch (DataIntegrityViolationException e) {
             throw new ExcepcionNegocio(CodigoError.MATRICULA_DUPLICADA);
         }
+        historial.save(new HistorialSeccion(matricula.getId(), seccion.id(), matricula.getFechaMatricula()));
         boolean nuevo = s.getTipoEstudiante() == TipoEstudiante.NUEVO_INGRESO;
         List<LineaCosto> lineas = cobros.generarObligaciones(matricula.getId(), s.getAnioEscolarId(),
                 s.getAlumnoId(), s.getApoderadoId(), nuevo);
