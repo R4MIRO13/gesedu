@@ -4,6 +4,24 @@
  */
 
 export interface paths {
+    "/api/v1/usuarios/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ficha de la cuenta con su perfil. Devuelve ETag con la versión de la cuenta */
+        get: operations["obtener"];
+        /** Modifica los datos de la cuenta; el rol no cambia. Exige If-Match; 409 DOCUMENTO_DUPLICADO, CORREO_DUPLICADO o CONFLICTO_CONCURRENCIA. Con la cuenta pendiente, un correo nuevo reenvía la invitación */
+        put: operations["modificar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/solicitudes-matricula/{codigo}/evaluacion": {
         parameters: {
             query?: never;
@@ -29,12 +47,12 @@ export interface paths {
             cookie?: never;
         };
         /** Una sección con su versión en el ETag */
-        get: operations["obtener"];
+        get: operations["obtener_1"];
         /**
          * Cambia la capacidad y el tutor de la sección. Exige If-Match
          * @description Las vacantes se ajustan con la capacidad. 422 CAPACIDAD_INSUFICIENTE si queda por debajo de los matriculados; 409 CONFLICTO_CONCURRENCIA si la sección cambió; 409 TUTOR_YA_ASIGNADO.
          */
-        put: operations["modificar"];
+        put: operations["modificar_1"];
         post?: never;
         delete?: never;
         options?: never;
@@ -51,7 +69,7 @@ export interface paths {
         };
         get?: never;
         /** Modifica el bloque, el curso o el docente de una clase (FA-1). Exige If-Match */
-        put: operations["modificar_1"];
+        put: operations["modificar_2"];
         post?: never;
         /** Elimina una clase del borrador (FA-2). Exige If-Match */
         delete: operations["eliminar"];
@@ -68,9 +86,9 @@ export interface paths {
             cookie?: never;
         };
         /** Un curso con sus competencias */
-        get: operations["obtener_1"];
+        get: operations["obtener_2"];
         /** Edita el curso y su lista de competencias (agrega, edita y quita; RF-24) */
-        put: operations["modificar_2"];
+        put: operations["modificar_3"];
         post?: never;
         /** Elimina un curso que aún no se usa. 409 CURSO_EN_USO si tiene docentes, cargas, clases o logros */
         delete: operations["eliminar_1"];
@@ -215,7 +233,7 @@ export interface paths {
             cookie?: never;
         };
         /** Cronograma de cobros y porcentaje de penalidad del año */
-        get: operations["obtener_2"];
+        get: operations["obtener_3"];
         /** Guarda el cronograma completo (reemplaza al anterior) y la penalidad, y actualiza el monto y el vencimiento de las obligaciones PENDIENTES del año (RF-07): las pagadas y las vencidas no cambian y las líneas nuevas no crean obligaciones retroactivas. `obligacionesActualizadas` dice cuántas cambiaron. Queda auditado */
         put: operations["guardar_2"];
         post?: never;
@@ -261,6 +279,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/usuarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista las cuentas, paginada, filtrable por texto (nombre o correo), rol y estado */
+        get: operations["listar"];
+        put?: never;
+        /** Crea una cuenta pendiente (UC-24) y le envía la invitación de 72 h para definir su contraseña. El administrador no define ni ve la contraseña. 409 DOCUMENTO_DUPLICADO o CORREO_DUPLICADO (FA-1) */
+        post: operations["crear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/usuarios/{id}/invitacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reenvía la invitación a una cuenta pendiente (la anterior queda anulada). 202 */
+        post: operations["reenviarInvitacion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/solicitudes-matricula": {
         parameters: {
             query?: never;
@@ -269,7 +322,7 @@ export interface paths {
             cookie?: never;
         };
         /** Bandeja de solicitudes (paso 1), paginada y filtrable por estado y texto */
-        get: operations["listar"];
+        get: operations["listar_1"];
         put?: never;
         /** Registra la solicitud (pasos 4 a 7): queda «Pendiente de revisión» con un código de seguimiento. 400 si faltan campos o documentos; 409 SOLICITUD_EN_TRAMITE o DOCUMENTO_DUPLICADO */
         post: operations["registrar"];
@@ -436,7 +489,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Agrega una clase al borrador. Exige If-Match. 409 por cruce o por versión; 422 si el docente no está asociado al curso o no está disponible */
-        post: operations["crear"];
+        post: operations["crear_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -453,7 +506,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Agrega una sección a un grado, con todas sus vacantes libres. 409 si la letra ya existe o el docente ya es tutor de otra sección del año. Queda auditado */
-        post: operations["crear_1"];
+        post: operations["crear_2"];
         delete?: never;
         options?: never;
         head?: never;
@@ -644,13 +697,13 @@ export interface paths {
             cookie?: never;
         };
         /** Años escolares, del más reciente al más antiguo */
-        get: operations["listar_1"];
+        get: operations["listar_2"];
         put?: never;
         /**
          * Crea el año escolar PLANIFICADO con sus cuatro bimestres y sus cinco grados
          * @description 422 RANGO_ANIO_INVALIDO si no dura entre 10 y 12 meses; 422 BIMESTRES_SUPERPUESTOS si un bimestre sale del año o se cruza con otro (con `problemas[]`); 409 si el año ya existe. Queda auditado.
          */
-        post: operations["crear_2"];
+        post: operations["crear_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -682,10 +735,10 @@ export interface paths {
             cookie?: never;
         };
         /** Cursos del año con sus competencias y el total de horas semanales */
-        get: operations["listar_2"];
+        get: operations["listar_3"];
         put?: never;
         /** Crea un curso con sus competencias (códigos C1, C2…). 409 si el nombre ya existe en el año; 422 si el año está cerrado. Queda auditado */
-        post: operations["crear_3"];
+        post: operations["crear_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -724,10 +777,10 @@ export interface paths {
             cookie?: never;
         };
         /** Lista los bloques horarios del año, ordenados por día y hora */
-        get: operations["listar_3"];
+        get: operations["listar_4"];
         put?: never;
         /** Crea un bloque horario (solo Administrador). 409 si se superpone con otro del mismo día */
-        post: operations["crear_4"];
+        post: operations["crear_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -791,6 +844,40 @@ export interface paths {
         patch: operations["desbloquear"];
         trace?: never;
     };
+    "/api/v1/usuarios/{id}/desactivacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Desactiva la cuenta y revoca sus sesiones de inmediato (el siguiente request da 401). No se puede desactivar la cuenta propia */
+        patch: operations["desactivar"];
+        trace?: never;
+    };
+    "/api/v1/usuarios/{id}/activacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Habilita la cuenta. El alumno exige matrícula activa (422 VINCULO_ACADEMICO_INEXISTENTE); el apoderado y el personal, no. Sin contraseña todavía, envía la invitación y queda PENDIENTE */
+        patch: operations["activar"];
+        trace?: never;
+    };
     "/api/v1/matriculas/{matriculaId}/seccion": {
         parameters: {
             query?: never;
@@ -828,21 +915,24 @@ export interface paths {
         patch: operations["cambiarEstado"];
         trace?: never;
     };
-    "/api/v1/usuarios": {
+    "/api/v1/anios-escolares/{anio}/activacion": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Lista las cuentas, paginada, filtrable por texto (nombre o correo), rol y estado */
-        get: operations["listar_4"];
+        get?: never;
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Activa un año PLANIFICADO y cierra el ACTIVO anterior en una sola transacción (C-47, extensión de UC-13)
+         * @description 422 ANIO_CERRADO si el año está cerrado; 400 si ya está activo; 409 si otro administrador activó otro año al mismo tiempo. Queda auditado.
+         */
+        patch: operations["activar_1"];
         trace?: never;
     };
     "/api/v1/solicitudes-matricula/{codigo}": {
@@ -998,7 +1088,7 @@ export interface paths {
          * El borrador del año para una perspectiva (lo crea si no existe). Devuelve ETag con la versión
          * @description perspectiva=SECCION con seccionId, o perspectiva=DOCENTE con docenteId; ambas ven el mismo borrador. Sin id se toma la primera sección o el primer docente.
          */
-        get: operations["obtener_3"];
+        get: operations["obtener_4"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1308,7 +1398,7 @@ export interface paths {
             cookie?: never;
         };
         /** Un año escolar con sus cuatro bimestres */
-        get: operations["obtener_4"];
+        get: operations["obtener_5"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1363,6 +1453,23 @@ export interface paths {
          * @description `cursos` trae, por curso en una sección, las celdas alumno x competencia con logro sobre el total y su porcentaje; los incompletos van primero. `puedeConsolidar` es verdadero cuando todos están al 100 % (y, en el último bimestre, los anteriores están consolidados y al día); si no, `motivo` y `docentesPendientes` lo explican.
          */
         get: operations["avance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/anios-escolares/activo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** El año escolar ACTIVO (año de trabajo de la SPA, C-47). Cualquier usuario autenticado; 404 si no hay uno */
+        get: operations["activo"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1537,6 +1644,36 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        CambiosRequest: {
+            nombres: string;
+            apellidos: string;
+            /** @description Un documento nuevo debe ser un DNI de 8 dígitos */
+            documento: string;
+            /** Format: email */
+            correo: string;
+            cargo?: string;
+            especialidad?: string;
+            telefono?: string;
+        };
+        DetalleUsuario: {
+            id?: string;
+            nombres?: string;
+            apellidos?: string;
+            documento?: string;
+            correo?: string;
+            rol?: string;
+            /** @enum {string} */
+            estado?: "ACTIVO" | "INACTIVO" | "BLOQUEADO" | "PENDIENTE";
+            cargo?: string;
+            codigoDocente?: string;
+            especialidad?: string;
+            telefono?: string;
+            codigoAlumno?: string;
+            /** Format: date-time */
+            invitacionVenceEn?: string;
+            /** Format: int64 */
+            version?: number;
+        };
         EvaluacionRequest: {
             /**
              * @example NUEVO_INGRESO
@@ -2069,6 +2206,42 @@ export interface components {
             /** Format: int64 */
             version?: number;
         };
+        UsuarioRequest: {
+            /**
+             * @description ADMINISTRADOR, DOCENTE o APODERADO (el alumno nace con la solicitud de matrícula)
+             * @example DOCENTE
+             */
+            rol: string;
+            /** @example Luis */
+            nombres: string;
+            /** @example Paredes Soto */
+            apellidos: string;
+            /**
+             * @description DNI de 8 dígitos
+             * @example 45678901
+             */
+            documento: string;
+            /**
+             * Format: email
+             * @example luis.paredes@colegio.pe
+             */
+            correo: string;
+            /**
+             * @description Obligatorio para ADMINISTRADOR
+             * @example Subdirector
+             */
+            cargo?: string;
+            /**
+             * @description Solo DOCENTE
+             * @example Matemática
+             */
+            especialidad?: string;
+            /**
+             * @description Solo APODERADO
+             * @example 987654321
+             */
+            telefono?: string;
+        };
         DocumentoRequest: {
             /** @example CERTIFICADO_ESTUDIOS */
             tipo: string;
@@ -2554,11 +2727,18 @@ export interface components {
             rol?: string;
             activo?: boolean;
             /** @enum {string} */
-            estado?: "ACTIVO" | "INACTIVO" | "BLOQUEADO";
+            estado?: "ACTIVO" | "INACTIVO" | "BLOQUEADO" | "PENDIENTE";
             /** Format: date-time */
             bloqueadoHasta?: string;
             /** Format: date-time */
             ultimoAcceso?: string;
+        };
+        ActivacionRequest: {
+            /**
+             * Format: email
+             * @description Solo para completar una cuenta sin correo (el alumno nace sin él)
+             */
+            correo?: string;
         };
         CambioSeccionRequest: {
             /** @description Sección de destino, del mismo año; puede ser de otro grado */
@@ -2589,6 +2769,16 @@ export interface components {
             /** Format: date-time */
             actualizadoEn?: string;
             modificado?: boolean;
+        };
+        AnioResumenDto: {
+            id?: string;
+            /** Format: int32 */
+            anio?: number;
+            /** Format: date */
+            fechaInicio?: string;
+            /** Format: date */
+            fechaFin?: string;
+            estado?: string;
         };
         PaginaUsuarioFila: {
             contenido?: components["schemas"]["UsuarioFila"][];
@@ -3032,16 +3222,6 @@ export interface components {
             /** Format: int32 */
             anio?: number;
         };
-        AnioResumenDto: {
-            id?: string;
-            /** Format: int32 */
-            anio?: number;
-            /** Format: date */
-            fechaInicio?: string;
-            /** Format: date */
-            fechaFin?: string;
-            estado?: string;
-        };
         VinculacionesAnioDto: {
             /** Format: int32 */
             anio?: number;
@@ -3299,6 +3479,56 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    obtener: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleUsuario"];
+                };
+            };
+        };
+    };
+    modificar: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CambiosRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleUsuario"];
+                };
+            };
+        };
+    };
     registrarEvaluacion: {
         parameters: {
             query?: never;
@@ -3327,7 +3557,7 @@ export interface operations {
             };
         };
     };
-    obtener: {
+    obtener_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3349,7 +3579,7 @@ export interface operations {
             };
         };
     };
-    modificar: {
+    modificar_1: {
         parameters: {
             query?: never;
             header?: {
@@ -3377,7 +3607,7 @@ export interface operations {
             };
         };
     };
-    modificar_1: {
+    modificar_2: {
         parameters: {
             query?: never;
             header?: {
@@ -3429,7 +3659,7 @@ export interface operations {
             };
         };
     };
-    obtener_1: {
+    obtener_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3451,7 +3681,7 @@ export interface operations {
             };
         };
     };
-    modificar_2: {
+    modificar_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3770,7 +4000,7 @@ export interface operations {
             };
         };
     };
-    obtener_2: {
+    obtener_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3917,6 +4147,79 @@ export interface operations {
         };
     };
     listar: {
+        parameters: {
+            query?: {
+                q?: string;
+                rol?: string;
+                estado?: "ACTIVO" | "INACTIVO" | "BLOQUEADO" | "PENDIENTE";
+                page?: number;
+                size?: number;
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PaginaUsuarioFila"];
+                };
+            };
+        };
+    };
+    crear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UsuarioRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleUsuario"];
+                };
+            };
+        };
+    };
+    reenviarInvitacion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleUsuario"];
+                };
+            };
+        };
+    };
+    listar_1: {
         parameters: {
             query?: {
                 estado?: "PENDIENTE_REVISION" | "APROBADA" | "RECHAZADA";
@@ -4218,7 +4521,7 @@ export interface operations {
             };
         };
     };
-    crear: {
+    crear_1: {
         parameters: {
             query?: never;
             header?: {
@@ -4246,7 +4549,7 @@ export interface operations {
             };
         };
     };
-    crear_1: {
+    crear_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4500,7 +4803,7 @@ export interface operations {
             };
         };
     };
-    listar_1: {
+    listar_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -4520,7 +4823,7 @@ export interface operations {
             };
         };
     };
-    crear_2: {
+    crear_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4570,7 +4873,7 @@ export interface operations {
             };
         };
     };
-    listar_2: {
+    listar_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -4592,7 +4895,7 @@ export interface operations {
             };
         };
     };
-    crear_3: {
+    crear_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4666,7 +4969,7 @@ export interface operations {
             };
         };
     };
-    listar_3: {
+    listar_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -4688,7 +4991,7 @@ export interface operations {
             };
         };
     };
-    crear_4: {
+    crear_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -4783,6 +5086,54 @@ export interface operations {
             };
         };
     };
+    desactivar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleUsuario"];
+                };
+            };
+        };
+    };
+    activar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ActivacionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DetalleUsuario"];
+                };
+            };
+        };
+    };
     cambiarSeccion: {
         parameters: {
             query?: never;
@@ -4835,18 +5186,13 @@ export interface operations {
             };
         };
     };
-    listar_4: {
+    activar_1: {
         parameters: {
-            query?: {
-                q?: string;
-                rol?: string;
-                estado?: "ACTIVO" | "INACTIVO" | "BLOQUEADO";
-                page?: number;
-                size?: number;
-                sort?: string;
-            };
+            query?: never;
             header?: never;
-            path?: never;
+            path: {
+                anio: number;
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -4857,7 +5203,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["PaginaUsuarioFila"];
+                    "*/*": components["schemas"]["AnioResumenDto"];
                 };
             };
         };
@@ -5047,7 +5393,7 @@ export interface operations {
             };
         };
     };
-    obtener_3: {
+    obtener_4: {
         parameters: {
             query?: {
                 perspectiva?: "SECCION" | "DOCENTE";
@@ -5435,7 +5781,7 @@ export interface operations {
             };
         };
     };
-    obtener_4: {
+    obtener_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -5520,6 +5866,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AvanceDto"];
+                };
+            };
+        };
+    };
+    activo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnioResumenDto"];
                 };
             };
         };

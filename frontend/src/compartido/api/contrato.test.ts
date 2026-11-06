@@ -60,7 +60,7 @@ import type {
   SolicitudPropia,
   SolicitudRegistrada,
 } from '../../modulos/matricula/api'
-import type { EstadoCuenta, FichaAlumno, FichaApoderado, PaginaUsuarios, UsuarioFila } from '../../modulos/seguridad/api'
+import type { DetalleUsuario, EstadoCuenta, FichaAlumno, FichaApoderado, PaginaUsuarios, UsuarioFila } from '../../modulos/seguridad/api'
 import type {
   AnioDetalle,
   AnioResumen,
@@ -212,6 +212,10 @@ describe('contrato de usuarios (UC-24)', () => {
   it('la fila de usuario tiene las mismas propiedades que el backend', () => {
     expectTypeOf<keyof UsuarioFila>().toEqualTypeOf<keyof Esquemas['UsuarioFila']>()
     expectTypeOf<keyof PaginaUsuarios>().toEqualTypeOf<keyof Esquemas['PaginaUsuarioFila']>()
+  })
+
+  it('fase 6: la ficha de la cuenta (UC-24) tiene las propiedades del backend', () => {
+    expectTypeOf<keyof DetalleUsuario>().toEqualTypeOf<keyof Esquemas['DetalleUsuario']>()
   })
 
   it('los estados de la cuenta son los del backend', () => {

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DefinirContrasenaRouteImport } from './routes/definir-contrasena'
 import { Route as IntranetRouteImport } from './routes/intranet'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RecuperarContrasenaRouteImport } from './routes/recuperar-contrasena'
@@ -54,6 +55,11 @@ import { Route as IntranetNotasCursoSeccionFinalesRouteImport } from './routes/i
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DefinirContrasenaRoute = DefinirContrasenaRouteImport.update({
+  id: '/definir-contrasena',
+  path: '/definir-contrasena',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IntranetRoute = IntranetRouteImport.update({
@@ -282,6 +288,7 @@ const IntranetNotasCursoSeccionFinalesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/definir-contrasena': typeof DefinirContrasenaRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
   '/recuperar-contrasena': typeof RecuperarContrasenaRoute
@@ -325,6 +332,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/definir-contrasena': typeof DefinirContrasenaRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
   '/recuperar-contrasena': typeof RecuperarContrasenaRoute
@@ -369,6 +377,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/definir-contrasena': typeof DefinirContrasenaRoute
   '/intranet': typeof IntranetRouteWithChildren
   '/login': typeof LoginRoute
   '/recuperar-contrasena': typeof RecuperarContrasenaRoute
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/definir-contrasena'
     | '/intranet'
     | '/login'
     | '/recuperar-contrasena'
@@ -457,6 +467,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/definir-contrasena'
     | '/intranet'
     | '/login'
     | '/recuperar-contrasena'
@@ -500,6 +511,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/definir-contrasena'
     | '/intranet'
     | '/login'
     | '/recuperar-contrasena'
@@ -544,6 +556,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DefinirContrasenaRoute: typeof DefinirContrasenaRoute
   IntranetRoute: typeof IntranetRouteWithChildren
   LoginRoute: typeof LoginRoute
   RecuperarContrasenaRoute: typeof RecuperarContrasenaRoute
@@ -557,6 +570,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/definir-contrasena': {
+      id: '/definir-contrasena'
+      path: '/definir-contrasena'
+      fullPath: '/definir-contrasena'
+      preLoaderRoute: typeof DefinirContrasenaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/intranet': {
@@ -932,6 +952,7 @@ const IntranetRouteWithChildren = IntranetRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DefinirContrasenaRoute: DefinirContrasenaRoute,
   IntranetRoute: IntranetRouteWithChildren,
   LoginRoute: LoginRoute,
   RecuperarContrasenaRoute: RecuperarContrasenaRoute,

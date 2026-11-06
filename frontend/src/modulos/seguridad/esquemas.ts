@@ -65,3 +65,22 @@ export const esquemaDatosApoderado = z.object({
 })
 
 export type DatosApoderado = z.infer<typeof esquemaDatosApoderado>
+
+/** Alta y edición de cuentas (UC-24). Un DNI de 8 dígitos para las cuentas nuevas; el backend decide el resto. */
+export const esquemaUsuario = z
+  .object({
+    rol: z.enum(['DOCENTE', 'APODERADO', 'ADMINISTRADOR']),
+    nombres: z.string().trim().min(1, 'Ingresa los nombres.').max(100, 'Admite hasta 100 caracteres.'),
+    apellidos: z.string().trim().min(1, 'Ingresa los apellidos.').max(100, 'Admite hasta 100 caracteres.'),
+    documento: z.string().trim().min(4, 'Ingresa el documento de identidad.').max(20, 'Admite hasta 20 caracteres.'),
+    correo: z.string().trim().min(1, 'Ingresa el correo.').pipe(z.email('Ingresa un correo válido.')),
+    cargo: z.string().trim().max(80, 'Admite hasta 80 caracteres.'),
+    especialidad: z.string().trim().max(80, 'Admite hasta 80 caracteres.'),
+    telefono: z.string().trim().max(20, 'Admite hasta 20 caracteres.'),
+  })
+  .refine((d) => d.rol !== 'ADMINISTRADOR' || d.cargo !== '', {
+    path: ['cargo'],
+    message: 'Ingresa el cargo.',
+  })
+
+export type DatosUsuario = z.infer<typeof esquemaUsuario>

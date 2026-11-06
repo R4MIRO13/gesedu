@@ -25,7 +25,7 @@ export function useRestablecerContrasena() {
   })
 }
 
-export type EstadoCuenta = 'ACTIVO' | 'INACTIVO' | 'BLOQUEADO'
+export type EstadoCuenta = 'ACTIVO' | 'INACTIVO' | 'BLOQUEADO' | 'PENDIENTE'
 
 /** Fila de la lista de usuarios (UC-24). */
 export interface UsuarioFila {
@@ -73,6 +73,116 @@ export function useDesbloquearUsuario() {
   const cliente = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => api<UsuarioFila>(`/usuarios/${id}/desbloqueo`, { method: 'PATCH' }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
+// ---- UC-24: alta, edición, activación y desactivación de cuentas ----
+
+export type RolCreable = 'DOCENTE' | 'APODERADO' | 'ADMINISTRADOR'
+
+/** Ficha de la cuenta con su perfil; `version` hace de ETag en la edición. */
+export interface DetalleUsuario {
+  id: string
+  nombres: string
+  apellidos: string
+  documento: string
+  correo: string | null
+  rol: string
+  estado: EstadoCuenta
+  cargo: string | null
+  codigoDocente: string | null
+  especialidad: string | null
+  telefono: string | null
+  codigoAlumno: string | null
+  invitacionVenceEn: string | null
+  version: number
+}
+
+export interface CuerpoUsuario {
+  rol: RolCreable
+  nombres: string
+  apellidos: string
+  documento: string
+  correo: string
+  cargo: string
+  especialidad: string
+  telefono: string
+}
+
+/** Los campos vacíos viajan como nulos; los que no corresponden al rol no se mandan. */
+function cuerpoDe(d: CuerpoUsuario) {
+  const o = (v: string) => (v.trim() === '' ? null : v.trim())
+  return {
+    rol: d.rol,
+    nombres: d.nombres,
+    apellidos: d.apellidos,
+    documento: d.documento,
+    correo: d.correo,
+    cargo: d.rol === 'ADMINISTRADOR' ? o(d.cargo) : null,
+    especialidad: d.rol === 'DOCENTE' ? o(d.especialidad) : null,
+    telefono: d.rol === 'APODERADO' ? o(d.telefono) : null,
+  }
+}
+
+export function useDetalleUsuario(id: string | null) {
+  return useQuery({
+    queryKey: ['usuario', id],
+    queryFn: () => api<DetalleUsuario>(`/usuarios/${id}`),
+    enabled: !!id,
+    staleTime: 0,
+  })
+}
+
+/** Crea la cuenta pendiente y le manda la invitación de 72 horas (S-77). */
+export function useCrearUsuario() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (datos: CuerpoUsuario) => api<DetalleUsuario>('/usuarios', { method: 'POST', cuerpo: cuerpoDe(datos) }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
+export function useActualizarUsuario(id: string) {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ version, ...datos }: CuerpoUsuario & { version: number }) =>
+      api<DetalleUsuario>(`/usuarios/${id}`, {
+        method: 'PUT',
+        cuerpo: (({ rol: _rol, ...resto }) => resto)(cuerpoDe(datos)),
+        cabeceras: { 'If-Match': `"${version}"` },
+      }),
+    onSuccess: () => {
+      void cliente.invalidateQueries({ queryKey: ['usuarios'] })
+      void cliente.invalidateQueries({ queryKey: ['usuario', id] })
+    },
+  })
+}
+
+/** Habilita la cuenta (FA-2: el alumno exige matrícula activa). Una cuenta sin contraseña recibe la invitación. */
+export function useActivarUsuario() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, correo }: { id: string; correo?: string }) =>
+      api<DetalleUsuario>(`/usuarios/${id}/activacion`, { method: 'PATCH', cuerpo: correo ? { correo } : {} }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
+/** Desactiva la cuenta y corta sus sesiones de inmediato. */
+export function useDesactivarUsuario() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api<DetalleUsuario>(`/usuarios/${id}/desactivacion`, { method: 'PATCH' }),
+    onSuccess: () => cliente.invalidateQueries({ queryKey: ['usuarios'] }),
+  })
+}
+
+/** «Reenviar invitación»: la anterior queda anulada. */
+export function useReenviarInvitacion() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api<DetalleUsuario>(`/usuarios/${id}/invitacion`, { method: 'POST' }),
     onSuccess: () => cliente.invalidateQueries({ queryKey: ['usuarios'] }),
   })
 }
