@@ -74,10 +74,14 @@ public class RecuperacionContrasenaService {
     @Transactional
     public void solicitar(String correo) {
         Usuario usuario = usuarios.buscarPorCorreo(correo.trim()).orElse(null);
+        Instant ahora = reloj.instant();
         if (usuario == null || !usuario.isActivo() || usuario.getHashContrasena() == null) {
+            // Mismo trabajo que con una cuenta real (consulta, token y hash) para que el tiempo de respuesta no
+            // delate qué correos existen (ISO/IEC 27002:2022, 8.5; S-84)
+            tokens.anularPendientes("sin-cuenta", ahora);
+            TokensOpacos.hash(TokensOpacos.generar());
             return;
         }
-        Instant ahora = reloj.instant();
         tokens.anularPendientes(usuario.getId(), ahora);
         String valor = TokensOpacos.generar();
         tokens.save(new TokenRecuperacion(usuario.getId(), TokensOpacos.hash(valor), ahora.plus(VIGENCIA)));

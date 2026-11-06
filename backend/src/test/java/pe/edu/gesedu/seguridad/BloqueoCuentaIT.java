@@ -141,6 +141,39 @@ class BloqueoCuentaIT extends BaseIT {
         assertThat(inexistente.cuerpo().get("detail")).isEqualTo(incorrecta.cuerpo().get("detail"));
     }
 
+    /** S-84 (ISO/IEC 27002:2022, 8.5): el bloqueo no debe delatar qué correos tienen cuenta. */
+    @Test
+    void unCorreoInexistenteTambienSeBloqueaAlQuintoIntentoComoUnaCuentaReal() throws Exception {
+        String real = crearUsuario("DOCENTE", true);
+        String inexistente = "fantasma-" + System.nanoTime() + "@test.gesedu.pe";
+        String hastaReal = null;
+        String hastaFicticio = null;
+
+        for (int i = 1; i <= 5; i++) {
+            Respuesta r = iniciarSesion(real, "incorrecta");
+            Respuesta f = iniciarSesion(inexistente, "incorrecta");
+            assertThat(f.estado()).isEqualTo(r.estado());
+            assertThat(f.cuerpo().get("codigo")).isEqualTo(r.cuerpo().get("codigo"));
+            assertThat(f.cuerpo().get("detail")).isEqualTo(r.cuerpo().get("detail"));
+            if (i < 5) {
+                assertThat(f.cuerpo().get("codigo").asString()).isEqualTo("CREDENCIALES_INVALIDAS");
+            } else {
+                hastaReal = r.cuerpo().get("bloqueadoHasta").asString();
+                hastaFicticio = f.cuerpo().get("bloqueadoHasta").asString();
+            }
+        }
+        assertThat(hastaFicticio).endsWith("-05:00");
+        assertThat(Duration.between(java.time.OffsetDateTime.parse(hastaReal), java.time.OffsetDateTime.parse(hastaFicticio)).abs())
+                .isLessThan(Duration.ofSeconds(5));
+
+        // Mientras dura el bloqueo, sigue igual con cualquier contraseña
+        Respuesta sexto = iniciarSesion(inexistente, CONTRASENA);
+        assertThat(sexto.cuerpo().get("codigo").asString()).isEqualTo("CUENTA_BLOQUEADA");
+        // El bloqueo de un correo no afecta a otro
+        assertThat(iniciarSesion("otro-" + System.nanoTime() + "@test.gesedu.pe", "x").cuerpo().get("codigo").asString())
+                .isEqualTo("CREDENCIALES_INVALIDAS");
+    }
+
     @Test
     void laCuentaInactivaSoloSeRevelaConLaContrasenaCorrecta() throws Exception {
         String correo = crearUsuario("ALUMNO", false);

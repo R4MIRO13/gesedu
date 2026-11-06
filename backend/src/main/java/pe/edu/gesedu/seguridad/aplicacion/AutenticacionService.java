@@ -30,6 +30,7 @@ public class AutenticacionService {
     private final ControlAccesoCuenta control;
     private final TokensRefresco tokensRefresco;
     private final CacheCuentas cacheCuentas;
+    private final BloqueoFicticio bloqueoFicticio;
     private final PropiedadesSeguridad propiedades;
     private final Clock reloj;
 
@@ -39,7 +40,7 @@ public class AutenticacionService {
     AutenticacionService(UsuarioRepository usuarios, AdministradorRepository administradores,
                          PasswordEncoder codificador, EmisorToken emisorToken, ControlAccesoCuenta control,
                          TokensRefresco tokensRefresco, CacheCuentas cacheCuentas,
-                         PropiedadesSeguridad propiedades, Clock reloj) {
+                         BloqueoFicticio bloqueoFicticio, PropiedadesSeguridad propiedades, Clock reloj) {
         this.usuarios = usuarios;
         this.administradores = administradores;
         this.codificador = codificador;
@@ -47,6 +48,7 @@ public class AutenticacionService {
         this.control = control;
         this.tokensRefresco = tokensRefresco;
         this.cacheCuentas = cacheCuentas;
+        this.bloqueoFicticio = bloqueoFicticio;
         this.propiedades = propiedades;
         this.reloj = reloj;
     }
@@ -62,7 +64,10 @@ public class AutenticacionService {
 
         if (usuario == null || usuario.getHashContrasena() == null) {
             codificador.matches(contrasena, hashFicticio());
-            throw new ExcepcionNegocio(CodigoError.CREDENCIALES_INVALIDAS);
+            // Un correo sin cuenta también «se bloquea» a los 5 intentos: así el bloqueo no delata qué correos existen
+            throw bloqueoFicticio.registrarIntento(correo)
+                    .<ExcepcionNegocio>map(this::cuentaBloqueadaHasta)
+                    .orElseGet(() -> new ExcepcionNegocio(CodigoError.CREDENCIALES_INVALIDAS));
         }
         if (usuario.estaBloqueada(ahora)) {
             throw cuentaBloqueada(usuario);
@@ -135,7 +140,11 @@ public class AutenticacionService {
     }
 
     private ExcepcionNegocio cuentaBloqueada(Usuario usuario) {
-        OffsetDateTime hasta = usuario.getBloqueadoHasta().atZone(reloj.getZone()).toOffsetDateTime();
+        return cuentaBloqueadaHasta(usuario.getBloqueadoHasta());
+    }
+
+    private ExcepcionNegocio cuentaBloqueadaHasta(Instant bloqueadoHasta) {
+        OffsetDateTime hasta = bloqueadoHasta.atZone(reloj.getZone()).toOffsetDateTime();
         return new ExcepcionNegocio(CodigoError.CUENTA_BLOQUEADA).con("bloqueadoHasta", hasta);
     }
 
