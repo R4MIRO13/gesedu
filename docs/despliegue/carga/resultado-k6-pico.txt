@@ -1,0 +1,213 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /carga/uc01.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 200 max VUs, 3m30s max duration (incl. graceful stop):
+              * apoderados: 1 iterations for each of 200 VUs (maxDuration: 3m0s, gracefulStop: 30s)
+
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+apoderados   [   0% ] 200 VUs  0m01.0s/3m0s  000/200 iters, 1 per VU
+
+apoderados   [   0% ] 200 VUs  0m02.0s/3m0s  000/200 iters, 1 per VU
+
+apoderados   [   0% ] 200 VUs  0m03.0s/3m0s  000/200 iters, 1 per VU
+
+apoderados   [   2% ] 200 VUs  0m04.0s/3m0s  005/200 iters, 1 per VU
+
+apoderados   [   6% ] 200 VUs  0m05.0s/3m0s  013/200 iters, 1 per VU
+
+apoderados   [   8% ] 200 VUs  0m06.0s/3m0s  017/200 iters, 1 per VU
+
+apoderados   [  10% ] 200 VUs  0m07.0s/3m0s  020/200 iters, 1 per VU
+
+apoderados   [  16% ] 200 VUs  0m08.0s/3m0s  031/200 iters, 1 per VU
+
+apoderados   [  23% ] 200 VUs  0m09.0s/3m0s  046/200 iters, 1 per VU
+
+apoderados   [  32% ] 200 VUs  0m10.0s/3m0s  064/200 iters, 1 per VU
+
+apoderados   [  42% ] 200 VUs  0m11.0s/3m0s  083/200 iters, 1 per VU
+
+apoderados   [  50% ] 200 VUs  0m12.0s/3m0s  101/200 iters, 1 per VU
+
+apoderados   [  60% ] 200 VUs  0m13.0s/3m0s  120/200 iters, 1 per VU
+
+apoderados   [  69% ] 200 VUs  0m14.0s/3m0s  138/200 iters, 1 per VU
+
+apoderados   [  78% ] 200 VUs  0m15.0s/3m0s  157/200 iters, 1 per VU
+
+apoderados   [  88% ] 200 VUs  0m16.0s/3m0s  177/200 iters, 1 per VU
+
+apoderados   [  98% ] 200 VUs  0m17.0s/3m0s  196/200 iters, 1 per VU
+
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+
+    http_req_duration
+    ✗ 'p(95)<2000' p(95)=6.83s
+
+      {paso:opciones}
+      ✗ 'p(95)<2000' p(95)=5.94s
+
+      {paso:solicitud}
+      ✗ 'p(95)<2000' p(95)=7.26s
+
+      {paso:subida-url}
+      ✗ 'p(95)<2000' p(95)=6.62s
+
+      {paso:subida}
+      ✓ 'p(95)<2000' p(95)=41.83ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 800     15.654445/s
+    checks_succeeded...: 100.00% 800 out of 800
+    checks_failed......: 0.00%   0 out of 800
+
+    ✓ opciones 200
+    ✓ url de subida 200
+    ✓ subida 200
+    ✓ solicitud 201
+
+    HTTP
+    http_req_duration..............: avg=2.25s   min=6.35ms   med=1.33s   max=13.16s   p(90)=6.59s   p(95)=6.83s  
+      { expected_response:true }...: avg=2.25s   min=6.35ms   med=1.33s   max=13.16s   p(90)=6.59s   p(95)=6.83s  
+      { paso:opciones }............: avg=2.05s   min=239.07ms med=1.6s    max=13.16s   p(90)=4.86s   p(95)=5.94s  
+      { paso:solicitud }...........: avg=5.52s   min=611.12ms med=6.2s    max=11.36s   p(90)=7.17s   p(95)=7.26s  
+      { paso:subida-url }..........: avg=2.76s   min=9.75ms   med=1.82s   max=9.78s    p(90)=6.1s    p(95)=6.62s  
+      { paso:subida }..............: avg=19.27ms min=6.35ms   med=15.35ms max=108.07ms p(90)=34.35ms p(95)=41.83ms
+    http_req_failed................: 0.00%  0 out of 1000
+    http_reqs......................: 1000   19.568056/s
+
+    EXECUTION
+    iteration_duration.............: avg=11.56s  min=3.46s    med=11.83s  max=17.07s   p(90)=16.04s  p(95)=16.55s 
+    iterations.....................: 200    3.913611/s
+    vus............................: 4      min=0         max=200
+    vus_max........................: 200    min=200       max=200
+
+    NETWORK
+    data_received..................: 841 kB 16 kB/s
+    data_sent......................: 473 kB 9.3 kB/s
+
+
+
+
+apoderados ✓ [ 100% ] 200 VUs  0m17.1s/3m0s  200/200 iters, 1 per VU
+time="2026-11-06T14:28:04Z" level=error msg="thresholds on metrics 'http_req_duration, http_req_duration{paso:opciones}, http_req_duration{paso:solicitud}, http_req_duration{paso:subida-url}' have been crossed"
