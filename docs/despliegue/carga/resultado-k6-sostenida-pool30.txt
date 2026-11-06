@@ -1,0 +1,365 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: /carga/uc01.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 200 max VUs, 2m0s max duration (incl. graceful stop):
+              * apoderados: 200 looping VUs for 1m30s (gracefulStop: 30s)
+
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+Run          [ 100% ] setup()
+apoderados   [   0% ]
+
+apoderados   [   0% ] 200 VUs  0m00.3s/1m30s
+
+apoderados   [   1% ] 200 VUs  0m01.3s/1m30s
+
+apoderados   [   3% ] 200 VUs  0m02.3s/1m30s
+
+apoderados   [   4% ] 200 VUs  0m03.3s/1m30s
+
+apoderados   [   5% ] 200 VUs  0m04.3s/1m30s
+
+apoderados   [   6% ] 200 VUs  0m05.3s/1m30s
+
+apoderados   [   7% ] 200 VUs  0m06.3s/1m30s
+
+apoderados   [   8% ] 200 VUs  0m07.3s/1m30s
+
+apoderados   [   9% ] 200 VUs  0m08.3s/1m30s
+
+apoderados   [  10% ] 200 VUs  0m09.3s/1m30s
+
+apoderados   [  11% ] 200 VUs  0m10.3s/1m30s
+
+apoderados   [  13% ] 200 VUs  0m11.3s/1m30s
+
+apoderados   [  14% ] 200 VUs  0m12.3s/1m30s
+
+apoderados   [  15% ] 200 VUs  0m13.3s/1m30s
+
+apoderados   [  16% ] 200 VUs  0m14.3s/1m30s
+
+apoderados   [  17% ] 200 VUs  0m15.3s/1m30s
+
+apoderados   [  18% ] 200 VUs  0m16.3s/1m30s
+
+apoderados   [  19% ] 200 VUs  0m17.3s/1m30s
+
+apoderados   [  20% ] 200 VUs  0m18.3s/1m30s
+
+apoderados   [  21% ] 200 VUs  0m19.3s/1m30s
+
+apoderados   [  23% ] 200 VUs  0m20.3s/1m30s
+
+apoderados   [  24% ] 200 VUs  0m21.3s/1m30s
+
+apoderados   [  25% ] 200 VUs  0m22.3s/1m30s
+
+apoderados   [  26% ] 200 VUs  0m23.3s/1m30s
+
+apoderados   [  27% ] 200 VUs  0m24.3s/1m30s
+
+apoderados   [  28% ] 200 VUs  0m25.3s/1m30s
+
+apoderados   [  29% ] 200 VUs  0m26.3s/1m30s
+
+apoderados   [  30% ] 200 VUs  0m27.3s/1m30s
+
+apoderados   [  31% ] 200 VUs  0m28.3s/1m30s
+
+apoderados   [  33% ] 200 VUs  0m29.3s/1m30s
+
+apoderados   [  34% ] 200 VUs  0m30.3s/1m30s
+
+apoderados   [  35% ] 200 VUs  0m31.3s/1m30s
+
+apoderados   [  36% ] 200 VUs  0m32.3s/1m30s
+
+apoderados   [  37% ] 200 VUs  0m33.3s/1m30s
+
+apoderados   [  38% ] 200 VUs  0m34.3s/1m30s
+
+apoderados   [  39% ] 200 VUs  0m35.3s/1m30s
+
+apoderados   [  40% ] 200 VUs  0m36.3s/1m30s
+
+apoderados   [  41% ] 200 VUs  0m37.3s/1m30s
+
+apoderados   [  43% ] 200 VUs  0m38.3s/1m30s
+
+apoderados   [  44% ] 200 VUs  0m39.3s/1m30s
+
+apoderados   [  45% ] 200 VUs  0m40.3s/1m30s
+
+apoderados   [  46% ] 200 VUs  0m41.3s/1m30s
+
+apoderados   [  47% ] 200 VUs  0m42.3s/1m30s
+
+apoderados   [  48% ] 200 VUs  0m43.3s/1m30s
+
+apoderados   [  49% ] 200 VUs  0m44.3s/1m30s
+
+apoderados   [  50% ] 200 VUs  0m45.3s/1m30s
+
+apoderados   [  51% ] 200 VUs  0m46.3s/1m30s
+
+apoderados   [  53% ] 200 VUs  0m47.3s/1m30s
+
+apoderados   [  54% ] 200 VUs  0m48.3s/1m30s
+
+apoderados   [  55% ] 200 VUs  0m49.3s/1m30s
+
+apoderados   [  56% ] 200 VUs  0m50.3s/1m30s
+
+apoderados   [  57% ] 200 VUs  0m51.3s/1m30s
+
+apoderados   [  58% ] 200 VUs  0m52.3s/1m30s
+
+apoderados   [  59% ] 200 VUs  0m53.3s/1m30s
+
+apoderados   [  60% ] 200 VUs  0m54.3s/1m30s
+
+apoderados   [  61% ] 200 VUs  0m55.3s/1m30s
+
+apoderados   [  63% ] 200 VUs  0m56.3s/1m30s
+
+apoderados   [  64% ] 200 VUs  0m57.3s/1m30s
+
+apoderados   [  65% ] 200 VUs  0m58.3s/1m30s
+
+apoderados   [  66% ] 200 VUs  0m59.3s/1m30s
+
+apoderados   [  67% ] 200 VUs  1m00.3s/1m30s
+
+apoderados   [  68% ] 200 VUs  1m01.3s/1m30s
+
+apoderados   [  69% ] 200 VUs  1m02.3s/1m30s
+
+apoderados   [  70% ] 200 VUs  1m03.3s/1m30s
+
+apoderados   [  71% ] 200 VUs  1m04.3s/1m30s
+
+apoderados   [  73% ] 200 VUs  1m05.3s/1m30s
+
+apoderados   [  74% ] 200 VUs  1m06.3s/1m30s
+
+apoderados   [  75% ] 200 VUs  1m07.3s/1m30s
+
+apoderados   [  76% ] 200 VUs  1m08.3s/1m30s
+
+apoderados   [  77% ] 200 VUs  1m09.3s/1m30s
+
+apoderados   [  78% ] 200 VUs  1m10.3s/1m30s
+
+apoderados   [  79% ] 200 VUs  1m11.3s/1m30s
+
+apoderados   [  80% ] 200 VUs  1m12.3s/1m30s
+
+apoderados   [  81% ] 200 VUs  1m13.3s/1m30s
+
+apoderados   [  83% ] 200 VUs  1m14.3s/1m30s
+
+apoderados   [  84% ] 200 VUs  1m15.3s/1m30s
+
+apoderados   [  85% ] 200 VUs  1m16.3s/1m30s
+
+apoderados   [  86% ] 200 VUs  1m17.3s/1m30s
+
+apoderados   [  87% ] 200 VUs  1m18.3s/1m30s
+
+apoderados   [  88% ] 200 VUs  1m19.3s/1m30s
+
+apoderados   [  89% ] 200 VUs  1m20.3s/1m30s
+
+apoderados   [  90% ] 200 VUs  1m21.3s/1m30s
+
+apoderados   [  91% ] 200 VUs  1m22.3s/1m30s
+
+apoderados   [  93% ] 200 VUs  1m23.3s/1m30s
+
+apoderados   [  94% ] 200 VUs  1m24.3s/1m30s
+
+apoderados   [  95% ] 200 VUs  1m25.3s/1m30s
+
+apoderados   [  96% ] 200 VUs  1m26.3s/1m30s
+
+apoderados   [  97% ] 200 VUs  1m27.3s/1m30s
+
+apoderados   [  98% ] 200 VUs  1m28.3s/1m30s
+
+apoderados   [  99% ] 200 VUs  1m29.3s/1m30s
+
+apoderados ↓ [ 100% ] 200 VUs  1m30s
+
+apoderados ↓ [ 100% ] 200 VUs  1m30s
+
+apoderados ↓ [ 100% ] 200 VUs  1m30s
+
+apoderados ↓ [ 100% ] 200 VUs  1m30s
+
+apoderados ↓ [ 100% ] 200 VUs  1m30s
+
+apoderados ↓ [ 100% ] 200 VUs  1m30s
+
+
+  █ THRESHOLDS 
+
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+
+    http_req_duration
+    ✗ 'p(95)<2000' p(95)=2.43s
+
+      {paso:opciones}
+      ✗ 'p(95)<2000' p(95)=2.76s
+
+      {paso:solicitud}
+      ✗ 'p(95)<2000' p(95)=2.71s
+
+      {paso:subida-url}
+      ✗ 'p(95)<2000' p(95)=2.33s
+
+      {paso:subida}
+      ✓ 'p(95)<2000' p(95)=106.23ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 16288   127.24023/s
+    checks_succeeded...: 100.00% 16288 out of 16288
+    checks_failed......: 0.00%   0 out of 16288
+
+    ✓ opciones 200
+    ✓ url de subida 200
+    ✓ subida 200
+    ✓ solicitud 201
+
+    HTTP
+    http_req_duration..............: avg=893.41ms min=10.5ms   med=809.65ms max=7.23s    p(90)=1.93s   p(95)=2.43s   
+      { expected_response:true }...: avg=893.41ms min=10.5ms   med=809.65ms max=7.23s    p(90)=1.93s   p(95)=2.43s   
+      { paso:opciones }............: avg=1.14s    min=78.91ms  med=898.5ms  max=6.2s     p(90)=2.1s    p(95)=2.76s   
+      { paso:solicitud }...........: avg=1.38s    min=301.82ms med=1.19s    max=6.03s    p(90)=2.39s   p(95)=2.71s   
+      { paso:subida-url }..........: avg=991.26ms min=28.85ms  med=806.82ms max=7.23s    p(90)=1.92s   p(95)=2.33s   
+      { paso:subida }..............: avg=46.98ms  min=10.5ms   med=36.51ms  max=554.22ms p(90)=80.89ms p(95)=106.23ms
+    http_req_failed................: 0.00%  0 out of 16488
+    http_reqs......................: 16488  128.80261/s
+
+    EXECUTION
+    iteration_duration.............: avg=4.58s    min=1.64s    med=4.26s    max=10.31s   p(90)=6.6s    p(95)=7.27s   
+    iterations.....................: 4072   31.810058/s
+    vus............................: 21     min=0          max=200
+    vus_max........................: 200    min=200        max=200
+
+    NETWORK
+    data_received..................: 13 MB  101 kB/s
+    data_sent......................: 8.8 MB 69 kB/s
+
+
+
+
+apoderados ✓ [ 100% ] 200 VUs  1m30s
+time="2026-11-06T15:16:00Z" level=error msg="thresholds on metrics 'http_req_duration, http_req_duration{paso:opciones}, http_req_duration{paso:solicitud}, http_req_duration{paso:subida-url}' have been crossed"

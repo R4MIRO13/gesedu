@@ -78,9 +78,10 @@ class SolicitudApoderadoIT extends BaseMatriculaIT {
         assertThat(jdbc.queryForObject("SELECT estado || '/' || tipo_estudiante || '/' || estado_documentacion "
                 + "FROM matricula.solicitud_matricula WHERE codigo_seguimiento = ?", String.class, codigo))
                 .isEqualTo("PENDIENTE_REVISION/NUEVO_INGRESO/COMPLETA");
+        // El número del código sale de una secuencia global (V13): solo se comprueba el formato y el año
         assertThat(jdbc.queryForObject("SELECT al.codigo_alumno || '/' || u.activo FROM seguridad.alumno al "
                 + "JOIN seguridad.usuario u ON u.id = al.usuario_id WHERE u.documento_identidad = ?", String.class,
-                documento)).isEqualTo(e.anio() + "-0001/false");
+                documento)).matches(e.anio() + "-\\d{4,}/false");
         assertThat(contar("SELECT count(*) FROM matricula.documento_solicitud d JOIN matricula.solicitud_matricula s "
                 + "ON s.id = d.solicitud_id WHERE s.codigo_seguimiento = ? AND d.tipo = 'CERTIFICADO_ESTUDIOS'", codigo))
                 .isEqualTo(1);
@@ -359,5 +360,64 @@ class SolicitudApoderadoIT extends BaseMatriculaIT {
         }
         assertThat(contarAlumnosConDocumento(documento)).isEqualTo(1);
         assertThat(contar("SELECT count(*) FROM matricula.solicitud_matricula WHERE anio_escolar_id = ?", e.anioId())).isEqualTo(1);
+    }
+
+    /** V13: el código de alumno sale de una secuencia; altas simultáneas de documentos distintos no repiten código. */
+    @Test
+    void altasSimultaneasDeAlumnosDistintosGeneranCodigosUnicosSinEsperarseEntreSi() throws Exception {
+        Escenario e = datos.crearEscenario(4);
+        int hilos = 12;
+        List<String> documentos = new ArrayList<>();
+        List<Map<String, Object>> cuerpos = new ArrayList<>();
+        List<String> tokens = new ArrayList<>();
+        for (int i = 0; i < hilos; i++) {
+            ApoderadoConCuenta ap = crearApoderadoConCuenta();
+            String documento = documentoNuevo();
+            documentos.add(documento);
+            tokens.add(ap.token());
+            cuerpos.add(solicitud(e, "NUEVO_INGRESO", documento,
+                    List.of(subirDocumento(ap.token(), "CERTIFICADO_ESTUDIOS", "c" + i + ".pdf"))));
+        }
+
+        ExecutorService pool = Executors.newFixedThreadPool(hilos);
+        java.util.concurrent.CountDownLatch salida = new java.util.concurrent.CountDownLatch(1);
+        try {
+            List<Future<Integer>> futuros = new ArrayList<>();
+            for (int i = 0; i < hilos; i++) {
+                Map<String, Object> cuerpo = cuerpos.get(i);
+                String token = tokens.get(i);
+                Callable<Integer> envio = () -> {
+                    salida.await();
+                    return enviarSolicitud(cuerpo, token).estado();
+                };
+                futuros.add(pool.submit(envio));
+            }
+            salida.countDown();
+            for (Future<Integer> f : futuros) {
+                assertThat(f.get(60, java.util.concurrent.TimeUnit.SECONDS)).isEqualTo(201);
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+
+        List<String> codigos = new ArrayList<>();
+        for (String documento : documentos) {
+            codigos.add(jdbc.queryForObject("SELECT al.codigo_alumno FROM seguridad.alumno al JOIN seguridad.usuario u "
+                    + "ON u.id = al.usuario_id WHERE u.documento_identidad = ?", String.class, documento));
+        }
+        assertThat(codigos).hasSize(hilos).doesNotHaveDuplicates().allMatch(c -> c.matches(e.anio() + "-\\d{4,}"));
+        assertThat(contar("SELECT count(*) FROM matricula.solicitud_matricula WHERE anio_escolar_id = ?", e.anioId()))
+                .isEqualTo(hilos);
+    }
+
+    /** V13: la secuencia arranca después del mayor código existente y un rollback solo deja saltos, nunca repetidos. */
+    @Test
+    void laSecuenciaDeCodigosContinuaDespuesDelMayorYAdmiteSaltos() {
+        Long maximo = jdbc.queryForObject("SELECT COALESCE(MAX(CAST(substring(codigo_alumno FROM 6) AS integer)), 0) "
+                + "FROM seguridad.alumno WHERE codigo_alumno ~ '^[0-9]{4}-[0-9]+$'", Long.class);
+        Long siguiente = jdbc.queryForObject("SELECT nextval('seguridad.seq_codigo_alumno')", Long.class);
+        Long despues = jdbc.queryForObject("SELECT nextval('seguridad.seq_codigo_alumno')", Long.class);
+        assertThat(siguiente).isGreaterThan(maximo);
+        assertThat(despues).isGreaterThan(siguiente);
     }
 }

@@ -56,8 +56,9 @@ public class RegistroFamilias {
      */
     @Transactional
     public AlumnoRegistrado obtenerORegistrar(String apoderadoId, DatosAlumno datos, int anio) {
-        // Las altas se serializan: dos solicitudes simultáneas del mismo documento no crean dos cuentas
-        alumnos.tomarCandadoDeCodigos();
+        // Solo se serializan las altas del mismo documento: dos solicitudes simultáneas no crean dos cuentas, pero
+        // altas de documentos distintos corren en paralelo (el código sale de una secuencia, V13)
+        alumnos.tomarCandadoDelDocumento(datos.documento());
         Optional<AlumnoResumen> existente = directorio.alumnoPorDocumento(datos.documento());
         if (existente.isPresent()) {
             if (!existente.get().apoderadoId().equals(apoderadoId)) {
@@ -75,10 +76,19 @@ public class RegistroFamilias {
                 new ExcepcionNegocio(CodigoError.ERROR_INTERNO, "Falta el rol ALUMNO en el catálogo"));
         Usuario cuenta = usuarios.save(Usuario.sinAcceso(datos.nombres().trim(), datos.apellidos().trim(),
                 datos.documento(), rol));
-        String codigo = "%d-%04d".formatted(anio, alumnos.siguienteNumeroDeCodigo(anio));
+        String codigo = siguienteCodigo(anio);
         Alumno alumno = alumnos.saveAndFlush(new Alumno(cuenta.getId(), codigo, datos.fechaNacimiento(), apoderadoId,
                 datos.parentesco()));
         return new AlumnoRegistrado(directorio.alumnos(java.util.List.of(alumno.getId())).get(alumno.getId()), true);
+    }
+
+    /** {@code AAAA-NNNN} con el número de la secuencia; salta los códigos que ya existan (por ejemplo, de una carga manual). */
+    private String siguienteCodigo(int anio) {
+        String codigo;
+        do {
+            codigo = "%d-%04d".formatted(anio, alumnos.siguienteNumeroDeCodigo());
+        } while (alumnos.existsByCodigoAlumno(codigo));
+        return codigo;
     }
 
     /** El apoderado actualiza su teléfono de contacto (RF-02). Texto vacío lo borra. */

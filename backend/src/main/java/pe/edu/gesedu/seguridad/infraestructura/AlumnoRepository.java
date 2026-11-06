@@ -12,15 +12,17 @@ public interface AlumnoRepository extends JpaRepository<Alumno, String> {
 
     Optional<Alumno> findByUsuarioId(String usuarioId);
 
-    /** Candado consultivo de la transacción: serializa las altas de alumnos que calculan su código. */
-    @Query(value = "SELECT 1 FROM (SELECT pg_advisory_xact_lock(7311001)) AS candado", nativeQuery = true)
-    int tomarCandadoDeCodigos();
+    /**
+     * Candado consultivo de la transacción, <b>por documento</b>: dos altas simultáneas del mismo documento se
+     * serializan (la segunda ve a la primera), pero altas de documentos distintos no se esperan entre sí.
+     */
+    @Query(value = "SELECT 1 FROM (SELECT pg_advisory_xact_lock(hashtextextended(:documento, 7311001))) AS candado",
+            nativeQuery = true)
+    int tomarCandadoDelDocumento(@Param("documento") String documento);
 
-    /** Siguiente número del código {@code AAAA-NNNN} de los alumnos del año (llamar tras el candado). */
-    @Query(value = """
-            SELECT COALESCE(MAX(CAST(substring(codigo_alumno FROM 6) AS integer)), 0) + 1
-            FROM seguridad.alumno
-            WHERE codigo_alumno ~ ('^' || CAST(:anio AS text) || '-[0-9]+$')
-            """, nativeQuery = true)
-    int siguienteNumeroDeCodigo(@Param("anio") int anio);
+    /** Siguiente número del código {@code AAAA-NNNN} (V13): no bloquea ni espera a otras transacciones. */
+    @Query(value = "SELECT nextval('seguridad.seq_codigo_alumno')", nativeQuery = true)
+    long siguienteNumeroDeCodigo();
+
+    boolean existsByCodigoAlumno(String codigoAlumno);
 }
