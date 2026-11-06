@@ -51,9 +51,9 @@ describe('MatrizHorario', () => {
     )
     const tabla = screen.getByRole('table', { name: 'Horario semanal' })
 
-    const activa = within(tabla).getByRole('button', { name: 'Martes 09:15 a 10:00' })
+    const activa = within(tabla).getByRole('button', { name: /^Martes 09:15 a 10:00/ })
     expect(activa).toHaveAttribute('aria-pressed', 'true')
-    await userEvent.click(within(tabla).getByRole('button', { name: 'Lunes 07:45 a 08:30' }))
+    await userEvent.click(within(tabla).getByRole('button', { name: /^Lunes 07:45 a 08:30/ }))
 
     expect(elegir).toHaveBeenCalledWith(expect.objectContaining({ id: 'b-lun' }))
   })

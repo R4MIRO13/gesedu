@@ -85,10 +85,10 @@ describe('Elaborar horario (UC-21)', () => {
     expect(await screen.findByRole('heading', { name: 'Elaborar horario 2027' })).toBeInTheDocument()
     const tabla = await screen.findByRole('table', { name: 'Horario semanal' })
     expect(screen.getByText('Borrador · versión 3')).toBeInTheDocument()
-    const celda = within(tabla).getByRole('button', { name: 'Lunes 07:45 a 08:30' })
+    const celda = within(tabla).getByRole('button', { name: /^Lunes 07:45 a 08:30/ })
     expect(within(celda).getByText('Matemática')).toBeInTheDocument()
     expect(within(celda).getByText('Fernando Medina Soto')).toBeInTheDocument()
-    expect(within(tabla).getByRole('button', { name: 'Martes 09:15 a 10:00' })).toHaveTextContent('Libre')
+    expect(within(tabla).getByRole('button', { name: /^Martes 09:15 a 10:00/ })).toHaveTextContent('Libre')
 
     const carga = screen.getByRole('region', { name: 'Carga horaria de la sección' })
     expect(within(carga).getByText('1 de 8')).toBeInTheDocument()
@@ -100,7 +100,7 @@ describe('Elaborar horario (UC-21)', () => {
     await renderizarRuta(RUTA)
     const tabla = await screen.findByRole('table', { name: 'Horario semanal' })
 
-    await userEvent.click(within(tabla).getByRole('button', { name: 'Martes 09:15 a 10:00' }))
+    await userEvent.click(within(tabla).getByRole('button', { name: /^Martes 09:15 a 10:00/ }))
     const panel = await screen.findByRole('region', { name: 'Asignación de clase' })
     await userEvent.click(await within(panel).findByRole('radio', { name: /Matemática/ }))
 
@@ -115,7 +115,7 @@ describe('Elaborar horario (UC-21)', () => {
     simularBackend(escrituras)
     await renderizarRuta(RUTA)
     const tabla = await screen.findByRole('table', { name: 'Horario semanal' })
-    await userEvent.click(within(tabla).getByRole('button', { name: 'Martes 09:15 a 10:00' }))
+    await userEvent.click(within(tabla).getByRole('button', { name: /^Martes 09:15 a 10:00/ }))
     const panel = await screen.findByRole('region', { name: 'Asignación de clase' })
     await userEvent.click(await within(panel).findByRole('radio', { name: /Matemática/ }))
 
@@ -137,7 +137,7 @@ describe('Elaborar horario (UC-21)', () => {
     simularBackend()
     await renderizarRuta(RUTA)
     const tabla = await screen.findByRole('table', { name: 'Horario semanal' })
-    await userEvent.click(within(tabla).getByRole('button', { name: 'Martes 09:15 a 10:00' }))
+    await userEvent.click(within(tabla).getByRole('button', { name: /^Martes 09:15 a 10:00/ }))
     const panel = await screen.findByRole('region', { name: 'Asignación de clase' })
     await userEvent.click(await within(panel).findByRole('radio', { name: /Matemática/ }))
 
@@ -153,7 +153,7 @@ describe('Elaborar horario (UC-21)', () => {
     simularBackend(escrituras)
     await renderizarRuta(RUTA)
     const tabla = await screen.findByRole('table', { name: 'Horario semanal' })
-    await userEvent.click(within(tabla).getByRole('button', { name: 'Martes 09:15 a 10:00' }))
+    await userEvent.click(within(tabla).getByRole('button', { name: /^Martes 09:15 a 10:00/ }))
     const panel = await screen.findByRole('region', { name: 'Asignación de clase' })
     await userEvent.click(await within(panel).findByRole('radio', { name: /Matemática/ }))
     await userEvent.click(await within(panel).findByRole('radio', { name: /Fernando Medina/ }))
@@ -179,7 +179,7 @@ describe('Elaborar horario (UC-21)', () => {
     )
     await renderizarRuta(RUTA)
     const tabla = await screen.findByRole('table', { name: 'Horario semanal' })
-    await userEvent.click(within(tabla).getByRole('button', { name: 'Martes 09:15 a 10:00' }))
+    await userEvent.click(within(tabla).getByRole('button', { name: /^Martes 09:15 a 10:00/ }))
     const panel = await screen.findByRole('region', { name: 'Asignación de clase' })
     await userEvent.click(await within(panel).findByRole('radio', { name: /Matemática/ }))
     await userEvent.click(await within(panel).findByRole('radio', { name: /Fernando Medina/ }))
@@ -202,7 +202,7 @@ describe('Elaborar horario (UC-21)', () => {
     )
     await renderizarRuta(RUTA)
     const tabla = await screen.findByRole('table', { name: 'Horario semanal' })
-    await userEvent.click(within(tabla).getByRole('button', { name: 'Lunes 07:45 a 08:30' }))
+    await userEvent.click(within(tabla).getByRole('button', { name: /^Lunes 07:45 a 08:30/ }))
     const panel = await screen.findByRole('region', { name: 'Asignación de clase' })
     expect(within(panel).getByRole('heading', { name: 'Modificar clase · 3° A' })).toBeInTheDocument()
 

@@ -791,3 +791,9 @@ dd {
   font-size: 2.2rem;
   font-variant-numeric: tabular-nums;
 }
+
+/* Campos dentro de tablas (por ejemplo, costos): objetivo táctil mínimo de 24 px (WCAG 2.5.8) */
+td input:not([type='checkbox']):not([type='radio']),
+td select {
+  min-height: 2rem;
+}

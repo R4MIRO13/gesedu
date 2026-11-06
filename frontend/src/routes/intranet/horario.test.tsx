@@ -46,7 +46,7 @@ describe('Horario publicado (UC-23, RF-39, RF-45)', () => {
     expect(screen.queryByRole('tablist', { name: 'Perspectiva' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Sección')).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Lunes 07:45 a 08:30' })[0]!)
+    await userEvent.click(screen.getAllByRole('button', { name: /^Lunes 07:45 a 08:30/ })[0]!)
     const detalle = screen.getByRole('region', { name: 'Detalle del bloque' })
     expect(within(detalle).getByText('Matemática')).toBeInTheDocument()
     expect(within(detalle).getByText('Rosa Quispe Mendoza')).toBeInTheDocument()
@@ -58,7 +58,7 @@ describe('Horario publicado (UC-23, RF-39, RF-45)', () => {
     servidor.use(http.get('*/api/v1/horarios/2027/vigente', () => HttpResponse.json(horario())))
     await renderizarRuta('/intranet/horario')
 
-    await userEvent.click((await screen.findAllByRole('button', { name: 'Lunes 08:30 a 09:15' }))[0]!)
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Lunes 08:30 a 09:15/ }))[0]!)
 
     expect(screen.getByText(/sin clase/)).toBeInTheDocument()
   })

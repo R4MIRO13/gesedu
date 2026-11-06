@@ -56,10 +56,11 @@ export function MatrizHorario<B extends BloqueMatriz>({ bloques, contenido, sele
       <button
         type="button"
         className={clases}
-        aria-label={etiqueta}
         aria-pressed={seleccionadoId === bloque.id}
         onClick={() => onSeleccionar(bloque)}
       >
+        {/* WCAG 2.5.3: el nombre accesible empieza con el día y la hora y conserva el texto visible de la celda */}
+        <span className="solo-lectores">{etiqueta}. </span>
         {contenido(bloque)}
       </button>
     ) : (
