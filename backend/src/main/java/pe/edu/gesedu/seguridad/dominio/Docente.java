@@ -23,6 +23,16 @@ public class Docente extends EntidadBase {
     protected Docente() {
     }
 
+    public Docente(String usuarioId, String codigoDocente, String especialidad) {
+        this.usuarioId = usuarioId;
+        this.codigoDocente = codigoDocente;
+        this.especialidad = especialidad;
+    }
+
+    public void cambiarEspecialidad(String especialidad) {
+        this.especialidad = especialidad;
+    }
+
     public String getUsuarioId() {
         return usuarioId;
     }

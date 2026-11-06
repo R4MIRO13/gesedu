@@ -70,6 +70,43 @@ public class Usuario extends EntidadBase {
         return u;
     }
 
+    /**
+     * Cuenta nueva de personal o de apoderado (UC-24): sin contraseña y sin acceso hasta que la persona acepte la
+     * invitación y la defina (S-77). El administrador nunca define ni conoce la contraseña.
+     */
+    public static Usuario pendienteDeInvitacion(String nombres, String apellidos, String documentoIdentidad,
+                                                String correo, RolAcceso rolAcceso) {
+        Usuario u = sinAcceso(nombres, apellidos, documentoIdentidad, rolAcceso);
+        u.correo = correo;
+        return u;
+    }
+
+    /** Sin contraseña todavía: la cuenta espera que su titular acepte la invitación (S-77). */
+    public boolean sinContrasena() {
+        return hashContrasena == null;
+    }
+
+    /** Primera contraseña, definida con el enlace de la invitación: la cuenta queda activa. */
+    public void definirContrasenaInicial(String hash) {
+        this.hashContrasena = hash;
+        this.activo = true;
+        this.intentosFallidos = 0;
+        this.bloqueadoHasta = null;
+    }
+
+    /** Habilita una cuenta que ya tiene contraseña (el CHECK de la base exige correo y contraseña). */
+    public void activar() {
+        this.activo = true;
+    }
+
+    public void desactivar() {
+        this.activo = false;
+    }
+
+    public void asignarCorreo(String correo) {
+        this.correo = correo;
+    }
+
     public boolean estaBloqueada(Instant ahora) {
         return bloqueadoHasta != null && bloqueadoHasta.isAfter(ahora);
     }

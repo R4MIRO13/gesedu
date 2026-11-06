@@ -23,4 +23,8 @@ public interface TokenRecuperacionRepository extends JpaRepository<TokenRecupera
     @Modifying
     @Query("UPDATE TokenRecuperacion t SET t.usadoEn = :ahora WHERE t.usuarioId = :usuarioId AND t.usadoEn IS NULL")
     int anularPendientes(@Param("usuarioId") String usuarioId, @Param("ahora") Instant ahora);
+
+    /** Vencimiento del enlace pendiente más reciente de la cuenta (vigente o vencido), si hay alguno sin usar. */
+    @Query("SELECT max(t.expiraEn) FROM TokenRecuperacion t WHERE t.usuarioId = :usuarioId AND t.usadoEn IS NULL")
+    Optional<Instant> vencimientoPendiente(@Param("usuarioId") String usuarioId);
 }

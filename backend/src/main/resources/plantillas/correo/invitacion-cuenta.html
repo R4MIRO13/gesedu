@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+  <body style="font-family: Arial, sans-serif; color: #1c2434; max-width: 560px; margin: 0 auto; padding: 24px;">
+    <h2 style="color: #2748b5; letter-spacing: 0.08em;">GESEDU</h2>
+    <p>Hola {{nombre}},</p>
+    <p>
+      El colegio creó tu cuenta de GESEDU con el rol <strong>{{rol}}</strong>. Para empezar a usarla, elige tu propia
+      contraseña con el siguiente enlace. El enlace es de un solo uso y vale {{horas}} horas.
+    </p>
+    <p>
+      <a href="{{enlace}}"
+         style="display: inline-block; padding: 10px 18px; background: #2748b5; color: #ffffff; border-radius: 8px; text-decoration: none;">
+        Definir mi contraseña
+      </a>
+    </p>
+    <p style="font-size: 13px; color: #5d6a85;">
+      Si el botón no funciona, copia y pega esta dirección en tu navegador:<br />
+      {{enlace}}
+    </p>
+    <p style="font-size: 13px; color: #5d6a85;">
+      Nadie del colegio conoce tu contraseña ni te la pedirá. Si el enlace venció, pide una invitación nueva a la
+      administración del colegio.
+    </p>
+  </body>
+</html>

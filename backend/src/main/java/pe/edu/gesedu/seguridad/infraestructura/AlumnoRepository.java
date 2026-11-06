@@ -1,5 +1,7 @@
 package pe.edu.gesedu.seguridad.infraestructura;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -7,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import pe.edu.gesedu.seguridad.dominio.Alumno;
 
 public interface AlumnoRepository extends JpaRepository<Alumno, String> {
+
+    Optional<Alumno> findByUsuarioId(String usuarioId);
 
     /** Candado consultivo de la transacción: serializa las altas de alumnos que calculan su código. */
     @Query(value = "SELECT 1 FROM (SELECT pg_advisory_xact_lock(7311001)) AS candado", nativeQuery = true)

@@ -22,15 +22,18 @@ import pe.edu.gesedu.seguridad.dominio.Usuario;
 import pe.edu.gesedu.seguridad.infraestructura.UsuarioRepository;
 
 /**
- * Cuentas de usuario (UC-24, RF-01): consulta con filtros y desbloqueo por el administrador. El resto del CRUD
- * llega en la fase 6.
+ * Cuentas de usuario (UC-24, RF-01): consulta con filtros y desbloqueo por el administrador. El alta, la modificación, la
+ * activación y la desactivación están en {@link GestionUsuariosService}.
  */
 @Service
 public class UsuariosService {
 
-    /** Estado de la cuenta tal como se filtra y se muestra: bloqueado gana sobre activo. */
+    /**
+     * Estado de la cuenta tal como se filtra y se muestra: bloqueado gana sobre activo. PENDIENTE es la cuenta creada
+     * que aún no definió su contraseña con la invitación (S-77): inactiva, con correo y sin contraseña.
+     */
     public enum EstadoCuenta {
-        ACTIVO, INACTIVO, BLOQUEADO
+        ACTIVO, INACTIVO, BLOQUEADO, PENDIENTE
     }
 
     public record UsuarioFila(String id, String nombre, String correo, String rol, boolean activo, EstadoCuenta estado,
@@ -70,7 +73,10 @@ public class UsuariosService {
                         cb.lessThanOrEqualTo(raiz.<Instant>get("bloqueadoHasta"), ahora));
                 condiciones.add(switch (estado) {
                     case BLOQUEADO -> bloqueada;
-                    case INACTIVO -> cb.isFalse(raiz.get("activo"));
+                    case PENDIENTE -> cb.and(cb.isFalse(raiz.get("activo")), cb.isNull(raiz.get("hashContrasena")),
+                            cb.isNotNull(raiz.get("correo")));
+                    case INACTIVO -> cb.and(cb.isFalse(raiz.get("activo")), cb.or(cb.isNotNull(raiz.get("hashContrasena")),
+                            cb.isNull(raiz.get("correo"))));
                     case ACTIVO -> cb.and(cb.isTrue(raiz.get("activo")), sinBloqueo);
                 });
             }
@@ -100,8 +106,7 @@ public class UsuariosService {
     }
 
     private static UsuarioFila aFila(Usuario u, Instant ahora, Clock reloj) {
-        EstadoCuenta estado = u.estaBloqueada(ahora) ? EstadoCuenta.BLOQUEADO
-                : u.isActivo() ? EstadoCuenta.ACTIVO : EstadoCuenta.INACTIVO;
+        EstadoCuenta estado = GestionUsuariosService.estadoDe(u, ahora);
         return new UsuarioFila(u.getId(), u.getNombres() + " " + u.getApellidos(), u.getCorreo(),
                 u.getRolAcceso().getCodigo(), u.isActivo(), estado, local(u.getBloqueadoHasta(), reloj),
                 local(u.getUltimoAcceso(), reloj));

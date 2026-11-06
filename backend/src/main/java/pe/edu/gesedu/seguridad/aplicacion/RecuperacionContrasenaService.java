@@ -17,13 +17,15 @@ import pe.edu.gesedu.compartido.error.CodigoError;
 import pe.edu.gesedu.compartido.error.ExcepcionNegocio;
 import pe.edu.gesedu.seguridad.dominio.TokenRecuperacion;
 import pe.edu.gesedu.seguridad.dominio.Usuario;
+import pe.edu.gesedu.seguridad.infraestructura.AlumnoRepository;
 import pe.edu.gesedu.seguridad.infraestructura.TokenRecuperacionRepository;
 import pe.edu.gesedu.seguridad.infraestructura.UsuarioRepository;
 import pe.edu.gesedu.transversal.notificaciones.Notificacion;
 import pe.edu.gesedu.transversal.notificaciones.Notificaciones;
 
 /**
- * Recuperación de contraseña (UC-24 FA-5, RF-52, S-01). El enlace lleva un token aleatorio de 32 bytes del que solo
+ * Recuperación de contraseña (UC-24 FA-5, RF-52, S-01) y aceptación de la invitación de una cuenta nueva (S-77): el
+ * mismo enlace sirve a ambas, y la cuenta sin contraseña queda activa al definirla. El enlace lleva un token aleatorio de 32 bytes del que solo
  * se guarda el hash; vale 30 minutos y una sola vez. Pedir la recuperación responde siempre igual, exista o no la
  * cuenta, para no revelar qué correos están registrados.
  */
@@ -41,6 +43,8 @@ public class RecuperacionContrasenaService {
     private final TokenRecuperacionRepository tokens;
     private final TokensRefresco tokensRefresco;
     private final CacheCuentas cacheCuentas;
+    private final VerificadorVinculoAcademico vinculo;
+    private final AlumnoRepository alumnos;
     private final PasswordEncoder codificador;
     private final Notificaciones notificaciones;
     private final Clock reloj;
@@ -48,12 +52,15 @@ public class RecuperacionContrasenaService {
 
     RecuperacionContrasenaService(UsuarioRepository usuarios, TokenRecuperacionRepository tokens,
                                   TokensRefresco tokensRefresco, CacheCuentas cacheCuentas,
+                                  VerificadorVinculoAcademico vinculo, AlumnoRepository alumnos,
                                   PasswordEncoder codificador, Notificaciones notificaciones, Clock reloj,
                                   @Value("${gesedu.web-origen}") String origenWeb) {
         this.usuarios = usuarios;
         this.tokens = tokens;
         this.tokensRefresco = tokensRefresco;
         this.cacheCuentas = cacheCuentas;
+        this.vinculo = vinculo;
+        this.alumnos = alumnos;
         this.codificador = codificador;
         this.notificaciones = notificaciones;
         this.reloj = reloj;
@@ -98,22 +105,40 @@ public class RecuperacionContrasenaService {
         TokenRecuperacion enlace = tokens.findByTokenHash(TokensOpacos.hash(token))
                 .filter(t -> t.sePuedeUsar(ahora))
                 .orElseThrow(RecuperacionContrasenaService::enlaceInvalido);
+        // Una cuenta sin contraseña que espera su invitación (S-77) también puede usar el enlace; una desactivada, no
         Usuario usuario = usuarios.findById(enlace.getUsuarioId())
-                .filter(Usuario::isActivo)
+                .filter(u -> u.isActivo() || (u.sinContrasena() && u.getCorreo() != null))
                 .orElseThrow(RecuperacionContrasenaService::enlaceInvalido);
+        boolean invitacion = !usuario.isActivo();
+        if (invitacion && !conVinculo(usuario)) {
+            throw enlaceInvalido();
+        }
 
         enlace.marcarUsado(ahora);
         tokens.anularPendientes(usuario.getId(), ahora);
         Instant bloqueoAnterior = usuario.estaBloqueada(ahora) ? usuario.getBloqueadoHasta() : null;
-        usuario.cambiarContrasena(codificador.encode(nuevaContrasena));
+        if (invitacion) {
+            usuario.definirContrasenaInicial(codificador.encode(nuevaContrasena));
+            ContextoAuditoria.registrarCambio("estado", "PENDIENTE", "ACTIVO");
+        } else {
+            usuario.cambiarContrasena(codificador.encode(nuevaContrasena));
+        }
         if (bloqueoAnterior != null) {
             ContextoAuditoria.registrarCambio("bloqueado_hasta", bloqueoAnterior, null);
         }
         tokensRefresco.revocarTodos(usuario.getId());
         cacheCuentas.invalidar(usuario.getId());
         // La contraseña nunca va a la auditoría, solo el hecho de que cambió
-        ContextoAuditoria.registrarCambio("contrasena", null, "restablecida");
+        ContextoAuditoria.registrarCambio("contrasena", null, invitacion ? "definida" : "restablecida");
         return usuario.getId();
+    }
+
+    /** Un alumno solo activa su cuenta si todavía tiene una matrícula activa (UC-24 FA-2). */
+    private boolean conVinculo(Usuario usuario) {
+        if (!"ALUMNO".equals(usuario.getRolAcceso().getCodigo())) {
+            return true;
+        }
+        return alumnos.findByUsuarioId(usuario.getId()).map(a -> vinculo.alumnoConMatriculaActiva(a.getId())).orElse(false);
     }
 
     private static ExcepcionNegocio enlaceInvalido() {
