@@ -37,6 +37,16 @@ class ConfiguracionSeguridad {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Cabeceras de seguridad (tarea 6.5, ISO/IEC 27002:2022 8.9 y 8.26). X-Content-Type-Options y
+                // Cache-Control ya vienen por omisión; HSTS solo se envía en peticiones HTTPS (detrás del balanceador)
+                .headers(h -> h
+                        .frameOptions(f -> f.deny())
+                        .httpStrictTransportSecurity(t -> t.includeSubDomains(true).maxAgeInSeconds(31_536_000))
+                        // Sin default-src para no romper la Swagger UI; la API solo devuelve JSON y descargas
+                        .contentSecurityPolicy(c -> c.policyDirectives("frame-ancestors 'none'; base-uri 'none'"))
+                        .referrerPolicy(r -> r.policy(
+                                org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .permissionsPolicyHeader(p -> p.policy("geolocation=(), camera=(), microphone=()")))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/inicio-sesion", "/api/v1/auth/refresco",
                                 "/api/v1/auth/recuperacion", "/api/v1/auth/recuperacion/confirmacion")
