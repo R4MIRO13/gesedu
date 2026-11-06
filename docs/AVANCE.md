@@ -17,7 +17,7 @@
 | 3 Académico y horarios | `feat/fase-3` | **terminada** (3.1–3.7, probada en el navegador) |
 | 4 Asistencia | `feat/fase-4` | **terminada** (4.1–4.6, probada en el navegador) |
 | 5 Evaluación | `feat/fase-5` | **terminada** (5.1–5.6, probada en el navegador) |
-| 6 Cierre | `feat/fase-6` | en curso (6.1, 6.1b, 6.2, 6.3, 6.4 y 6.5 hechas) |
+| 6 Cierre | `feat/fase-6` | en curso (6.1–6.6 hechas; quedan de la fase 6 del plan la prueba k6, el repaso responsive/accesibilidad, `docs/despliegue` y el manual) |
 
 ## Tareas
 | Tarea | Descripción | Estado | Commit |
@@ -81,7 +81,7 @@ einiciar-bd.ps1` para cargar V1002 sin la matrícula de prueba** | hecha | ver `
 | 6.3 | **Roles y permisos** (RF-48, RNF-07; `ROL_GESTIONAR`). Backend `RolesService`: `GET /roles` (roles con sus permisos y el catálogo agrupable por módulo) y `PUT /roles/{id}/permisos` (reemplaza el conjunto completo). El rol se bloquea con `SELECT … FOR UPDATE`; un código fuera del catálogo → 400 y no cambia nada; **al Administrador no se le pueden quitar `USUARIO_CONSULTAR`, `USUARIO_GESTIONAR` ni `ROL_GESTIONAR`** (400, para no dejar el sistema sin quien lo administre). La caché de cuentas se descarta **después del commit** (`afterCommit`, para que una petición concurrente no la vuelva a llenar con lo viejo): el cambio rige en el siguiente request, con el mismo token. `@Auditable` `MODIFICAR_PERMISOS_ROL` con `permiso X: no→sí / sí→no`. Sin migraciones ni códigos de error nuevos. Frontend: `/intranet/roles` (en lugar de `/intranet/usuarios/roles` para no convertir `usuarios.tsx` en un layout): roles a la izquierda, permisos agrupados por módulo con casillas, las tres esenciales del Administrador bloqueadas, «Guardar permisos» solo con cambios; opción «Roles y permisos» del menú. Pruebas: `GestionRolesIT` (9: catálogo, permisos por rol, **quitar y devolver un permiso se refleja en el siguiente request con el mismo token**, agregar un permiso a ALUMNO, auditoría, código inexistente, permisos esenciales del Administrador, rol inexistente, 6 cambios simultáneos sin mezclarse; restaura los permisos para no afectar a otras clases), `roles.test.tsx` (5). Verify completo: backend 612 pruebas, frontend 43 archivos y 365 pruebas (lint, typecheck, build). Los tipos del contrato de `/roles` se regeneran al cierre de la fase | hecha | ver `git log` |
 | 6.4 | **Reportes de asistencia de meses pasados** (UC-10, UC-11, UC-12; RF-16, RF-17; revisa S-62; **S-83**). (a) Los días esperados de cada docente salen de la versión del horario publicada y vigente en cada fecha (`ClasesDocenteService`); sin ninguna versión publicada en el periodo, el reporte de docentes responde 422 `CALENDARIO_NO_DISPONIBLE`. (b) Nueva migración **`V12__historial_seccion.sql`** (`matricula.historial_seccion`, con las matrículas existentes sembradas con su sección actual desde la fecha de matrícula); el historial se llena al confirmar la matrícula y en cada cambio de sección (`EvaluacionMatriculaService`, `CambioSeccionService`) y `ConsultaMatriculaService` lista a los alumnos con la sección que tenían cada día: un alumno trasladado aparece en las dos secciones sin contar dos veces un mismo día. Las matrículas ANULADAS ya no aparecen. Pruebas: `ReporteMesesPasadosIT` (versión del horario por fecha, alumno trasladado en cada sección, historial del traslado, reporte general sin doble conteo) y `ReporteAsistenciaIT` ajustado. Verify completo (`clean verify`): backend 616 pruebas de integración en verde; frontend sin cambios (lint, typecheck y 365 pruebas) | hecha | ver `git log` |
 | 6.5 | **Endurecimiento: sin enumeración de cuentas** (RNF-06, RF-52; ISO/IEC 27002:2022 8.5; **S-84**). `BloqueoFicticio` (Caffeine, en memoria): un correo sin cuenta o sin contraseña también responde `CUENTA_BLOQUEADA` con `bloqueadoHasta` al 5.º intento y mientras dura el bloqueo, igual que una cuenta real; antes el bloqueo delataba qué correos existían. `RecuperacionContrasenaService.solicitar` hace el mismo trabajo (consulta, token y hash) exista o no la cuenta. Riesgo residual aceptado en S-84. Prueba nueva en `BloqueoCuentaIT` (cuenta real y correo inexistente lado a lado: mismos códigos, textos y duración). Verify completo (`clean verify`, `-Xmx1g`, un fork): 182 unitarias + 617 de integración en verde; frontend sin cambios | hecha | ver `git log` |
-| 6.6 | Fase 6: tabla de cobertura RF-01…52 y UC-01…25 | pendiente | |
+| 6.6 | **Cierre: tabla de cobertura RF-01…52 y UC-01…25** al final de este documento (cada requisito con las tareas que lo implementan o prueban; ningún RF ni UC del alcance queda sin tarea). Sin cambios de código | hecha | ver `git log` |
 
 ## Supuestos tomados
 - **S-28** El cronograma de cobros modificado no crea obligaciones retroactivas ni toca las obligaciones no PENDIENTES. La edición de datos personales reutiliza `USUARIO_GESTIONAR` y el cambio de sección `MATRICULA_REGISTRAR` (sin permisos nuevos).
@@ -200,4 +200,91 @@ Aprobados el 05/11/2026 junto con la división de tareas (ERS UC-15 a UC-19, RF-
 **Cómo probarla** (PowerShell, desde la raíz; Docker Desktop encendido): `.\scripts\reiniciar-bd.ps1` · `cd backend; .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local,demo"` · `cd frontend; npm ci; npm run dev` · http://localhost:5173 (contraseña de todas las cuentas: `Gesedu2027!`) y seguir `docs/demo/guion.md`, paso 14. **Si ya tenías la base de la fase 4, reiníciala:** se editó `V7` y se agregó `V1005`.
 
 ## Cobertura RF / UC
-(Se completa en la tarea 6.6.)
+Cobertura construida a partir de las filas de la tabla de tareas: cada requisito lista las tareas que lo implementan o lo prueban (número de fase y tarea; 1.x = fase 1, etc.). Todos los RF y UC del alcance están cubiertos; el **alcance excluido** (SIAGIE, pasarela de pagos, horarios automáticos, aulas, app móvil, validación de red en la marcación y consolidado mensual guardado) no figura.
+
+### Requisitos funcionales (RF-01 a RF-52)
+
+| RF | Requisito | Tareas |
+|---|---|---|
+| RF-01 | Gestión de cuentas de los cuatro roles | 1.8, 6.1, 6.2 |
+| RF-02 | Datos de estudiante y apoderado; DNI sin duplicar | 2.2, 2.8 |
+| RF-03 | Años, grados y secciones | 3.1, 3.3 |
+| RF-04 | Capacidad y vacantes por sección | 1.6, 3.3 |
+| RF-05 | Matrículas y cambio de sección | 1.6, 2.9 |
+| RF-06 | Costos y política de penalidad | 2.1 |
+| RF-07 | Compromisos de pago (matrícula y pensiones) | 1.6, 2.3, 2.10 |
+| RF-08 | Boletas y comprobantes de pago | 2.2, 2.4, 2.5 |
+| RF-09 | Estados de las obligaciones | 2.3, 2.5, 2.7 |
+| RF-10 | Morosidad y penalidades automáticas | 2.5, 2.6, 2.7 |
+| RF-11 | Historial de pagos y deudas | 2.3, 2.6 |
+| RF-12 | Correos de matrícula y cronograma | 1.6 |
+| RF-13 | Clasificación de la llegada docente | 4.1, 4.4 |
+| RF-14 | Pase de lista de alumnos | 4.2 |
+| RF-15 | Falta → Tardanza | 4.3 |
+| RF-16 | Porcentaje mensual de asistencia | 4.5, 4.6, 6.4 |
+| RF-17 | Reporte de la sección (tutor) | 4.5, 6.4 |
+| RF-18 | Marcación docente | 4.1 |
+| RF-19 | Contraste con el horario individual | 4.1, 4.4 |
+| RF-20 | Registro con marca de tiempo | 4.1, 4.4 |
+| RF-21 | Reporte general (administrador) | 4.5 |
+| RF-22 | Registro de logros por bimestre | 5.2 |
+| RF-23 | Cursos del nivel | 3.2 |
+| RF-24 | Competencias de los cursos | 3.2 |
+| RF-25 | Fechas de los bimestres | 3.1 |
+| RF-26 | Regla de consolidación | 5.1, 5.3 |
+| RF-27 | Nota bimestral por competencia | 5.1, 5.5 |
+| RF-28 | Nota anual por competencia | 5.1, 5.4, 5.5 |
+| RF-29 | Notas consolidadas del docente | 5.4 |
+| RF-30 | Notas del alumno y su apoderado | 5.6 |
+| RF-31 | Cursos del docente | 5.2 |
+| RF-32 | Cursos del alumno | 5.6 |
+| RF-33 | Cursos de los hijos | 5.6 |
+| RF-34 | Competencias y niveles de un curso | 5.6 |
+| RF-35 | Libreta por bimestre | 5.5, 5.6 |
+| RF-36 | Ver y descargar la libreta | 5.6 |
+| RF-37 | Consolidado anual | 5.5, 5.6 |
+| RF-38 | Promedio ponderado (AD=4 … C=1) | 5.1, 5.3, 5.4 |
+| RF-39 | Matriz semanal del horario | 1.2, 3.7 |
+| RF-40 | Asignaciones manuales | 1.2 |
+| RF-41 | Validación de cruces | 1.2 |
+| RF-42 | Impedir confirmar con conflictos | 1.2 |
+| RF-43 | Completitud de la carga horaria | 1.2, 3.4, 3.6 |
+| RF-44 | Publicar el horario | 3.6 |
+| RF-45 | Horario publicado por rol | 3.6, 3.7 |
+| RF-46 | Días lectivos, bloques y disponibilidad | 3.4, 3.5 |
+| RF-47 | Solo cursos, secciones y docentes habilitados | 1.2, 3.4, 3.5 |
+| RF-48 | Roles y permisos | 6.3 |
+| RF-49 | Auditoría de transacciones críticas | 1.4, 5.2 |
+| RF-50 | Acceso por rol | 6.6 |
+| RF-51 | Consulta y exportación de auditoría | 1.4 |
+| RF-52 | Inicio, cierre y recuperación de sesión | 1.1, 1.7, 6.1, 6.2, 6.5 |
+
+### Casos de uso (UC-01 a UC-25)
+
+| UC | Caso de uso | Tareas |
+|---|---|---|
+| UC-01 | Solicitar matrícula | 2.2 |
+| UC-02 | Registrar matrícula | 1.6, 1.9 |
+| UC-03 | Consultar matrícula y obligaciones | 2.3 |
+| UC-04 | Presentar comprobante | 2.4 |
+| UC-05 | Validar y registrar pago | 2.5 |
+| UC-06 | Consultar historial de pagos | 2.6 |
+| UC-07 | Registrar asistencia de docente | 4.1, 4.6 |
+| UC-08 | Registrar asistencia de alumnos | 4.2, 4.6 |
+| UC-09 | Actualizar estado de asistencia | 4.2, 4.3, 4.6 |
+| UC-10 | Reporte de asistencia de la sección | 4.5, 4.6, 6.4 |
+| UC-11 | Reporte general de asistencia | 4.5, 4.6, 6.4 |
+| UC-12 | Cierre diario de asistencia docente | 4.4, 4.6, 6.4 |
+| UC-13 | Crear año escolar | 3.1, 3.7, 6.1b |
+| UC-14 | Cursos y competencias | 3.2, 3.7 |
+| UC-15 | Registrar evaluación por competencias | 5.2, 5.5, 5.6 |
+| UC-16 | Definir regla de consolidación | 5.3, 5.4, 5.6 |
+| UC-17 | Cálculo de notas finales | 5.3, 5.4, 5.5, 5.6 |
+| UC-18 | Consolidar notas bimestrales | 5.5, 5.6 |
+| UC-19 | Consultar notas y libreta | 5.6 |
+| UC-20 | Registrar disponibilidad docente | 3.5, 3.7 |
+| UC-21 | Gestionar horario (matriz y validaciones) | 1.2, 1.3, 1.9, 3.5, 3.7 |
+| UC-22 | Publicar horario | 3.6, 3.7 |
+| UC-23 | Consultar horario | 3.7 |
+| UC-24 | Gestión de cuentas e inicio de sesión | 1.1, 1.7, 1.8, 6.1, 6.2 |
+| UC-25 | Consultar y exportar auditoría | 1.4, 1.9 |
