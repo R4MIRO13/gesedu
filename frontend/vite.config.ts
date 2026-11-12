@@ -14,6 +14,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    // Solo las pruebas de la SPA: las de frontend/e2e son de Playwright (npm run e2e)
+    include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/test/setup.ts'],
     css: false,
     // Los flujos largos con user-event pueden pasar de 5 s si la máquina está cargada (por ejemplo, junto a las pruebas del backend)

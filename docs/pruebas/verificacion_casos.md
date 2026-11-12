@@ -629,13 +629,14 @@ Para cada prueba: confirmar que la clase indicada en «Verificado por» existe y
 - Resultado de la revisión: ✅
 
 ## UC-19: Consultar notas y libreta
-### Prueba 77 (unitaria)
-- Objetivo: Verificar la generación del PDF de la libreta.
+### Prueba 77 (caso de uso)
+- Objetivo: Verificar el contenido del PDF de la libreta.
 - Clases asociadas: GeneradorPdf, ConsultaNotasService
-- Descripción: Generar la libreta en PDF.
-- Esperado: El PDF contiene alumno, sección, año, estado, fecha y una fila por competencia.
-- Verificado por: `GeneradorPdfTest`
-- Resultado de la revisión: ❌ Ninguna prueba verifica el contenido del PDF de la libreta. `GeneradorPdfTest` prueba el PDF del **reporte de asistencia** (título, alcance, periodo, tabla, paginación). `ConsultaNotasIT.laLibretaYElInformeSeDescarganEnPdf` solo comprueba 200, `Content-Type: application/pdf`, la firma `%PDF-` y el nombre del archivo (`libreta-…<año>.pdf`), y el alcance (403 a otro alumno); no asserta alumno, sección, año, estado, fecha ni una fila por competencia. `ConsultaNotasService` no tiene prueba unitaria.
+- Precondición: Semilla de demo (V1002, V1005): Valeria Torres (2026-0404), 2° A de 2026 con cuatro bimestres consolidados y libreta FINAL actualizada el 18/12/2026 12:00.
+- Descripción: Generar la libreta en PDF de Valeria, extraer el texto con PDFBox y compararlo con la base; luego agregar a 2° A un curso sin ninguna nota y generarla otra vez.
+- Esperado: El PDF contiene nombre, código, «Sección: 2° A · Año escolar 2026», el estado y la fecha de actualización de `evaluacion.libreta` («Libreta final, actualizada el 18/12/2026 12:00», en la zona del reloj inyectado), cada curso y cada competencia, y en cada fila los calificativos AD/A/B/C de los bimestres I a IV y el final iguales a `evaluacion.nota_consolidada`. El curso sin notas aparece con «—» en cada calificativo, no cambia el estado ni la fecha, y el PDF se genera sin error.
+- Verificado por: `LibretaPdfContenidoIT`
+- Resultado de la revisión: ✅ (observación 4 de la evaluación del primer incremento, 11/11/2026). `LibretaPdfContenidoIT` (2 casos) extrae el texto con PDFBox 3.0.8 (solo pruebas) y lee los calificativos por posición, en las columnas «Bim. I» a «Final», para no confundirlos con el texto del nivel esperado. El PDF no imprime una fecha de emisión aparte: la fecha verificada es la de actualización de la libreta (RF-35 y RF-36 del Catálogo v4 no exigen fecha de emisión). Revisión anterior: ❌ Ninguna prueba verificaba el contenido del PDF de la libreta (solo 200, tipo, firma `%PDF-` y nombre del archivo).
 
 ### Prueba 78 (caso de uso)
 - Objetivo: Probar el flujo básico: el alumno consulta sus notas.
@@ -947,20 +948,22 @@ Para cada prueba: confirmar que la clase indicada en «Verificado por» existe y
 - Esperado: Sin desbordes horizontales; Lighthouse 100 en accesibilidad.
 - Verificado por: `Prueba manual con Chrome DevTools`
 - Resultado de la revisión: ✏️ Sin prueba automatizada; el registro está en `docs/AVANCE.md` (tarea 6.5d, commit b493fe2): 17 pantallas del administrador y del apoderado a 375×812 con pantalla táctil, sin desbordes, etiquetas, nombres ni `lang` pendientes, y Lighthouse de accesibilidad 100 «en el login y en las pantallas autenticadas revisadas» (no se dice que sea en las 17). Texto corregido: «Lighthouse 100 en accesibilidad en el login y en las pantallas autenticadas revisadas».
+- Actualización (observación 1, 11/11/2026): la parte responsive ya tiene pruebas automatizadas. `e2e/responsive.spec.ts` (Playwright) recorre 21 rutas del administrador, 11 de la docente y 4 del apoderado en 375, 768 y 1280 px sin desbordamiento horizontal, y prueba el menú plegable (☰ de 44 px, foco, cierre al navegar y con Escape); pasa en Chromium, Firefox y Edge (`docs/pruebas/compatibilidad.md`). `MenuMovil.test` (Vitest, 7 casos) cubre el menú plegable en la SPA. Lighthouse sigue siendo manual.
 
 ### Prueba 117
 - Objetivo: Verificar la compatibilidad con navegadores (RNF-04).
-- Descripción: Ejecutar la lista de comprobación de AVANCE.md (inicio de sesión de 4 roles, bloqueo, menú móvil, UC-21, UC-01, UC-04, descargas, UC-07 y teclado) en Chrome, Edge y Firefox.
-- Esperado: Todas las comprobaciones pasan. Chrome: verificado. Edge y Firefox: pendientes de ejecución manual. Safari: no probado.
-- Verificado por: `Prueba manual (AVANCE.md, «Navegadores»)`
-- Resultado de la revisión: ✏️ `docs/AVANCE.md` (tarea 6.10, «Navegadores (RNF-04)») figura **pendiente**: las nueve casillas de la lista están sin marcar. Dice que Chrome se usó en todas las pruebas de navegador de las fases 2 a 5, pero no que la lista se haya ejecutado completa en Chrome; Edge y Firefox, por probar; Safari, no probado. «Todas las comprobaciones pasan» no está registrado para ningún navegador.
+- Descripción: Ejecutar los smoke tests de Playwright (`frontend/e2e`: inicio y cierre de sesión, credenciales incorrectas, navegación por rol de administrador, docente y apoderado, marcación y pase de lista, registro de notas, descarga de la libreta y pantallas responsive) en Chromium, Firefox y Edge, con los datos preparados antes de cada navegador.
+- Esperado: Las 14 pruebas pasan en cada navegador. Safari queda fuera de alcance (no hay equipo Apple).
+- Verificado por: `npm run e2e (frontend/e2e, Playwright)` · resumen en `docs/pruebas/compatibilidad.md`
+- Resultado de la revisión: ✅ (observación 3, 11/11/2026). Chromium 156.0.8078.4, Firefox 157.0 y Edge 157.0.4341.46: **14/14 en cada uno**. Safari, fuera de alcance y anotado así. No entra en CI: necesita Docker, el backend con `local,demo` y Edge instalado. De la lista manual de AVANCE quedan sin automatizar el bloqueo tras 5 intentos, UC-21, UC-01, UC-04, las exportaciones y el teclado en diálogos; siguen cubiertos por sus pruebas de integración y de Vitest, no por navegador. Revisión anterior: ✏️ `docs/AVANCE.md` (tarea 6.10, «Navegadores (RNF-04)») figura **pendiente**: las nueve casillas de la lista están sin marcar. Dice que Chrome se usó en todas las pruebas de navegador de las fases 2 a 5, pero no que la lista se haya ejecutado completa en Chrome; Edge y Firefox, por probar; Safari, no probado. «Todas las comprobaciones pasan» no está registrado para ningún navegador.
 
 ## Datos para el plan
 
 Revisión hecha leyendo el código y el historial de git (6/11/2026); no se ejecutó ninguna prueba.
 
 ### Cantidad de pruebas
-- **Último registro de una verificación completa** (`docs/AVANCE.md`, tarea 6.5, `clean verify` con `-Xmx1g` y un fork): backend **182 unitarias + 617 de integración = 799**; frontend **365 pruebas en 43 archivos** (lint, typecheck y build en verde).
+- **Verificación completa del 11/11/2026** (rama `feat/observaciones-e5`, observaciones de la evaluación del primer incremento), ejecutada y contada en los reportes de surefire y failsafe: backend **184 unitarias + 640 de integración = 824**, 0 fallos, 0 errores y 0 omitidas (`./mvnw -B verify`, BUILD SUCCESS en 19:18 min). Antes de los cambios, en `main` (`6e657ae`): **184 + 638 = 822**, igual que los documentos entregados; las 2 nuevas son `LibretaPdfContenidoIT`. Frontend **372 pruebas en 44 archivos** (365 + 7 de `MenuMovil.test`), con lint, typecheck y build en verde. Playwright (`npm run e2e`): 14/14 en Chromium 156, Firefox 157 y Edge 157 (`docs/pruebas/compatibilidad.md`).
+- Registro anterior de una verificación completa (`docs/AVANCE.md`, tarea 6.5, `clean verify` con `-Xmx1g` y un fork): backend **182 unitarias + 617 de integración = 799**; frontend **365 pruebas en 43 archivos** (lint, typecheck y build en verde).
 - Registro anterior (tarea 6.4): 616 pruebas de integración. Cierre de la fase 5: 182 unitarias + 577 de integración y 341 del frontend.
 - **Recuento estático actual** (lectura de `src/test` y `*.test.ts(x)`): backend **783** métodos con `@Test`, `@RepeatedTest` o `@ParameterizedTest` en 95 clases (629 en clases de integración —`@SpringBootTest` o `extends BaseIT`— y el resto unitarios) más las 17 reglas `@ArchTest` de `ArquitecturaTest`; el número que informa Maven es mayor porque `VacantesConcurrentesIT` se repite 3 veces y las pruebas parametrizadas se expanden. Frontend: **361** `it`/`test` en 43 archivos, más los casos de 2 `it.each` (365 con la expansión, igual que el registro).
 - Después del último registro se agregaron pruebas (`ValidacionClaveJwtIT`, 6 casos, tarea 6.8; las de S-86 sobre la secuencia de códigos de alumno), así que el total real hoy es mayor que 799; confirmar con un `./mvnw -B clean verify` antes de citarlo en el plan.

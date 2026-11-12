@@ -10,6 +10,7 @@
     "typecheck": "tsc -b --noEmit",
     "preview": "vite preview",
     "test": "vitest",
+    "e2e": "node e2e/ejecutar.mjs",
     "format": "prettier --write src",
     "gen:tipos": "openapi-typescript http://localhost:8080/v3/api-docs -o src/compartido/api/tipos.gen.ts"
   },
@@ -23,6 +24,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@tanstack/router-plugin": "^1.168.48",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

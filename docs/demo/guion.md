@@ -16,6 +16,7 @@ Credenciales: todas las cuentas usan la contraseña `Gesedu2027!`.
 | `admin@demo.gesedu.pe` | Administrador (Carmen, Secretaría académica) |
 | `directivo@demo.gesedu.pe` | Administrador (Ricardo, Coordinación académica) |
 | `docente@demo.gesedu.pe`, `alumno@demo.gesedu.pe`, `apoderado@demo.gesedu.pe` | Docente (Rosa Quispe), Alumno (Lucía García), Apoderado (María Rojas) |
+| `docente2@demo.gesedu.pe` | Docente (Fernando Medina): dicta Matemática en 3° A, la sección con alumnos y logros del bimestre I. Para las notas («Recorrido del docente» y paso 14) |
 | `bloqueo@demo.gesedu.pe` | Docente (Hugo), reservada para mostrar el bloqueo |
 | `familia.torres@demo.gesedu.pe` | Apoderado (Marcos Torres): hijo **Tomás** ya matriculado en 1° A con sus 11 compromisos; su otra hija, Valeria, tiene la solicitud `00482` pendiente. Para los pagos (paso 11) |
 
@@ -33,6 +34,7 @@ Qué cubre cada paso:
 | 8 | Registrar matrícula | P2 | UC-02, RF-04, RF-05, RF-07, RF-12, RNF-10 |
 | 9 | Última vacante en vivo | P2 | RNF-09 |
 | 12 | Configuración académica y horarios *(fase 3)* | P2 | UC-13, UC-14, UC-20, UC-22, UC-23, RF-03, RF-04, RF-43 a RF-47 |
+| Docente | Recorrido del docente: mi horario, marcación, pase de lista, notas por competencia, regla y notas finales | P2 | UC-23, UC-07, UC-08, UC-15, UC-16, UC-17 |
 | 13 | Asistencia: marcación docente, pase de lista, cambio a tardanza, cierre diario, reportes y resumen del alumno *(fase 4)* | P2 | UC-07 a UC-12, RF-13 a RF-21, RNF-03 |
 | 10 | ArchUnit | P1 | DA-02 |
 
@@ -310,7 +312,7 @@ Se usa a la familia Torres, que ya viene lista en la semilla (no hace falta conf
 8. **Configuración de cobros**: cambiar el monto de una pensión pendiente (por ejemplo, mayo a 400.00) → «Se actualizaron N compromisos pendientes»; en la cuenta de Torres esa pensión ya dice S/ 400.00 y la ya pagada no cambió (RF-07). El job de penalidades (00:05) no tiene pantalla: se muestra su prueba, `JobVencimientosIT`.
 
 ### 12. Configuración académica y horarios (8 min) — UC-13, UC-14, UC-20, UC-22, UC-23 *(fase 3)*
-Contraseña de todas las cuentas: `Gesedu2027!`. Con `.\scriptseiniciar-bd.ps1` y el backend `local,demo` el borrador 2027 viene casi completo: 8 secciones con sus 22 h, **3° A con 19 h (faltan 3)** y **4° B con 23 h (excede 1)**.
+Contraseña de todas las cuentas: `Gesedu2027!`. Con `.\scripts\reiniciar-bd.ps1` y el backend `local,demo` el borrador 2027 viene casi completo: 8 secciones con sus 22 h, **3° A con 19 h (faltan 3)** y **4° B con 23 h (excede 1)**.
 
 1. **UC-13** · `directivo@demo.gesedu.pe` → **Año escolar** → **Nuevo año escolar**. Fechas 14/02/2028 – 19/12/2028: «Duración: 10 meses y 5 días» → **Siguiente**. Escribe los bimestres de modo que el III empiece antes de que termine el II: aparece «El Bimestre III se cruza con el Bimestre II. Corrige las fechas…», la etiqueta «Se superpone», la línea de tiempo con el tramo rayado y **Crear año escolar** queda deshabilitado (FA-2). Corrige las fechas y crea el año (queda *Planificado*, con sus grados 1° a 5°). Para FA-1, en el paso 1 pon como fin 14/11/2028: «El año escolar debe durar entre 10 y 12 meses».
 2. **UC-14** · **Cursos y competencias** (año 2027): 6 cursos · 22 h. Elige *Matemática*, agrega una competencia y **Guardar curso**; intenta crear otra vez «Matemática» → 409 «Ya existe el curso». Para la copia (FA-1) hace falta un año sin cursos: abre `/intranet/academico/2028/cursos` → **Copiar configuración de 2027** → **Confirmar copia** («Se copiaron 6 cursos de 2027 con sus competencias»).
@@ -322,7 +324,24 @@ Contraseña de todas las cuentas: `Gesedu2027!`. Con `.\scriptseiniciar-bd.ps1`
 8. **Auditoría**: `CREAR_ANIO_ESCOLAR`, `COPIAR_CURSOS_ANIO_ANTERIOR`, `MODIFICAR_SECCION`, `CONFIRMAR_DISPONIBILIDAD` (bloques disponibles 0 → 12) y `PUBLICAR_HORARIO` (versión vigente → 1, 220 clases).
 9. La inmutabilidad se muestra en psql: `docker exec -it gesedu-postgres psql -U gesedu_app -d gesedu -c "DELETE FROM horarios.asignacion_publicada"` → «los horarios publicados son inmutables».
 
-> Publicar es definitivo: para repetir el ensayo hay que reiniciar la base (`.\scriptseiniciar-bd.ps1`). Las pruebas de este recorrido son `DatosDemoFase3IT` (todo el flujo con estos usuarios) y `PublicacionHorarioIT` (concurrencia e inmutabilidad).
+> Publicar es definitivo: para repetir el ensayo hay que reiniciar la base (`.\scripts\reiniciar-bd.ps1`). Las pruebas de este recorrido son `DatosDemoFase3IT` (todo el flujo con estos usuarios) y `PublicacionHorarioIT` (concurrencia e inmutabilidad).
+
+### Recorrido del docente (6 min) — UC-23, UC-07, UC-08, UC-15, UC-16, UC-17
+Va **aquí, después del paso 12**, porque Mi horario y la marcación necesitan el horario 2027 publicado (en la demo en vivo ya lo publicó el paso 12; no hace falta ningún atajo). El rol docente se reparte entre dos cuentas de la semilla: **Rosa** es la tutora de 3° A (pase de lista) y dicta Matemática en 3° B, 4° A, 4° B y 5° A, secciones casi sin alumnos («La sección no tiene alumnos matriculados» no es un error); **Fernando** dicta Matemática en 3° A, la sección con seis alumnos y los logros del bimestre I. Reloj de la demo: lunes 15/03/2027 desde las 7:40 a. m.
+
+| Cuenta | Contraseña | Para qué |
+|---|---|---|
+| `docente@demo.gesedu.pe` (Rosa Quispe Mendoza) | `Gesedu2027!` | Mi horario, marcación y pase de lista de 3° A |
+| `docente2@demo.gesedu.pe` (Fernando Medina Soto) | `Gesedu2027!` | Notas por competencia, regla de consolidación y notas finales de Matemática 3° A |
+
+1. **Inicio** · `docente@` (Rosa): «Hola, Rosa · Rol: Docente» y sus opciones (Horario, Mi asistencia, Asistencia de mi sección, Reporte de asistencia de mi sección, Registro de notas…).
+2. **Mi horario (UC-23)** · **Horario**: «Mi horario · Rosa Quispe Mendoza · 2027», «Versión 1 publicada», 20 clases de Matemática (3° B a 5° A) de lunes a viernes; clic en un bloque → *Detalle del bloque*. *Por sección* solo ofrece sus secciones (donde dicta o es tutora).
+3. **Marcación (UC-07)** · **Mi asistencia**: «Lunes 15/03/2027», la hora del servidor, «Tu primera clase hoy: 7:45 a. m.» y «eres puntual hasta las 7:50 a. m.» → **Registrar asistencia** → «Asistencia registrada a las 7:4x a. m.: Puntual.» (después de las 7:50, *Tardanza*).
+4. **Pase de lista (UC-08)** · **Asistencia de mi sección** (`/intranet/asistencia/3A/registrar`): seis alumnos con **Puntual / Tardanza / Falta** → **Marcar todos como Puntual**, cambia a Castro a **Tardanza** y a Mendoza a **Falta** → **Guardar asistencia** → «Asistencia registrada: 4 puntuales, 1 tardanza y 1 falta.» → **Ver el registro del día**.
+5. **Notas por competencia (UC-15)** · `docente2@` (Fernando) en otra ventana de incógnito → **Registro de notas** → «Registrar notas» de **Matemática 3° A**: 6 alumnos × 4 competencias con AD / A / B / C, «22/24 celdas completas» y el aviso «Mendoza Ruiz Joaquín (C3) · Paredes Vega Camila (C3)». Elige las dos C3 → **Guardar registro** → «Se guardó el registro: 2 celdas.» y «24/24 celdas completas».
+6. **Consulta de la consolidación (UC-16, UC-17)** · misma cuenta → **Regla de consolidación** de Matemática 3° A («Regla actual: Moda», las tres reglas con su ejemplo y los pesos) → **Notas finales**: por alumno y competencia, los bimestres I a IV y «Final» (solo el I tiene notas). **Calcular notas finales** aplica la regla. *El docente consulta y calcula lo de su curso; consolidar el bimestre para todo el colegio (UC-18) es del administrador (`NOTA_CONSOLIDAR`), pasos 14.3 a 14.5.*
+
+> **Sin el paso 12** (para probar este recorrido por separado), publica antes el horario con el atajo `docs/demo/atajos/publicar-horario.sql` (ver el paso 13, «Dos preparaciones»). El atajo es definitivo: se revierte solo con `.\scripts\reiniciar-bd.ps1`, que borra la base local. **Si haces este recorrido, en los pasos 13.1, 13.2 y 14.4 la marcación, el pase de lista y las dos celdas C3 ya estarán registrados**: muéstralos como hechos o reinicia la base entre ensayos. Los smoke tests de Playwright (`frontend/e2e`, `docs/pruebas/compatibilidad.md`) automatizan este recorrido.
 
 ### 13. Asistencia (12 min) — UC-07 a UC-12 *(fase 4)*
 **Dos preparaciones.** (1) **El reloj de la demo.** El perfil `demo` corre con un reloj propio, porque el año de la semilla es 2027: arranca el **lunes 15/03/2027 a las 7:40 a. m.** y avanza en tiempo real (`GESEDU_DEMO_RELOJ_INICIO` lo cambia; ver «Reiniciar entre ensayos»). Toda hora de asistencia la pone el servidor con ese reloj: la de tu computadora no cuenta. (2) **El horario publicado**: UC-07 y UC-12 lo necesitan. Si hiciste el paso 12 (UC-22), ya está; con una base recién reiniciada, publícalo con el atajo (una sola vez):
