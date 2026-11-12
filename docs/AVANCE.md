@@ -17,7 +17,8 @@
 | 3 Académico y horarios | `feat/fase-3` | **terminada** (3.1–3.7, probada en el navegador) |
 | 4 Asistencia | `feat/fase-4` | **terminada** (4.1–4.6, probada en el navegador) |
 | 5 Evaluación | `feat/fase-5` | **terminada** (5.1–5.6, probada en el navegador) |
-| 6 Cierre | `feat/fase-6` | **terminada** (6.1–6.10). **Pendientes fuera del código:** (1) prueba manual en Edge y Firefox con la lista de «Navegadores (RNF-04)», y Safari como **no probado**; (2) la medición válida de carga de RNF-12 en QA con la infraestructura de AWS (la local es orientativa, `docs/despliegue/carga/README.md`). Hechos: `docs/despliegue` (local, QA, AWS, `rds-bootstrap.sql`) y `manual.md` |
+| 6 Cierre | `feat/fase-6` | **terminada** (6.1–6.10). **Pendientes fuera del código:** (1) ~~prueba manual en Edge y Firefox~~ cubierta por los smoke tests de Playwright de E5.3 (Safari, fuera de alcance); (2) la medición válida de carga de RNF-12 en QA con la infraestructura de AWS (la local es orientativa, `docs/despliegue/carga/README.md`). Hechos: `docs/despliegue` (local, QA, AWS, `rds-bootstrap.sql`) y `manual.md` |
+| E5 Observaciones del primer incremento | `feat/observaciones-e5` | **terminada** (E5.1–E5.5): libreta en PDF, rol docente, compatibilidad con Playwright y responsive |
 
 ## Tareas
 | Tarea | Descripción | Estado | Commit |
@@ -85,20 +86,25 @@ einiciar-bd.ps1` para cargar V1002 sin la matrícula de prueba** | hecha | ver `
 | 6.7 | **Prueba de carga de UC-01 y código de alumno con secuencia** (RNF-12, RNF-03; **S-86**). k6 con 200 apoderados (`docs/despliegue/carga/`). Se quitó el candado global del alta de alumnos: secuencia `seguridad.seq_codigo_alumno` (migración **V13**) y candado solo por documento. Pruebas: `SolicitudApoderadoIT`, `VacantesConcurrentesIT` | hecha | `af1567a` |
 | 6.8 | **Verificación de arranque de la clave JWT** (S-85). `ValidacionClaveJwt` rechaza el arranque fuera de `local`, `demo` y `test` (incluido sin perfil) si `GESEDU_JWT_SECRET` es la clave de desarrollo o tiene menos de 256 bits, con un mensaje que nombra la variable. Pruebas: `ValidacionClaveJwtIT` | hecha | ver `git log` |
 | 6.9 | **Carga: resultado aceptado como medición local.** La solicitud de matrícula cumple (p95 de **1,59 s** en el pico de 200); el p95 sostenido es de **2,53 s** en una máquina que comparte CPU entre k6, backend y base de datos. **No es la medición válida de RNF-12:** esa se repite en QA con la infraestructura de AWS. Sin más optimizaciones por ahora | hecha (medición válida pendiente en QA) | ver `git log` |
-| 6.10 | **Navegadores (RNF-04): lista de comprobación manual** (abajo, «Navegadores (RNF-04)»). Edge y Firefox por probar; Safari **no probado** | pendiente (prueba manual) | — |
+| 6.10 | **Navegadores (RNF-04): lista de comprobación manual** (abajo, «Navegadores (RNF-04)»). Reemplazada en lo posible por los smoke tests de Playwright (E5.3): Chromium, Firefox y Edge 14/14; Safari **fuera de alcance** | hecha (E5.3; parte de la lista sigue siendo manual) | ver E5.3 |
+| E5.1 | **Observación 4: contenido del PDF de la libreta** (UC-19, RF-35, RF-36; ficha 77). `LibretaPdfContenidoIT` genera la libreta FINAL 2026 de Valeria Torres (semilla), extrae el texto con PDFBox 3.0.8 (solo pruebas) y verifica nombre, código, grado y sección, periodo, estado y fecha de actualización (en la zona del reloj inyectado), cursos, competencias y los calificativos AD/A/B/C por bimestre y final, fila por fila, contra `nota_consolidada`. Caso adicional: un curso sin notas sale con «—» y sin error. El PDF no imprime fecha de emisión (el Catálogo no la exige). Pruebas: `LibretaPdfContenidoIT` (2) | hecha | `00f93f9` + cierre |
+| E5.2 | **Observación 2: rol docente.** Recorrido en Chrome con `local,demo` y el horario publicado: inicio, mi horario, marcación, pase de lista de 3° A (Puntual/Tardanza/Falta), notas por competencia de Matemática 3° A (`docente2@`) y regla y notas finales. **Sin fallos funcionales:** el horario 2027 es un borrador hasta el paso 12 y Rosa dicta en secciones casi sin alumnos. Guion: bloque «Recorrido del docente» después del paso 12, con `docente@` y `docente2@` (`Gesedu2027!`). Se corrigió la ruta `.\scripts\reiniciar-bd.ps1` (un retorno de carro en lugar de «\r») en el guion y aquí | hecha | `d025946` |
+| E5.3 | **Observación 3: compatibilidad entre navegadores** (RNF-04; ficha 117). Playwright 1.64.1 con proyectos chromium, firefox y msedge en serie, `preparar-datos.sql` antes de cada uno (guardia de base local, sin tocar auditoría) y `npm run e2e`. Specs: login, navegación por rol, marcación y pase de lista, notas, libreta, responsive. Resultado: **14/14** en Chromium 156, Firefox 157 y Edge 157; Safari fuera de alcance. No entra en CI. `docs/pruebas/compatibilidad.md`, `frontend/e2e/README.md` (`PLAYWRIGHT_BROWSERS_PATH`) | hecha | `4f8ea6b` |
+| E5.4 | **Observación 1: responsive** (RNF-02; ficha 116). Menú lateral plegable con botón ☰ bajo 768 px (reemplaza la barra inferior: **C-57**), tablas con encabezado fijo y desplazamiento propio, formularios en una columna bajo 640 px, diálogos casi a pantalla completa y objetivos táctiles de 44 px. Revisadas 21 rutas del administrador y 12 de la docente en 375, 768 y 1280 px (viewport emulado) sin desbordes; capturas en `docs/demo/capturas/responsive/`. Pruebas: `MenuMovil.test` (7), `e2e/responsive.spec.ts` | hecha | `d63e82c` |
+| E5.5 | **Cierre de las observaciones.** `verify` completo: backend **184 unitarias + 640 de integración = 824** (antes 184 + 638 = 822), 0 fallos; frontend **372 pruebas** en 44 archivos (antes 365), lint, typecheck y build en verde; Playwright 14/14 en los tres navegadores. Fichas 77, 116 y 117 de `docs/pruebas/verificacion_casos.md` actualizadas | hecha | cierre |
 
 ### Navegadores (RNF-04)
-Chrome se usó en todas las pruebas en navegador de las fases 2 a 5. **Edge y Firefox: por probar a mano. Safari: no probado** (no hay equipo Apple disponible); no se afirma compatibilidad con él. Con `local,demo` en marcha (SPA en http://localhost:5173), marcar en cada navegador:
-- [ ] Inicio de sesión como los 4 roles, cierre de sesión y recarga de la página (la sesión se restaura con la cookie de refresh).
-- [ ] Bloqueo tras 5 intentos fallidos y mensaje con la hora de desbloqueo.
-- [ ] Menú lateral en escritorio y barra inferior al estrechar la ventana (≤ 600 px).
-- [ ] UC-21: matriz de horario, asignar y eliminar una clase, aviso de cruce.
-- [ ] UC-01: formulario de solicitud con subida de archivo (PDF/JPG/PNG ≤ 5 MB) y constancia.
-- [ ] UC-04: subir comprobante y ver el estado «pendiente de validación».
-- [ ] Descargas por blob: exportación de auditoría (Excel/CSV) y reportes de asistencia (Excel/PDF).
-- [ ] UC-07: «Registrar asistencia» con la hora del servidor.
-- [ ] Foco visible y navegación con teclado en formularios y diálogos.
-Anotar aquí navegador, versión, fecha y resultado de cada prueba.
+Chrome se usó en todas las pruebas en navegador de las fases 2 a 5. **Desde el 11/11/2026 (E5.3) la compatibilidad se prueba con Playwright** en Chromium 156.0.8078.4, Firefox 157.0 y Edge 157.0.4341.46: **14/14 en cada uno** (`docs/pruebas/compatibilidad.md`). **Safari: fuera de alcance** (no hay equipo Apple disponible); no se afirma compatibilidad con él. Estado de la lista (✓ = automatizado en los tres navegadores; parcial = solo una parte; sin marcar = sigue siendo manual):
+- [ ] Inicio de sesión como los 4 roles, cierre de sesión y recarga de la página. *Parcial:* administrador, docente y apoderado entran, y «Salir» vuelve al login; el alumno y la restauración de la sesión al recargar siguen siendo manuales.
+- [ ] Bloqueo tras 5 intentos fallidos y mensaje con la hora de desbloqueo (manual; lo cubren `BloqueoCuentaIT` y `login.test`).
+- [x] Menú lateral en escritorio y **menú plegable ☰ bajo 768 px** (la barra inferior se reemplazó, C-57), sin desbordes en 375, 768 y 1280 px (`responsive.spec.ts`).
+- [ ] UC-21: matriz de horario, asignar y eliminar una clase, aviso de cruce (manual).
+- [ ] UC-01: formulario de solicitud con subida de archivo y constancia (manual).
+- [ ] UC-04: subir comprobante y ver el estado «pendiente de validación» (manual).
+- [ ] Descargas por blob. *Parcial:* la libreta en PDF (`libreta.spec.ts`); las exportaciones de auditoría y los reportes de asistencia siguen siendo manuales.
+- [x] UC-07: «Registrar asistencia» con la hora del servidor (`asistencia.spec.ts`, también el pase de lista de UC-08).
+- [ ] Foco visible y navegación con teclado en formularios y diálogos. *Parcial:* foco y Escape del menú plegable; los formularios y diálogos siguen siendo manuales.
+Repetir con `npm run e2e` (requisitos en `frontend/e2e/README.md`).
 
 ## Supuestos tomados
 - **S-28** El cronograma de cobros modificado no crea obligaciones retroactivas ni toca las obligaciones no PENDIENTES. La edición de datos personales reutiliza `USUARIO_GESTIONAR` y el cambio de sección `MATRICULA_REGISTRAR` (sin permisos nuevos).

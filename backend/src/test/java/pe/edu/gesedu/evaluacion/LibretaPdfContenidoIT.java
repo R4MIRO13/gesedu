@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.Normalizer;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -91,7 +93,9 @@ class LibretaPdfContenidoIT extends BaseIT {
                 .contains(valeria.apellidos())
                 .contains("(" + valeria.codigo() + ")")
                 .contains("Sección: " + valeria.seccion() + " · Año escolar 2026")
-                .contains("Libreta final")
+                .as("estado y fecha de la libreta en la base, la fecha en la zona del reloj inyectado")
+                .contains(estadoYFecha(valeria))
+                .contains("Libreta final, actualizada el 18/12/2026 12:00")
                 .contains("AD logro destacado · A logro esperado · B en proceso · C en inicio");
         assertThat(texto).as("columnas de los cuatro periodos y la final")
                 .contains("Bim. I").contains("Bim. II").contains("Bim. III").contains("Bim. IV").contains("Final");
@@ -124,7 +128,8 @@ class LibretaPdfContenidoIT extends BaseIT {
         byte[] pdf = libretaPdf(valeria.id());
         String texto = textoPlano(pdf);
 
-        assertThat(texto).contains("Taller de Robótica").contains("C1 · Diseña prototipos").contains("C2 · Programa secuencias");
+        assertThat(texto).contains("Taller de Robótica").contains("C1 · Diseña prototipos").contains("C2 · Programa secuencias")
+                .as("un curso sin notas no cambia el estado ni la fecha de la libreta").contains(estadoYFecha(valeria));
         List<FilaEsperada> esperadas = filasEsperadas(valeria);
         List<List<String>> deRobotica = esperadas.stream().filter(f -> f.curso().equals("Taller de Robótica"))
                 .map(FilaEsperada::calificativos).toList();
@@ -151,6 +156,20 @@ class LibretaPdfContenidoIT extends BaseIT {
                 + "WHERE u.nombres = 'Valeria' AND u.apellidos = 'Torres Gil'",
                 (rs, i) -> new Alumna(rs.getString("id"), rs.getString("nombres"), rs.getString("apellidos"), rs.getString("codigo_alumno"),
                         rs.getString("seccion_id"), rs.getInt("numero_nivel") + "° " + rs.getString("letra")));
+    }
+
+    /**
+     * «Libreta final|parcial, actualizada el dd/MM/yyyy HH:mm» con el estado y la fecha de actualización de
+     * {@code evaluacion.libreta} para 2026. La fecha se escribe en la zona del reloj inyectado (America/Lima), no en la del
+     * sistema, igual que el servicio. El PDF de la libreta no imprime una fecha de emisión aparte.
+     */
+    private String estadoYFecha(Alumna alumna) {
+        return jdbc.queryForObject("SELECT l.estado, l.fecha_actualizacion FROM evaluacion.libreta l "
+                + "JOIN academico.anio_escolar ae ON ae.id = l.anio_escolar_id WHERE l.alumno_id = ? AND ae.anio = 2026",
+                (rs, i) -> "Libreta " + ("FINAL".equals(rs.getString("estado")) ? "final" : "parcial") + ", actualizada el "
+                        + rs.getObject("fecha_actualizacion", OffsetDateTime.class).atZoneSameInstant(reloj.getZone())
+                                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                alumna.id());
     }
 
     /**
