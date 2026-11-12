@@ -16,9 +16,8 @@ describe('Layout de la intranet', () => {
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toBeInTheDocument()
     expect(within(menu).getByRole('link', { name: 'Bloques horarios' })).toBeInTheDocument()
     expect(within(menu).queryByRole('link', { name: 'Auditoría' })).not.toBeInTheDocument()
-    // La misma navegación está en la barra inferior de móvil
-    const movil = screen.getByRole('navigation', { name: 'Navegación móvil' })
-    expect(within(movil).getByRole('link', { name: 'Bloques horarios' })).toBeInTheDocument()
+    // En móvil es el mismo menú, plegado: hay una sola navegación principal
+    expect(screen.getAllByRole('navigation')).toHaveLength(1)
   })
 
   it('el administrador ve también Auditoría y su cargo', async () => {
