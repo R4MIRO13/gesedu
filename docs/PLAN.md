@@ -582,7 +582,7 @@ Prioridad de las pruebas: **P1** = `ValidadorConflictosTest`, `HorarioBorradorCo
 - UC-19: flujo básico; FA-1, varios hijos; FA-2, libreta final.
 - RF-38: 2,5 → A; pesos iguales por defecto y ajustables por bimestre.
 **RF/RNF:** RF-22, RF-26 a RF-38, RNF-03.
-**Pruebas:** `PromedioPonderadoStrategyTest` (tabla de casos: 3,5 → AD, 2,5 → A, 1,49 → C, pesos distintos), `ModaStrategyTest` (empate → el más reciente), `UltimoRegistroStrategyTest`, `NivelLogroTest`, `ConsolidacionIdempotenteIT` (reejecutar no duplica), `LibretaPdfTest` (genera un PDF válido).
+**Pruebas:** `PromedioPonderadoStrategyTest` (tabla de casos: 3,5 → AD, 2,5 → A, 1,49 → C, pesos distintos), `ModaStrategyTest` (empate → el más reciente), `UltimoRegistroStrategyTest`, `NivelLogroTest`, `ConsolidacionIdempotenteIT` (reejecutar no duplica), `LibretaPdfTest` (genera un PDF válido; lo cubre `LibretaPdfContenidoIT`, que extrae el texto con PDFBox y lo compara con `nota_consolidada`).
 
 ### Fase 6 — Seguridad completa, endurecimiento y cierre (S6–S8) · equipo Plataforma + QA
 **Tareas:** UC-24 completo (crear, modificar, activar y desactivar; duplicados por DNI o correo, FA-1; vínculo académico obligatorio, FA-2, con el puerto SPI; heredar los permisos del rol; invalidar caché y tokens al desactivar), gestión de roles y permisos (RF-48), revisión responsive y de accesibilidad (RNF-02, RNF-04: Chrome, Firefox, Safari y Edge), prueba de carga k6 con 200 apoderados en UC-01 (RNF-12; `grafana/k6` en Docker), `docs/despliegue/*`, revisión de seguridad y manual breve por perfil.

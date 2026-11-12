@@ -27,6 +27,8 @@
         <shedlock.version>7.10.1</shedlock.version>
         <awssdk.version>2.57.5</awssdk.version>
         <poi.version>5.5.1</poi.version>
+        <!-- Solo pruebas: extrae el texto de los PDF generados con OpenPDF para verificar su contenido -->
+        <pdfbox.version>3.0.8</pdfbox.version>
         <!-- OpenPDF 3.x cambió el paquete a org.openpdf -->
         <openpdf.version>3.0.5</openpdf.version>
     </properties>
@@ -186,6 +188,12 @@
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
             <version>${archunit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
